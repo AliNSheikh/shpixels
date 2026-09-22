@@ -14,11 +14,7 @@ import {
   Film,
   Zap,
   Tag,
-  Layers,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  MoreHorizontal
+  Layers
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -52,8 +48,6 @@ export function AdminLayout() {
   const { language, toggleLanguage } = useLanguage();
   const isAr = language === 'ar';
   const [activeTab, setActiveTab] = useState<AdminTab>('home');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const navItems = [
     { id: 'home', label: isAr ? 'لوحة القيادة' : 'Dashboard', icon: LayoutDashboard },
@@ -69,54 +63,38 @@ export function AdminLayout() {
     { id: 'export', label: isAr ? 'تصدير الكود والبيانات' : 'Codebase Export', icon: Download },
   ];
 
-  const handleTabSelect = (tab: AdminTab) => {
-    setActiveTab(tab);
-    setMobileDrawerOpen(false);
-  };
-
-  const currentTabItem = navItems.find((n) => n.id === activeTab);
-
   return (
     <div className="min-h-screen bg-[#111111] text-[#f1f2ed] flex flex-col font-sans">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-[#171717]/95 backdrop-blur-md border-b border-[#2b2b2b] px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Mobile Drawer Hamburger */}
-          <button
-            onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-            className="md:hidden p-2 rounded-xl text-[#a8a6a1] hover:text-white hover:bg-[#232323] transition-colors cursor-pointer"
-            aria-label="Toggle navigation menu"
-          >
-            {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-
-          <div className="w-8 h-8 rounded-lg bg-[#941e33] flex items-center justify-center text-white font-black shadow-md shadow-[#941e33]/25 flex-shrink-0">
+      <header className="sticky top-0 z-40 bg-[#171717]/95 backdrop-blur-md border-b border-[#2b2b2b] px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#941e33] flex items-center justify-center text-white font-black shadow-md shadow-[#941e33]/25">
             <Film className="w-4 h-4" />
           </div>
-          <div className="min-w-0">
+          <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm sm:text-base tracking-wider uppercase font-quicksand text-white truncate">
+              <span className="font-extrabold text-base tracking-wider uppercase font-quicksand text-white">
                 MOGRAFIX
               </span>
-              <span className="hidden xs:inline-block px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#232323] text-[#b8283f] border border-[#941e33]/40">
-                {isAr ? 'لوحة CMS' : 'ADMIN CMS'}
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#232323] text-[#b8283f] border border-[#941e33]/40">
+                {isAr ? 'لوحة التحكم CMS' : 'ADMIN CMS'}
               </span>
             </div>
           </div>
         </div>
 
         {/* Status & Quick actions */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Real-time Codebase Sync Indicator */}
-          <div className="hidden lg:flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-800/40">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-800/40">
             <Zap className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>{isAr ? 'مزامنة الكود نشطة' : 'Codebase Synced'}</span>
+            <span>{isAr ? 'المزامنة المباشرة للكود نشطة' : 'Real-time Codebase Sync'}</span>
           </div>
 
-          {/* Bilingual Language Toggle */}
+          {/* Bilingual Language Toggle for Admin CMS */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-mono text-[#a8a6a1] hover:text-white border border-[#2b2b2b] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-mono text-[#a8a6a1] hover:text-white border border-[#2b2b2b] transition-colors cursor-pointer"
             title={isAr ? 'Switch CMS to English' : 'تحويل اللوحة إلى العربية'}
           >
             <Globe className="w-3.5 h-3.5 text-[#941e33]" />
@@ -127,9 +105,9 @@ export function AdminLayout() {
 
           <button
             onClick={() => setIsAdminView(false)}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-medium text-[#f1f2ed] border border-[#2b2b2b] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-medium text-[#f1f2ed] border border-[#2b2b2b] transition-colors cursor-pointer"
           >
-            <span className="hidden sm:inline">{isAr ? 'الموقع العام' : 'Public Site'}</span>
+            <span>{isAr ? 'الموقع العام' : 'Public Site'}</span>
             <ExternalLink className="w-3.5 h-3.5 text-[#941e33]" />
           </button>
 
@@ -143,106 +121,12 @@ export function AdminLayout() {
         </div>
       </header>
 
-      {/* Mobile Drawer Overlay */}
-      {mobileDrawerOpen && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm md:hidden flex animate-in fade-in duration-200"
-          onClick={() => setMobileDrawerOpen(false)}
-        >
-          <div 
-            className="w-4/5 max-w-sm bg-[#171717] h-full border-r border-[#2b2b2b] p-4 flex flex-col space-y-3 shadow-2xl overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-[#2b2b2b]">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#941e33] flex items-center justify-center text-white font-black">
-                  <Film className="w-3.5 h-3.5" />
-                </div>
-                <span className="font-bold text-sm text-white font-quicksand">
-                  {isAr ? 'قائمة إدارة المحتوى' : 'Admin Navigation'}
-                </span>
-              </div>
-              <button
-                onClick={() => setMobileDrawerOpen(false)}
-                className="p-1.5 rounded-lg text-[#a8a6a1] hover:text-white hover:bg-[#232323]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 space-y-1 overflow-y-auto py-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleTabSelect(item.id as AdminTab)}
-                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-[#941e33] text-white shadow-md shadow-[#941e33]/20 font-bold'
-                        : 'text-[#a8a6a1] hover:text-[#f1f2ed] hover:bg-[#232323]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4 flex-shrink-0" />
-                      <span>{item.label}</span>
-                    </div>
-                    {item.count !== undefined && (
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
-                          isActive ? 'bg-black/30 text-white' : 'bg-[#232323] text-[#706e6a]'
-                        }`}
-                      >
-                        {item.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="pt-3 border-t border-[#2b2b2b] flex items-center justify-between text-xs text-[#706e6a] font-mono">
-              <span>MOGRAFIX v2.0</span>
-              <button
-                onClick={() => {
-                  setMobileDrawerOpen(false);
-                  setIsAdminView(false);
-                }}
-                className="text-[#941e33] hover:underline flex items-center gap-1"
-              >
-                <span>{isAr ? 'الموقع العام' : 'Public Site'}</span>
-                <ExternalLink className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Dashboard Layout */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto p-3 sm:p-5 md:p-6 gap-4 sm:gap-6">
-        {/* Tablet & Desktop Sidebar Navigation */}
-        <aside 
-          className={`hidden md:flex flex-col rounded-2xl bg-[#171717] border border-[#2b2b2b] p-2 sm:p-3 space-y-1 self-start shadow-xl sticky top-20 transition-all duration-300 ${
-            sidebarCollapsed ? 'w-20 items-center' : 'w-60 lg:w-64'
-          }`}
-        >
-          {/* Collapse / Expand Toggle Button */}
-          <div className={`w-full flex items-center pb-2 mb-1 border-b border-[#2b2b2b] ${
-            sidebarCollapsed ? 'justify-center' : 'justify-between px-2'
-          }`}>
-            {!sidebarCollapsed && (
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#706e6a]">
-                {isAr ? 'أقسام اللوحة' : 'Navigation'}
-              </span>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1.5 rounded-lg text-[#706e6a] hover:text-[#f1f2ed] hover:bg-[#232323] transition-colors cursor-pointer"
-              title={sidebarCollapsed ? (isAr ? 'توسيع القائمة' : 'Expand Sidebar') : (isAr ? 'طي القائمة لتوفير مساحة' : 'Collapse Sidebar')}
-            >
-              {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </button>
+      <div className="flex-1 flex max-w-7xl w-full mx-auto p-4 sm:p-6 gap-6">
+        {/* Sidebar Navigation */}
+        <aside className="hidden md:flex flex-col w-64 rounded-2xl bg-[#171717] border border-[#2b2b2b] p-3 space-y-1 self-start shadow-xl sticky top-20">
+          <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-[#706e6a]">
+            {isAr ? 'أقسام لوحة التحكم' : 'Content Management'}
           </div>
 
           {navItems.map((item) => {
@@ -252,22 +136,17 @@ export function AdminLayout() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as AdminTab)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`flex items-center rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  sidebarCollapsed 
-                    ? 'w-12 h-12 justify-center p-0' 
-                    : 'w-full justify-between px-3.5 py-2.5'
-                } ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#941e33] text-white shadow-md shadow-[#941e33]/20 font-bold'
                     : 'text-[#a8a6a1] hover:text-[#f1f2ed] hover:bg-[#232323]'
                 }`}
               >
-                <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+                <div className="flex items-center gap-3">
                   <Icon className="w-4 h-4 flex-shrink-0" />
-                  {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                  <span>{item.label}</span>
                 </div>
-                {!sidebarCollapsed && item.count !== undefined && (
+                {item.count !== undefined && (
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
                       isActive ? 'bg-black/30 text-white' : 'bg-[#232323] text-[#706e6a]'
@@ -281,42 +160,28 @@ export function AdminLayout() {
           })}
         </aside>
 
-        {/* Mobile Clean Bottom Navigation Bar (5 core actions) */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#171717]/95 backdrop-blur-md border-t border-[#2b2b2b] px-2 py-1.5 flex items-center justify-around">
-          {[
-            { id: 'home', label: isAr ? 'الرئيسية' : 'Home', icon: LayoutDashboard },
-            { id: 'projects', label: isAr ? 'المشاريع' : 'Projects', icon: FolderKanban },
-            { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag },
-            { id: 'sections', label: isAr ? 'الأقسام' : 'Sections', icon: Layers },
-          ].map((item) => {
+        {/* Mobile Horizontal Tabs */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#171717] border-t border-[#2b2b2b] p-2 flex items-center justify-around overflow-x-auto">
+          {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => handleTabSelect(item.id as AdminTab)}
-                className={`min-h-[44px] min-w-[54px] px-2 py-1 rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-colors ${
-                  isActive ? 'text-[#941e33] font-bold' : 'text-[#706e6a] hover:text-[#a8a6a1]'
+                onClick={() => setActiveTab(item.id as AdminTab)}
+                className={`p-2 rounded-xl flex flex-col items-center gap-1 cursor-pointer ${
+                  isActive ? 'text-[#941e33]' : 'text-[#706e6a]'
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                <span className="text-[10px] tracking-tight">{item.label}</span>
+                <span className="text-[9px] uppercase tracking-wider">{item.label.split(' ')[0]}</span>
               </button>
             );
           })}
-
-          {/* More menu trigger button */}
-          <button
-            onClick={() => setMobileDrawerOpen(true)}
-            className="min-h-[44px] min-w-[54px] px-2 py-1 rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-pointer text-[#706e6a] hover:text-[#a8a6a1] transition-colors"
-          >
-            <MoreHorizontal className="w-4 h-4" />
-            <span className="text-[10px] tracking-tight">{isAr ? 'المزيد' : 'More'}</span>
-          </button>
         </div>
 
         {/* Content Workspace Area */}
-        <main className="flex-1 min-w-0 pb-20 md:pb-6">
+        <main className="flex-1 min-w-0 pb-16 md:pb-0">
           {activeTab === 'home' && (
             <DashboardHome
               onNavigate={(tab) => setActiveTab(tab as AdminTab)}
