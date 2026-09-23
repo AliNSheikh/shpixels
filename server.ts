@@ -19,12 +19,56 @@ async function startServer() {
   const contentFilePath = path.join(process.cwd(), "src", "data", "content.json");
   const publicContentFilePath = path.join(process.cwd(), "public", "content.json");
 
+  // In-memory cache for ultra-fast synchronization
+  let inMemoryContent: any = null;
+  let serverVersion = 1;
+  let lastPublishedAt = new Date().toISOString();
+
+  // Initialize in-memory cache from disk
+  try {
+    if (fs.existsSync(contentFilePath)) {
+      const raw = fs.readFileSync(contentFilePath, "utf-8");
+      inMemoryContent = JSON.parse(raw);
+      if (inMemoryContent?.publicationInfo?.version) {
+        serverVersion = inMemoryContent.publicationInfo.version;
+      }
+      if (inMemoryContent?.lastPublished) {
+        lastPublishedAt = inMemoryContent.lastPublished;
+      }
+    }
+  } catch (initErr) {
+    console.warn("[CMS] Notice initializing cache:", initErr);
+  }
+
+  // Helper to set aggressive no-cache headers so all visitors see updates immediately
+  const setNoCacheHeaders = (res: express.Response) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+  };
+
+  // Lightweight version check for real-time visitor synchronization
+  app.get("/api/content-version", (_req, res) => {
+    setNoCacheHeaders(res);
+    return res.json({
+      version: serverVersion,
+      lastPublished: lastPublishedAt,
+      serverTime: new Date().toISOString()
+    });
+  });
+
   // Read content saved in codebase
   app.get("/api/content", async (_req, res) => {
+    setNoCacheHeaders(res);
     try {
+      if (inMemoryContent) {
+        return res.json(inMemoryContent);
+      }
       if (fs.existsSync(contentFilePath)) {
         const raw = await fs.promises.readFile(contentFilePath, "utf-8");
-        return res.json(JSON.parse(raw));
+        inMemoryContent = JSON.parse(raw);
+        return res.json(inMemoryContent);
       }
       return res.json({ status: "not_found" });
     } catch (err: any) {
@@ -33,35 +77,77 @@ async function startServer() {
     }
   });
 
-  // Real-time update endpoint: Pushes data directly to the codebase!
-  app.post("/api/save-content", async (req, res) => {
+  // Central publisher function
+  const handlePublishContent = async (req: express.Request, res: express.Response) => {
     try {
       const data = req.body;
       if (!data || typeof data !== "object") {
         return res.status(400).json({ success: false, error: "Invalid content payload" });
       }
 
-      const jsonStr = JSON.stringify(data, null, 2);
+      const publishedAt = new Date().toISOString();
+      serverVersion += 1;
+      lastPublishedAt = publishedAt;
+
+      // Construct publication metadata
+      const publicationRecord = {
+        id: `pub-${Date.now()}`,
+        publishedAt,
+        version: serverVersion,
+        publishedBy: data.publicationInfo?.publishedBy || "Admin",
+        note: req.body.note || "Site published directly to server"
+      };
+
+      const existingHistory = Array.isArray(data.publicationHistory) 
+        ? data.publicationHistory 
+        : (inMemoryContent?.publicationHistory || []);
+
+      const updatedHistory = [publicationRecord, ...existingHistory].slice(0, 20);
+
+      // Mutate payload with official server timestamp and version
+      const finalPayload = {
+        ...data,
+        lastPublished: publishedAt,
+        publicationInfo: {
+          publishedAt,
+          version: serverVersion,
+          publishedBy: publicationRecord.publishedBy
+        },
+        publicationHistory: updatedHistory
+      };
+
+      inMemoryContent = finalPayload;
+      const jsonStr = JSON.stringify(finalPayload, null, 2);
 
       // Ensure target folders exist
       await fs.promises.mkdir(path.dirname(contentFilePath), { recursive: true });
       await fs.promises.mkdir(path.dirname(publicContentFilePath), { recursive: true });
 
-      // Save directly to the codebase
+      // Save directly to the codebase on server disk
       await fs.promises.writeFile(contentFilePath, jsonStr, "utf-8");
       await fs.promises.writeFile(publicContentFilePath, jsonStr, "utf-8");
 
-      console.log(`[CMS] Successfully pushed data directly to codebase: ${contentFilePath}`);
+      console.log(`[CMS] Published version ${serverVersion} at ${publishedAt} to ${contentFilePath}`);
+
+      setNoCacheHeaders(res);
       return res.json({ 
         success: true, 
-        message: "Content pushed directly to codebase",
-        timestamp: new Date().toISOString() 
+        message: "Site successfully saved and published on server",
+        publishedAt,
+        version: serverVersion,
+        data: finalPayload
       });
     } catch (err: any) {
       console.error("[CMS] Error writing to codebase:", err);
       return res.status(500).json({ success: false, error: err.message });
     }
-  });
+  };
+
+  // Dedicated "Save Site" / Publish endpoint
+  app.post("/api/publish-site", handlePublishContent);
+
+  // Backward-compatible save endpoint
+  app.post("/api/save-content", handlePublishContent);
 
   // Dynamic Sitemap XML Endpoint for Google Search Console & archiving
   app.get("/sitemap.xml", async (_req, res) => {

@@ -3,7 +3,7 @@ import {
   Sparkles, Workflow, Film, Sliders, Image, Type, Video, 
   Layers, Check, Plus, Trash2, Edit2, ArrowUp, ArrowDown, 
   Tag, Shield, ExternalLink, Save, Phone, Mail, Globe, MapPin, 
-  Quote, RefreshCw, UploadCloud, Eye
+  Quote, RefreshCw, UploadCloud, Eye, Clock
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -36,7 +36,13 @@ export function SectionManager() {
     deleteService,
     updateClientLogos,
     addClientLogo,
-    deleteClientLogo
+    deleteClientLogo,
+    publishSite,
+    isPublishing,
+    publishSuccess: isGlobalPublishSuccess,
+    hasUnsavedChanges,
+    lastPublishedAt,
+    publicationVersion
   } = useContent();
 
   const { language } = useLanguage();
@@ -440,9 +446,9 @@ export function SectionManager() {
       )}
 
       {/* Main Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2b2b2b]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#2b2b2b]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#2563eb]/20 border border-[#2563eb]/40 flex items-center justify-center text-[#3b82f6]">
+          <div className="w-10 h-10 rounded-xl bg-[#2563eb]/20 border border-[#2563eb]/40 flex items-center justify-center text-[#3b82f6] flex-shrink-0">
             <Layers className="w-5 h-5" />
           </div>
           <div>
@@ -451,10 +457,53 @@ export function SectionManager() {
             </h2>
             <p className="text-xs text-[#a8a6a1]">
               {isAr
-                ? 'تعديل كافة نصوص الموقع، الصور، الشعارات، الأيقونات، ومسار العمل ومراحل الإنتاج في مكان واحد.'
-                : 'Directly modify text, imagery, logos, icons, section info, and the production pipeline.'}
+                ? 'تعديل كافة نصوص الموقع، العناوين، الصور، الشعارات، ومسار العمل مع المزامنة الحية لجميع الزوار.'
+                : 'Directly modify text, headings, imagery, logos, icons, section info, and pipeline with real-time server sync.'}
             </p>
           </div>
+        </div>
+
+        {/* Global Save Site Button & Last Publication Record */}
+        <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-[11px] font-mono text-[#a8a6a1]">
+            <Clock className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <span>{isAr ? 'آخر نشر:' : 'Published:'}</span>
+            <span className="text-[#f1f2ed] font-semibold">
+              {lastPublishedAt 
+                ? new Date(lastPublishedAt).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })
+                : (isAr ? 'غير مسجل' : 'N/A')}
+            </span>
+          </div>
+
+          <button
+            onClick={() => publishSite()}
+            disabled={isPublishing}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs shadow-lg transition-all cursor-pointer ${
+              isGlobalPublishSuccess
+                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                : hasUnsavedChanges
+                ? 'bg-[#2563eb] hover:bg-[#3b82f6] text-white ring-2 ring-[#38bdf8]/50 shadow-[#2563eb]/30 animate-pulse'
+                : 'bg-[#2563eb] hover:bg-[#3b82f6] text-white shadow-[#2563eb]/20'
+            }`}
+          >
+            {isPublishing ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                <span>{isAr ? 'جارِ النشر على السيرفر...' : 'Publishing to Server...'}</span>
+              </>
+            ) : isGlobalPublishSuccess ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-white" />
+                <span>{isAr ? 'تم النشر بنجاح ✓' : 'Site Published ✓'}</span>
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-3.5 h-3.5 text-white" />
+                <span>{isAr ? 'حفظ ونشر الموقع' : 'Save Site'}</span>
+                {hasUnsavedChanges && <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping" />}
+              </>
+            )}
+          </button>
         </div>
       </div>
 

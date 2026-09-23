@@ -170,6 +170,20 @@ export interface FooterData {
   disclaimer: string;
 }
 
+export interface PublicationRecord {
+  id: string;
+  publishedAt: string;
+  version: number;
+  publishedBy?: string;
+  note?: string;
+}
+
+export interface PublicationInfo {
+  publishedAt: string;
+  version: number;
+  publishedBy?: string;
+}
+
 export interface GlobalContent {
   seo: SEOData;
   branding: BrandingData;
@@ -186,4 +200,7 @@ export interface GlobalContent {
   categories?: string[];
   clientLogos?: ClientLogo[];
   sectionHeaders?: Record<string, SectionHeaderInfo>;
+  lastPublished?: string;
+  publicationInfo?: PublicationInfo;
+  publicationHistory?: PublicationRecord[];
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FolderKanban, 
   Video, 
@@ -18,7 +18,12 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  MoreHorizontal
+  MoreHorizontal,
+  UploadCloud,
+  Check,
+  RefreshCw,
+  Clock,
+  Radio
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -48,12 +53,69 @@ type AdminTab =
   | 'export';
 
 export function AdminLayout() {
-  const { content, categories, logoutAdmin, setIsAdminView } = useContent();
+  const { 
+    content, 
+    categories, 
+    logoutAdmin, 
+    setIsAdminView,
+    publishSite,
+    isPublishing,
+    publishSuccess,
+    publishError,
+    hasUnsavedChanges,
+    lastPublishedAt,
+    publicationVersion,
+    serverSyncStatus
+  } = useContent();
   const { language, toggleLanguage } = useLanguage();
   const isAr = language === 'ar';
   const [activeTab, setActiveTab] = useState<AdminTab>('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [, setTimeTicker] = useState(0);
+
+  // Periodically refresh relative time display
+  useEffect(() => {
+    const timer = setInterval(() => setTimeTicker((t) => t + 1), 15000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format date helper
+  const formatPublicationDate = (isoString: string | null | undefined) => {
+    if (!isoString) return isAr ? 'لم ينشر بعد' : 'Not published yet';
+    try {
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return isoString;
+      return date.toLocaleString(isAr ? 'ar-EG' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return isoString;
+    }
+  };
+
+  // Relative time helper
+  const getRelativeTime = (isoString: string | null | undefined) => {
+    if (!isoString) return '';
+    try {
+      const date = new Date(isoString);
+      const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diffSec < 30) return isAr ? 'الآن' : 'Just now';
+      if (diffSec < 60) return isAr ? `منذ ${diffSec} ثانية` : `${diffSec}s ago`;
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return isAr ? `منذ ${diffMin} د` : `${diffMin}m ago`;
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return isAr ? `منذ ${diffHour} س` : `${diffHour}h ago`;
+      const diffDays = Math.floor(diffHour / 24);
+      return isAr ? `منذ ${diffDays} يوم` : `${diffDays}d ago`;
+    } catch {
+      return '';
+    }
+  };
 
   const navItems = [
     { id: 'home', label: isAr ? 'لوحة القيادة' : 'Dashboard', icon: LayoutDashboard },
@@ -106,12 +168,68 @@ export function AdminLayout() {
         </div>
 
         {/* Status & Quick actions */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Real-time Codebase Sync Indicator */}
-          <div className="hidden lg:flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-800/40">
-            <Zap className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>{isAr ? 'مزامنة الكود نشطة' : 'Codebase Synced'}</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Last Publication Time/Date Record & Live Server Sync */}
+          <div className="hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs">
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${serverSyncStatus === 'error' ? 'bg-red-400' : hasUnsavedChanges ? 'bg-amber-400' : 'bg-emerald-400'} opacity-75`}></span>
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${serverSyncStatus === 'error' ? 'bg-red-500' : hasUnsavedChanges ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+            </span>
+
+            <div className="flex flex-col text-[11px] leading-tight">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#a8a6a1] font-mono text-[10px]">v{publicationVersion}</span>
+                <span className="text-[#444]">•</span>
+                <span className="font-semibold text-[#f1f2ed] truncate max-w-[150px] lg:max-w-none">
+                  {formatPublicationDate(lastPublishedAt)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-[#706e6a]">
+                <Clock className="w-3 h-3 text-[#706e6a]" />
+                <span>
+                  {hasUnsavedChanges 
+                    ? (isAr ? 'يوجد تعديلات غير منشورة' : 'Draft changes pending publish')
+                    : lastPublishedAt 
+                      ? (isAr ? `نُشر على السيرفر (${getRelativeTime(lastPublishedAt)})` : `Live on server (${getRelativeTime(lastPublishedAt)})`)
+                      : (isAr ? 'متصل بالسيرفر' : 'Connected to server')}
+                </span>
+              </div>
+            </div>
           </div>
+
+          {/* Primary "Save Site" Button (Persists & Publishes to Server) */}
+          <button
+            onClick={() => publishSite()}
+            disabled={isPublishing}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl font-bold text-xs shadow-lg transition-all cursor-pointer select-none ${
+              publishSuccess
+                ? 'bg-emerald-600 text-white shadow-emerald-500/20'
+                : hasUnsavedChanges
+                ? 'bg-[#2563eb] hover:bg-[#3b82f6] text-white shadow-[#2563eb]/30 ring-2 ring-[#38bdf8]/50 animate-pulse'
+                : 'bg-[#2563eb] hover:bg-[#3b82f6] text-white shadow-[#2563eb]/20'
+            }`}
+            title={isAr ? 'حفظ وتثبيت التعديلات على السيرفر فوراً لجميع الزوار' : 'Save all changes directly to the server immediately for all visitors'}
+          >
+            {isPublishing ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <span>{isAr ? 'جارِ النشر على السيرفر...' : 'Publishing to Server...'}</span>
+              </>
+            ) : publishSuccess ? (
+              <>
+                <Check className="w-4 h-4 text-white" />
+                <span>{isAr ? 'تم النشر بنجاح ✓' : 'Site Saved & Published ✓'}</span>
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-4 h-4 text-white" />
+                <span>{isAr ? 'حفظ ونشر الموقع' : 'Save Site'}</span>
+                {hasUnsavedChanges && (
+                  <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping" />
+                )}
+              </>
+            )}
+          </button>
 
           {/* Bilingual Language Toggle */}
           <button

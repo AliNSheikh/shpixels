@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { 
   Settings, Save, Check, Key, Sliders, Sparkles, Image as ImageIcon, 
-  Globe, RotateCcw, Trash2, Eye, ShieldCheck, Palette 
+  Globe, RotateCcw, Trash2, Eye, ShieldCheck, Palette,
+  UploadCloud, RefreshCw, Clock
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -22,7 +23,17 @@ const DEFAULT_LOGO = '/assets/shpixels-logo.svg';
 const DEFAULT_FAVICON = '/assets/shpixels-icon.svg';
 
 export function SiteSettings() {
-  const { content, updateContent, changeAdminPassword } = useContent();
+  const { 
+    content, 
+    updateContent, 
+    changeAdminPassword,
+    publishSite,
+    isPublishing,
+    publishSuccess: isGlobalPublishSuccess,
+    hasUnsavedChanges,
+    lastPublishedAt,
+    publicationVersion
+  } = useContent();
   const { language } = useLanguage();
   const isAr = language === 'ar';
 
@@ -110,6 +121,12 @@ export function SiteSettings() {
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
+  const handleSaveAndPublish = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    handleSaveAll();
+    await publishSite('Settings and branding published');
+  };
+
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPass.trim()) return;
@@ -134,14 +151,48 @@ export function SiteSettings() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => handleSaveAll()}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto cursor-pointer"
-        >
-          {savedSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-          <span>{savedSuccess ? (isAr ? 'تم الحفظ بنجاح!' : 'Settings Saved!') : (isAr ? 'حفظ كافة التغييرات' : 'Save All Settings')}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-[11px] font-mono text-[#a8a6a1]">
+            <Clock className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <span>{isAr ? 'آخر نشر:' : 'Published:'}</span>
+            <span className="text-[#f1f2ed] font-semibold">
+              {lastPublishedAt 
+                ? new Date(lastPublishedAt).toLocaleTimeString(isAr ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })
+                : (isAr ? 'غير مسجل' : 'N/A')}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSaveAndPublish}
+            disabled={isPublishing}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md cursor-pointer ${
+              isGlobalPublishSuccess
+                ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'
+                : hasUnsavedChanges
+                ? 'bg-[#2563eb] hover:bg-[#3b82f6] ring-2 ring-[#38bdf8]/50 shadow-[#2563eb]/30 animate-pulse'
+                : 'bg-[#2563eb] hover:bg-[#3b82f6] shadow-[#2563eb]/20'
+            }`}
+          >
+            {isPublishing ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                <span>{isAr ? 'جارِ النشر على السيرفر...' : 'Publishing to Server...'}</span>
+              </>
+            ) : isGlobalPublishSuccess ? (
+              <>
+                <Check className="w-4 h-4 text-white" />
+                <span>{isAr ? 'تم النشر بنجاح ✓' : 'Published to Server ✓'}</span>
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-4 h-4 text-white" />
+                <span>{isAr ? 'حفظ ونشر الموقع (Save Site)' : 'Save Site & Publish'}</span>
+                {hasUnsavedChanges && <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping" />}
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSaveAll} className="space-y-8">

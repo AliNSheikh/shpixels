@@ -26,7 +26,8 @@ import {
   RefreshCw, 
   Copy,
   ChevronRight,
-  ArrowUpRight
+  ArrowUpRight,
+  Clock
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -50,7 +51,14 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     updateHero,
     addGalleryItem,
     exportJson, 
-    setIsAdminView
+    setIsAdminView,
+    publishSite,
+    isPublishing,
+    publishSuccess,
+    hasUnsavedChanges,
+    lastPublishedAt,
+    publicationVersion,
+    serverSyncStatus
   } = useContent();
   const { language } = useLanguage();
   const isAr = language === 'ar';
@@ -303,6 +311,112 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             <Download className="w-4 h-4" />
             <span>{isAr ? 'تصدير JSON' : 'Export JSON'}</span>
           </button>
+        </div>
+      </div>
+
+      {/* Primary Server Publication & Live Visitor Synchronization Banner */}
+      <div className={`p-5 sm:p-6 rounded-2xl border transition-all shadow-2xl ${
+        hasUnsavedChanges 
+          ? 'bg-gradient-to-r from-[#1c1917] via-[#1f1915] to-[#1c1917] border-amber-500/40 ring-1 ring-amber-500/20' 
+          : 'bg-[#181818] border-[#2b2b2b]'
+      }`}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          {/* Publication Metadata & Server Status */}
+          <div className="space-y-2.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold ${
+                serverSyncStatus === 'error'
+                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                  : hasUnsavedChanges
+                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${serverSyncStatus === 'error' ? 'bg-rose-400' : hasUnsavedChanges ? 'bg-amber-400 animate-ping' : 'bg-emerald-400'}`} />
+                <span>
+                  {serverSyncStatus === 'error'
+                    ? (isAr ? 'خطأ في الاتصال بالسيرفر' : 'Server Connection Issue')
+                    : hasUnsavedChanges
+                    ? (isAr ? 'توجد تعديلات مسودة غير منشورة' : 'Unpublished Changes Pending')
+                    : (isAr ? 'السيرفر محدث ومزامن للزوار' : 'Live & Synchronized on Server')}
+                </span>
+              </span>
+
+              <span className="px-2 py-0.5 rounded-md bg-[#232323] text-[#a8a6a1] text-[11px] font-mono">
+                {isAr ? `إصدار النشر: v${publicationVersion}` : `Version v${publicationVersion}`}
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <h2 className="text-base sm:text-lg font-bold text-[#f1f2ed] font-quicksand uppercase flex items-center gap-2">
+                <span>{isAr ? 'حفظ ونشر الموقع فورياً على السيرفر' : 'Server Synchronization & Publication'}</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-[#a8a6a1] leading-relaxed">
+                {isAr 
+                  ? 'تُحفظ كافة التعديلات على نصوص وصور وأقسام الموقع مباشرة على ملفات السيرفر، وتظهر لجميع الزوار فوراً دون تأخير.'
+                  : 'All edits across site text, images, and sections take place on the server and synchronize live to all visitors without delay.'}
+              </p>
+            </div>
+
+            {/* Last Publication Record with Exact Time/Date */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#141414] border border-[#262626] text-xs font-mono text-[#a8a6a1]">
+              <Clock className="w-3.5 h-3.5 text-[#38bdf8] flex-shrink-0" />
+              <span>{isAr ? 'آخر توقيت وتاريخ نشر:' : 'Last Publication Record:'}</span>
+              <strong className="text-[#f1f2ed]">
+                {lastPublishedAt 
+                  ? new Date(lastPublishedAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })
+                  : (isAr ? 'لم ينشر بعد' : 'Not recorded yet')}
+              </strong>
+            </div>
+          </div>
+
+          {/* Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink-0">
+            {/* The Dedicated "Save Site" Button */}
+            <button
+              onClick={() => publishSite()}
+              disabled={isPublishing}
+              className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm shadow-xl transition-all cursor-pointer ${
+                publishSuccess
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                  : hasUnsavedChanges
+                  ? 'bg-[#2563eb] hover:bg-[#3b82f6] text-white shadow-[#2563eb]/40 ring-2 ring-[#38bdf8]/50 animate-pulse'
+                  : 'bg-[#2563eb] hover:bg-[#3b82f6] text-white shadow-[#2563eb]/25'
+              }`}
+            >
+              {isPublishing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                  <span>{isAr ? 'جارِ الحفظ والنشر على السيرفر...' : 'Publishing to Server...'}</span>
+                </>
+              ) : publishSuccess ? (
+                <>
+                  <Check className="w-4 h-4 text-white" />
+                  <span>{isAr ? 'تم حفظ ونشر الموقع بنجاح ✓' : 'Site Saved & Published Live ✓'}</span>
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="w-4 h-4 text-white" />
+                  <span>{isAr ? 'حفظ ونشر الموقع (Save Site)' : 'Save Site (Publish)'}</span>
+                </>
+              )}
+            </button>
+
+            {/* Quick jump to Section Editor */}
+            <button
+              onClick={() => onNavigate('sections')}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-semibold text-[#f1f2ed] border border-[#2b2b2b] transition-colors cursor-pointer"
+            >
+              <Layers className="w-4 h-4 text-[#38bdf8]" />
+              <span>{isAr ? 'تعديل أي قسم بالموقع' : 'Edit Any Site Section'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

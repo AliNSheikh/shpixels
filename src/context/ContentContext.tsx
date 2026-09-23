@@ -74,6 +74,17 @@ interface ContentContextType {
   importJson: (jsonString: string) => { success: boolean; error?: string };
   lastSaved: Date | null;
 
+  // Server publication & real-time sync
+  publishSite: (note?: string) => Promise<boolean>;
+  isPublishing: boolean;
+  publishSuccess: boolean;
+  publishError: string | null;
+  hasUnsavedChanges: boolean;
+  lastPublishedAt: string | null;
+  publicationVersion: number;
+  serverSyncStatus: 'synced' | 'saving' | 'error' | 'syncing';
+  fetchLatestFromServer: () => Promise<void>;
+
   // Admin routing & auth
   isAdminView: boolean;
   setIsAdminView: (isOpen: boolean) => void;
@@ -109,7 +120,30 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     return initialContent;
   });
 
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.lastPublished) return new Date(parsed.lastPublished);
+      }
+    } catch {}
+    return null;
+  });
+
+  // Server publication and synchronization states
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [isPublishing, setIsPublishing] = useState<boolean>(false);
+  const [publishSuccess, setPublishSuccess] = useState<boolean>(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [serverSyncStatus, setServerSyncStatus] = useState<'synced' | 'saving' | 'error' | 'syncing'>('synced');
+  
+  const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(() => {
+    return content.lastPublished || content.publicationInfo?.publishedAt || null;
+  });
+  const [publicationVersion, setPublicationVersion] = useState<number>(() => {
+    return content.publicationInfo?.version || 1;
+  });
 
   // Admin authentication state
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -130,24 +164,154 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     return false;
   });
 
-  // Sync content updates to localStorage & push real-time to codebase
+  // Dedicated "Save Site" / Publish endpoint to the server
+  const publishSite = useCallback(async (note?: string): Promise<boolean> => {
+    setIsPublishing(true);
+    setPublishError(null);
+    setServerSyncStatus('saving');
+
+    try {
+      const res = await fetch('/api/publish-site', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...content,
+          note: note || 'Explicit site save and publication'
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}: ${res.statusText}`);
+      }
+
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to publish to server');
+      }
+
+      const publishedData = result.data || {
+        ...content,
+        lastPublished: result.publishedAt,
+        publicationInfo: {
+          publishedAt: result.publishedAt,
+          version: result.version,
+          publishedBy: 'Admin'
+        }
+      };
+
+      setContent(publishedData);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(publishedData));
+      setLastPublishedAt(result.publishedAt);
+      setPublicationVersion(result.version);
+      setLastSaved(new Date(result.publishedAt));
+      setHasUnsavedChanges(false);
+      setServerSyncStatus('synced');
+      setPublishSuccess(true);
+      setTimeout(() => setPublishSuccess(false), 4500);
+      return true;
+    } catch (err: any) {
+      console.error('[CMS] Error publishing site to server:', err);
+      setPublishError(err.message || 'Failed to publish to server');
+      setServerSyncStatus('error');
+      return false;
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [content]);
+
+  // Fetch authoritative state directly from server
+  const fetchLatestFromServer = useCallback(async () => {
+    setServerSyncStatus('syncing');
+    try {
+      const res = await fetch(`/api/content?t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.projects) {
+          setContent(data);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          if (data.lastPublished) setLastPublishedAt(data.lastPublished);
+          if (data.publicationInfo?.version) setPublicationVersion(data.publicationInfo.version);
+          setHasUnsavedChanges(false);
+          setServerSyncStatus('synced');
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch latest content from server:', err);
+      setServerSyncStatus('error');
+    }
+  }, []);
+
+  // Sync content updates to localStorage & push real-time draft to codebase
   const saveToStorage = useCallback((newContent: GlobalContent) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newContent));
       setLastSaved(new Date());
+      setHasUnsavedChanges(true);
 
       // Push real-time updates directly to the codebase on disk
       fetch('/api/save-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newContent)
-      }).catch((err) => {
+      })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          if (data.publishedAt) setLastPublishedAt(data.publishedAt);
+          if (data.version) setPublicationVersion(data.version);
+        }
+      })
+      .catch((err) => {
         console.warn('Real-time codebase push:', err);
       });
     } catch (err) {
       console.error('Failed to save content to localStorage:', err);
     }
   }, []);
+
+  // Real-time visitor synchronization: poll /api/content-version so all visitors see updates immediately
+  useEffect(() => {
+    const checkServerVersion = async () => {
+      // Don't overwrite if admin has uncommitted local draft changes
+      if (hasUnsavedChanges) return;
+
+      try {
+        const res = await fetch(`/api/content-version?t=${Date.now()}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        if (data && typeof data.version === 'number' && data.version > publicationVersion) {
+          console.log(`[CMS] Newer server version v${data.version} detected. Refreshing content live for visitor...`);
+          const contentRes = await fetch(`/api/content?t=${Date.now()}`);
+          if (contentRes.ok) {
+            const freshContent = await contentRes.json();
+            if (freshContent && freshContent.projects) {
+              setContent(freshContent);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(freshContent));
+              setPublicationVersion(data.version);
+              setLastPublishedAt(data.lastPublished || freshContent.lastPublished);
+              setServerSyncStatus('synced');
+            }
+          }
+        }
+      } catch {
+        // Ignore offline/transient fetch issues
+      }
+    };
+
+    const interval = setInterval(checkServerVersion, 12000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkServerVersion();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [hasUnsavedChanges, publicationVersion]);
 
   // Fetch codebase content on mount if available (with fallback to /content.json for static deployment)
   useEffect(() => {
@@ -826,6 +990,15 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         exportJson,
         importJson,
         lastSaved,
+        publishSite,
+        isPublishing,
+        publishSuccess,
+        publishError,
+        hasUnsavedChanges,
+        lastPublishedAt,
+        publicationVersion,
+        serverSyncStatus,
+        fetchLatestFromServer,
         updateSectionHeader,
         updateHero,
         updateAbout,
