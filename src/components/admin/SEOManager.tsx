@@ -17,7 +17,7 @@ export function SEOManager() {
     ogTitle: content.seo.ogTitle || '',
     ogDescription: content.seo.ogDescription || '',
     ogImage: content.seo.ogImage || '',
-    canonicalUrl: content.seo.canonicalUrl || 'https://mografix.com/',
+    canonicalUrl: content.seo.canonicalUrl || 'https://shpixels.vercel.app/',
     favicon: content.seo.favicon || '/favicon.ico',
     googleSiteVerification: content.seo.googleSiteVerification || '',
     googleAnalyticsId: content.seo.googleAnalyticsId || '',
@@ -29,7 +29,7 @@ export function SEOManager() {
 
   // Generate dynamic sitemap XML based on current published content
   const generatedSitemapXml = useMemo(() => {
-    const baseUrl = (seo.canonicalUrl || 'https://mografix.com').replace(/\/$/, '');
+    const baseUrl = (seo.canonicalUrl || 'https://shpixels.vercel.app').replace(/\/$/, '');
     const today = new Date().toISOString().split('T')[0];
 
     const staticUrls = [
@@ -63,7 +63,7 @@ export function SEOManager() {
   }, [seo.canonicalUrl, content.projects]);
 
   const robotsTxtContent = useMemo(() => {
-    const baseUrl = (seo.canonicalUrl || 'https://mografix.com').replace(/\/$/, '');
+    const baseUrl = (seo.canonicalUrl || 'https://shpixels.vercel.app').replace(/\/$/, '');
     return `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
   }, [seo.canonicalUrl]);
 
@@ -127,7 +127,7 @@ export function SEOManager() {
 
         <button
           onClick={handleSave}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto cursor-pointer"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto cursor-pointer"
         >
           {savedSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
           <span>{savedSuccess ? (isAr ? 'تم حفظ الإعدادات!' : 'SEO Saved!') : (isAr ? 'حفظ إعدادات الأرشفة' : 'Save Configuration')}</span>
@@ -140,7 +140,7 @@ export function SEOManager() {
           {/* Google Search Console & Google Analytics Card */}
           <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <ShieldCheck className="w-5 h-5 text-[#941e33]" />
+              <ShieldCheck className="w-5 h-5 text-[#2563eb]" />
               <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'الربط مع Google Search Console و Analytics' : 'Google Search Console & Google Analytics'}
               </h3>
@@ -157,7 +157,7 @@ export function SEOManager() {
                 value={seo.googleSiteVerification}
                 onChange={(e) => setSeo({ ...seo, googleSiteVerification: e.target.value })}
                 placeholder="e.g. abc123xyz_verification_token or HTML Tag content"
-                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#941e33]"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#2563eb]"
               />
               <p className="text-[10px] text-[#706e6a] mt-1 font-mono">
                 {isAr 
@@ -178,7 +178,7 @@ export function SEOManager() {
                   value={seo.googleAnalyticsId}
                   onChange={(e) => setSeo({ ...seo, googleAnalyticsId: e.target.value })}
                   placeholder="G-XXXXXXXXXX"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#941e33]"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#2563eb]"
                 />
                 <BarChart3 className="w-4 h-4 text-[#706e6a] absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
@@ -206,7 +206,7 @@ export function SEOManager() {
                 required
                 value={seo.pageTitle}
                 onChange={(e) => setSeo({ ...seo, pageTitle: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#941e33]"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#2563eb]"
               />
             </div>
 
@@ -220,7 +220,7 @@ export function SEOManager() {
                 required
                 value={seo.metaDescription}
                 onChange={(e) => setSeo({ ...seo, metaDescription: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#941e33] resize-none"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#2563eb] resize-none"
               />
             </div>
 
@@ -232,7 +232,7 @@ export function SEOManager() {
                 type="url"
                 value={seo.canonicalUrl}
                 onChange={(e) => setSeo({ ...seo, canonicalUrl: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#941e33]"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#2563eb]"
               />
             </div>
           </div>
@@ -251,7 +251,7 @@ export function SEOManager() {
                 type="text"
                 value={seo.ogTitle}
                 onChange={(e) => setSeo({ ...seo, ogTitle: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#941e33]"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#2563eb]"
               />
             </div>
 
@@ -263,7 +263,7 @@ export function SEOManager() {
                 type="url"
                 value={seo.ogImage}
                 onChange={(e) => setSeo({ ...seo, ogImage: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#941e33]"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#2563eb]"
               />
             </div>
           </div>
@@ -275,7 +275,7 @@ export function SEOManager() {
           <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
             <div className="flex items-center justify-between pb-2 border-b border-[#232323]">
               <div className="flex items-center gap-2">
-                <FileCode className="w-5 h-5 text-[#941e33]" />
+                <FileCode className="w-5 h-5 text-[#2563eb]" />
                 <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
                   {isAr ? 'خريطة الموقع التلقائية (sitemap.xml)' : 'Dynamic Sitemap.xml'}
                 </h3>
@@ -305,14 +305,14 @@ export function SEOManager() {
                 onClick={handleCopySitemap}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-mono text-[#f1f2ed] transition-colors"
               >
-                {copiedSitemap ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#941e33]" />}
+                {copiedSitemap ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#2563eb]" />}
                 <span>{copiedSitemap ? (isAr ? 'تم النسخ' : 'Copied!') : (isAr ? 'نسخ XML' : 'Copy XML')}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleDownloadSitemap}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-mono text-white transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-mono text-white transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{isAr ? 'تحميل sitemap.xml' : 'Download XML'}</span>
@@ -327,7 +327,7 @@ export function SEOManager() {
                 onClick={handleDownloadRobots}
                 className="text-xs text-[#a8a6a1] hover:text-white flex items-center gap-1 font-mono"
               >
-                <Download className="w-3 h-3 text-[#941e33]" />
+                <Download className="w-3.5 h-3.5 text-[#2563eb]" />
                 <span>{isAr ? 'تحميل robots.txt' : 'Download robots.txt'}</span>
               </button>
             </div>

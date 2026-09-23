@@ -322,10 +322,10 @@ export function SectionManager() {
   // 5. BRANDING & CLIENT LOGOS STATE
   // ==========================================
   const [brandForm, setBrandForm] = useState({
-    logoText: content.branding.logoText || 'MOGRAFIX',
+    logoText: content.branding.logoText || 'SHPIXELS',
     logoSubtext: content.branding.logoSubtext || 'FILMMAKER & CREATIVE STUDIO',
     logoImage: content.branding.logoImage || '',
-    accentColor: content.branding.accentColor || '#941e33',
+    accentColor: content.branding.accentColor || '#2563eb',
     favicon: content.seo.favicon || '/favicon.ico'
   });
 
@@ -442,7 +442,7 @@ export function SectionManager() {
       {/* Main Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#2b2b2b]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#941e33]/20 border border-[#941e33]/40 flex items-center justify-center text-[#b8283f]">
+          <div className="w-10 h-10 rounded-xl bg-[#2563eb]/20 border border-[#2563eb]/40 flex items-center justify-center text-[#3b82f6]">
             <Layers className="w-5 h-5" />
           </div>
           <div>
@@ -477,7 +477,7 @@ export function SectionManager() {
               onClick={() => setActiveTab(tab.id as SectionTab)}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-[#941e33] text-white shadow-lg shadow-[#941e33]/20 font-bold'
+                  ? 'bg-[#2563eb] text-white shadow-lg shadow-[#2563eb]/20 font-bold'
                   : 'bg-[#1d1d1d] hover:bg-[#232323] text-[#a8a6a1] hover:text-[#f1f2ed] border border-[#2b2b2b]'
               }`}
             >
@@ -497,7 +497,7 @@ export function SectionManager() {
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
               <div className="flex items-center gap-2">
-                <Workflow className="w-4 h-4 text-[#941e33]" />
+                <Workflow className="w-4 h-4 text-[#2563eb]" />
                 <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                   {isAr ? 'معلومات وعنوان قسم مسار الإنتاج' : 'Pipeline Section Header'}
                 </h3>
@@ -514,7 +514,7 @@ export function SectionManager() {
                     type="text"
                     value={pipelineSectionMeta.badge}
                     onChange={(e) => setPipelineSectionMeta({ ...pipelineSectionMeta, badge: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -525,7 +525,7 @@ export function SectionManager() {
                     type="text"
                     value={pipelineSectionMeta.title}
                     onChange={(e) => setPipelineSectionMeta({ ...pipelineSectionMeta, title: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                   />
                 </div>
               </div>
@@ -538,16 +538,16 @@ export function SectionManager() {
                   rows={2}
                   value={pipelineSectionMeta.description}
                   onChange={(e) => setPipelineSectionMeta({ ...pipelineSectionMeta, description: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
                 />
               </div>
 
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] border border-[#333] hover:border-[#941e33] text-xs font-bold text-[#f1f2ed] flex items-center gap-2 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] border border-[#333] hover:border-[#2563eb] text-xs font-bold text-[#f1f2ed] flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  <Save className="w-3.5 h-3.5 text-[#941e33]" />
+                  <Save className="w-3.5 h-3.5 text-[#2563eb]" />
                   <span>{isAr ? 'حفظ نصوص القسم' : 'Save Header Info'}</span>
                 </button>
               </div>
@@ -558,7 +558,7 @@ export function SectionManager() {
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
               <div className="flex items-center gap-2">
-                <Workflow className="w-4 h-4 text-[#941e33]" />
+                <Workflow className="w-4 h-4 text-[#2563eb]" />
                 <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                   {isAr ? `خطوات مسار الإنتاج (${content.workflow?.length || 0})` : `Workflow Steps (${content.workflow?.length || 0})`}
                 </h3>
@@ -567,7 +567,7 @@ export function SectionManager() {
               {!isAddingStep && editingStepIndex === null && (
                 <button
                   onClick={handleStartAddStep}
-                  className="px-3 py-1.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{isAr ? 'إضافة خطوة جديدة' : 'Add Step'}</span>
@@ -577,7 +577,7 @@ export function SectionManager() {
 
             {/* Step Add/Edit Modal/Form */}
             {(isAddingStep || editingStepIndex !== null) && (
-              <form onSubmit={handleSaveStep} className="p-4 rounded-xl bg-[#232323] border border-[#941e33]/50 space-y-4 animate-fadeIn">
+              <form onSubmit={handleSaveStep} className="p-4 rounded-xl bg-[#232323] border border-[#2563eb]/50 space-y-4 animate-fadeIn">
                 <div className="flex items-center justify-between pb-2 border-b border-[#2b2b2b]">
                   <h4 className="text-xs font-bold text-[#f1f2ed] uppercase font-mono">
                     {isAddingStep 
@@ -606,7 +606,7 @@ export function SectionManager() {
                       required
                       value={stepFormData.number}
                       onChange={(e) => setStepFormData({ ...stepFormData, number: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -619,7 +619,7 @@ export function SectionManager() {
                       value={stepFormData.title}
                       onChange={(e) => setStepFormData({ ...stepFormData, title: e.target.value })}
                       placeholder="e.g. Concept & Narrative Blueprint"
-                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -633,7 +633,7 @@ export function SectionManager() {
                     required
                     value={stepFormData.description}
                     onChange={(e) => setStepFormData({ ...stepFormData, description: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
                   />
                 </div>
 
@@ -658,7 +658,7 @@ export function SectionManager() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs font-bold"
+                    className="px-4 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold"
                   >
                     {isAr ? 'حفظ الخطوة' : 'Save Step'}
                   </button>
@@ -674,7 +674,7 @@ export function SectionManager() {
                   className="p-4 rounded-xl bg-[#232323] border border-[#2b2b2b] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-xl font-black text-[#941e33] font-mono w-8">
+                    <span className="text-xl font-black text-[#2563eb] font-mono w-8">
                       {step.number}
                     </span>
                     <div>
@@ -735,7 +735,7 @@ export function SectionManager() {
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
               <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-[#941e33]" />
+                <Sliders className="w-4 h-4 text-[#2563eb]" />
                 <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                   {isAr ? 'معلومات وعنوان قسم الخدمات' : 'Services Section Header'}
                 </h3>
@@ -752,7 +752,7 @@ export function SectionManager() {
                     type="text"
                     value={servicesSectionMeta.badge}
                     onChange={(e) => setServicesSectionMeta({ ...servicesSectionMeta, badge: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -763,7 +763,7 @@ export function SectionManager() {
                     type="text"
                     value={servicesSectionMeta.title}
                     onChange={(e) => setServicesSectionMeta({ ...servicesSectionMeta, title: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                   />
                 </div>
               </div>
@@ -776,16 +776,16 @@ export function SectionManager() {
                   rows={2}
                   value={servicesSectionMeta.description}
                   onChange={(e) => setServicesSectionMeta({ ...servicesSectionMeta, description: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
                 />
               </div>
 
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] border border-[#333] hover:border-[#941e33] text-xs font-bold text-[#f1f2ed] flex items-center gap-2 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] border border-[#333] hover:border-[#2563eb] text-xs font-bold text-[#f1f2ed] flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  <Save className="w-3.5 h-3.5 text-[#941e33]" />
+                  <Save className="w-3.5 h-3.5 text-[#2563eb]" />
                   <span>{isAr ? 'حفظ نصوص القسم' : 'Save Header Info'}</span>
                 </button>
               </div>
@@ -796,7 +796,7 @@ export function SectionManager() {
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
               <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-[#941e33]" />
+                <Sliders className="w-4 h-4 text-[#2563eb]" />
                 <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                   {isAr ? `قائمة الخدمات المعروضة (${content.services?.length || 0})` : `Services List (${content.services?.length || 0})`}
                 </h3>
@@ -805,7 +805,7 @@ export function SectionManager() {
               {!isAddingService && editingServiceId === null && (
                 <button
                   onClick={handleStartAddService}
-                  className="px-3 py-1.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{isAr ? 'إضافة خدمة جديدة' : 'Add Service'}</span>
@@ -815,7 +815,7 @@ export function SectionManager() {
 
             {/* Service Form */}
             {(isAddingService || editingServiceId !== null) && (
-              <form onSubmit={handleSaveService} className="p-4 rounded-xl bg-[#232323] border border-[#941e33]/50 space-y-4 animate-fadeIn">
+              <form onSubmit={handleSaveService} className="p-4 rounded-xl bg-[#232323] border border-[#2563eb]/50 space-y-4 animate-fadeIn">
                 <div className="flex items-center justify-between pb-2 border-b border-[#2b2b2b]">
                   <h4 className="text-xs font-bold text-[#f1f2ed] uppercase font-mono">
                     {isAddingService ? (isAr ? 'إضافة خدمة جديدة' : 'Add New Service') : (isAr ? 'تعديل الخدمة' : 'Edit Service')}
@@ -843,7 +843,7 @@ export function SectionManager() {
                       value={serviceFormData.title}
                       onChange={(e) => setServiceFormData({ ...serviceFormData, title: e.target.value })}
                       placeholder="e.g. Commercial & Brand Ads"
-                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                     />
                   </div>
                   <div>
@@ -855,7 +855,7 @@ export function SectionManager() {
                       value={serviceFormData.subtitle}
                       onChange={(e) => setServiceFormData({ ...serviceFormData, subtitle: e.target.value })}
                       placeholder="e.g. High-conversion cinematic campaigns"
-                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -868,7 +868,7 @@ export function SectionManager() {
                     <select
                       value={serviceFormData.category}
                       onChange={(e) => setServiceFormData({ ...serviceFormData, category: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                     >
                       {categories.map((c) => (
                         <option key={c} value={c}>{c}</option>
@@ -892,7 +892,7 @@ export function SectionManager() {
                     rows={3}
                     value={serviceFormData.description}
                     onChange={(e) => setServiceFormData({ ...serviceFormData, description: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
                   />
                 </div>
 
@@ -947,7 +947,7 @@ export function SectionManager() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs font-bold"
+                    className="px-4 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold"
                   >
                     {isAr ? 'حفظ الخدمة' : 'Save Service'}
                   </button>
@@ -964,7 +964,7 @@ export function SectionManager() {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono uppercase bg-[#1d1d1d] text-[#b8283f] px-2 py-0.5 rounded border border-[#2b2b2b]">
+                      <span className="text-[10px] font-mono uppercase bg-[#1d1d1d] text-[#3b82f6] px-2 py-0.5 rounded border border-[#2b2b2b]">
                         {service.category}
                       </span>
                       <span className="text-xs font-mono text-[#706e6a]">
@@ -975,7 +975,7 @@ export function SectionManager() {
                     <h4 className="text-sm font-bold text-[#f1f2ed] font-quicksand">
                       {service.title}
                     </h4>
-                    <p className="text-xs text-[#b8283f] font-medium mt-0.5">
+                    <p className="text-xs text-[#3b82f6] font-medium mt-0.5">
                       {service.subtitle}
                     </p>
                     <p className="text-xs text-[#a8a6a1] mt-2 line-clamp-2">
@@ -1013,7 +1013,7 @@ export function SectionManager() {
         <form onSubmit={handleSaveHeroAndShowreel} className="space-y-6">
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Film className="w-4 h-4 text-[#941e33]" />
+              <Film className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'نصوص الواجهة الرئيسية (Hero Section)' : 'Hero Section Copy & Imagery'}
               </h3>
@@ -1028,7 +1028,7 @@ export function SectionManager() {
                   type="text"
                   value={heroForm.badgeText}
                   onChange={(e) => setHeroForm({ ...heroForm, badgeText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1039,7 +1039,7 @@ export function SectionManager() {
                   type="text"
                   value={heroForm.title}
                   onChange={(e) => setHeroForm({ ...heroForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1052,7 +1052,7 @@ export function SectionManager() {
                 rows={2}
                 value={heroForm.subtitle}
                 onChange={(e) => setHeroForm({ ...heroForm, subtitle: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
               />
             </div>
 
@@ -1066,7 +1066,7 @@ export function SectionManager() {
                   type="text"
                   value={heroForm.primaryCtaText}
                   onChange={(e) => setHeroForm({ ...heroForm, primaryCtaText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1077,7 +1077,7 @@ export function SectionManager() {
                   type="text"
                   value={heroForm.primaryCtaLink}
                   onChange={(e) => setHeroForm({ ...heroForm, primaryCtaLink: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1091,7 +1091,7 @@ export function SectionManager() {
                   type="text"
                   value={heroForm.secondaryCtaText}
                   onChange={(e) => setHeroForm({ ...heroForm, secondaryCtaText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1102,7 +1102,7 @@ export function SectionManager() {
                   type="text"
                   value={heroForm.secondaryCtaLink}
                   onChange={(e) => setHeroForm({ ...heroForm, secondaryCtaLink: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1116,7 +1116,7 @@ export function SectionManager() {
                 type="text"
                 value={heroForm.marqueeItemsText}
                 onChange={(e) => setHeroForm({ ...heroForm, marqueeItemsText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
 
@@ -1156,7 +1156,7 @@ export function SectionManager() {
           {/* Showreel Settings Card */}
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Video className="w-4 h-4 text-[#941e33]" />
+              <Video className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'العرض الترويجي الشامل (Showreel 2026)' : 'Director Showreel Video & Specs'}
               </h3>
@@ -1171,7 +1171,7 @@ export function SectionManager() {
                   type="text"
                   value={showreelSectionMeta.badge}
                   onChange={(e) => setShowreelSectionMeta({ ...showreelSectionMeta, badge: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1182,7 +1182,7 @@ export function SectionManager() {
                   type="text"
                   value={showreelSectionMeta.title}
                   onChange={(e) => setShowreelSectionMeta({ ...showreelSectionMeta, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1196,7 +1196,7 @@ export function SectionManager() {
                 value={heroForm.featuredVideoId}
                 onChange={(e) => setHeroForm({ ...heroForm, featuredVideoId: e.target.value })}
                 placeholder="e.g. ScMzIvxBSi4 or https://youtube.com/watch?v=..."
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none font-mono"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
               />
             </div>
           </div>
@@ -1204,7 +1204,7 @@ export function SectionManager() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#941e33]/20 transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#2563eb]/20 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{isAr ? 'حفظ الواجهة والعرض الترويجي' : 'Save Hero & Showreel'}</span>
@@ -1220,7 +1220,7 @@ export function SectionManager() {
         <form onSubmit={handleSaveAbout} className="space-y-6">
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Sparkles className="w-4 h-4 text-[#941e33]" />
+              <Sparkles className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'الملف التعريفي للمخرج (Mo Abdallah)' : 'Director Profile & Biography'}
               </h3>
@@ -1235,7 +1235,7 @@ export function SectionManager() {
                   type="text"
                   value={aboutForm.badge}
                   onChange={(e) => setAboutForm({ ...aboutForm, badge: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1246,7 +1246,7 @@ export function SectionManager() {
                   type="number"
                   value={aboutForm.experienceYears}
                   onChange={(e) => setAboutForm({ ...aboutForm, experienceYears: Number(e.target.value) })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1260,7 +1260,7 @@ export function SectionManager() {
                   type="text"
                   value={aboutForm.heading}
                   onChange={(e) => setAboutForm({ ...aboutForm, heading: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1271,7 +1271,7 @@ export function SectionManager() {
                   type="text"
                   value={aboutForm.highlightText}
                   onChange={(e) => setAboutForm({ ...aboutForm, highlightText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1284,7 +1284,7 @@ export function SectionManager() {
                 rows={4}
                 value={aboutForm.bioText}
                 onChange={(e) => setAboutForm({ ...aboutForm, bioText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
 
@@ -1330,7 +1330,7 @@ export function SectionManager() {
                   type="text"
                   value={aboutForm.skillsText}
                   onChange={(e) => setAboutForm({ ...aboutForm, skillsText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1341,7 +1341,7 @@ export function SectionManager() {
                   type="text"
                   value={aboutForm.toolsText}
                   onChange={(e) => setAboutForm({ ...aboutForm, toolsText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1390,7 +1390,7 @@ export function SectionManager() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#941e33]/20 transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#2563eb]/20 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{isAr ? 'حفظ قسم المخرج' : 'Save About Section'}</span>
@@ -1406,7 +1406,7 @@ export function SectionManager() {
         <div className="space-y-6">
           <form onSubmit={handleSaveBrand} className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Image className="w-4 h-4 text-[#941e33]" />
+              <Image className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'شعار وهوية الموقع (Brand Identity & Logos)' : 'Brand Identity & Studio Logo'}
               </h3>
@@ -1421,7 +1421,7 @@ export function SectionManager() {
                   type="text"
                   value={brandForm.logoText}
                   onChange={(e) => setBrandForm({ ...brandForm, logoText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1432,7 +1432,7 @@ export function SectionManager() {
                   type="text"
                   value={brandForm.logoSubtext}
                   onChange={(e) => setBrandForm({ ...brandForm, logoSubtext: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1465,7 +1465,7 @@ export function SectionManager() {
                   type="text"
                   value={brandForm.favicon}
                   onChange={(e) => setBrandForm({ ...brandForm, favicon: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1505,7 +1505,7 @@ export function SectionManager() {
             <div className="flex justify-end pt-2">
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs font-bold flex items-center gap-2"
+                className="px-5 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold flex items-center gap-2"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>{isAr ? 'حفظ إعدادات الهوية' : 'Save Brand Settings'}</span>
@@ -1517,7 +1517,7 @@ export function SectionManager() {
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#941e33]" />
+                <Shield className="w-4 h-4 text-[#2563eb]" />
                 <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                   {isAr ? `شعارات العملاء والشركاء الموثوقين (${content.clientLogos?.length || 0})` : `Client & Partner Logos (${content.clientLogos?.length || 0})`}
                 </h3>
@@ -1563,7 +1563,7 @@ export function SectionManager() {
                 </div>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs font-bold flex items-center gap-1.5 self-end sm:self-auto"
+                  className="px-4 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold flex items-center gap-1.5 self-end sm:self-auto"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{isAr ? 'إضافة الشعار' : 'Add Logo'}</span>
@@ -1612,7 +1612,7 @@ export function SectionManager() {
           {/* Portfolio Section Meta */}
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Film className="w-4 h-4 text-[#941e33]" />
+              <Film className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'معلومات وعنوان قسم الأعمال (Portfolio Section)' : 'Portfolio Section Header Info'}
               </h3>
@@ -1627,7 +1627,7 @@ export function SectionManager() {
                   type="text"
                   value={portfolioMeta.badge}
                   onChange={(e) => setPortfolioMeta({ ...portfolioMeta, badge: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1638,7 +1638,7 @@ export function SectionManager() {
                   type="text"
                   value={portfolioMeta.title}
                   onChange={(e) => setPortfolioMeta({ ...portfolioMeta, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1651,7 +1651,7 @@ export function SectionManager() {
                 rows={2}
                 value={portfolioMeta.description}
                 onChange={(e) => setPortfolioMeta({ ...portfolioMeta, description: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
               />
             </div>
           </div>
@@ -1659,7 +1659,7 @@ export function SectionManager() {
           {/* Gallery Section Meta */}
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Image className="w-4 h-4 text-[#941e33]" />
+              <Image className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'معلومات وعنوان معرض الكواليس (Gallery Section)' : 'Behind The Scenes & Gallery Header Info'}
               </h3>
@@ -1674,7 +1674,7 @@ export function SectionManager() {
                   type="text"
                   value={galleryMeta.badge}
                   onChange={(e) => setGalleryMeta({ ...galleryMeta, badge: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1685,7 +1685,7 @@ export function SectionManager() {
                   type="text"
                   value={galleryMeta.title}
                   onChange={(e) => setGalleryMeta({ ...galleryMeta, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1698,7 +1698,7 @@ export function SectionManager() {
                 rows={2}
                 value={galleryMeta.description}
                 onChange={(e) => setGalleryMeta({ ...galleryMeta, description: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
               />
             </div>
           </div>
@@ -1706,7 +1706,7 @@ export function SectionManager() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#941e33]/20 transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#2563eb]/20 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{isAr ? 'حفظ نصوص الأقسام' : 'Save Header Info'}</span>
@@ -1722,7 +1722,7 @@ export function SectionManager() {
         <form onSubmit={handleSaveContactFooter} className="space-y-6">
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Phone className="w-4 h-4 text-[#941e33]" />
+              <Phone className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'معلومات التواصل المباشر (Contact Details)' : 'Direct Contact & Inquiries'}
               </h3>
@@ -1737,7 +1737,7 @@ export function SectionManager() {
                   type="text"
                   value={contactForm.ctaHeading}
                   onChange={(e) => setContactForm({ ...contactForm, ctaHeading: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1748,7 +1748,7 @@ export function SectionManager() {
                   type="text"
                   value={contactForm.responseTimeNote}
                   onChange={(e) => setContactForm({ ...contactForm, responseTimeNote: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1761,7 +1761,7 @@ export function SectionManager() {
                 rows={2}
                 value={contactForm.ctaSubtitle}
                 onChange={(e) => setContactForm({ ...contactForm, ctaSubtitle: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
               />
             </div>
 
@@ -1774,7 +1774,7 @@ export function SectionManager() {
                   type="email"
                   value={contactForm.email}
                   onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1785,7 +1785,7 @@ export function SectionManager() {
                   type="text"
                   value={contactForm.phone}
                   onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1796,7 +1796,7 @@ export function SectionManager() {
                   type="text"
                   value={contactForm.whatsapp}
                   onChange={(e) => setContactForm({ ...contactForm, whatsapp: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1809,7 +1809,7 @@ export function SectionManager() {
                 type="text"
                 value={contactForm.location}
                 onChange={(e) => setContactForm({ ...contactForm, location: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -1817,7 +1817,7 @@ export function SectionManager() {
           {/* Footer Card */}
           <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-              <Quote className="w-4 h-4 text-[#941e33]" />
+              <Quote className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
                 {isAr ? 'تذييل الموقع والاقتباس (Footer & Quotation)' : 'Footer & Legal Disclaimers'}
               </h3>
@@ -1832,7 +1832,7 @@ export function SectionManager() {
                   type="text"
                   value={footerForm.copyrightText}
                   onChange={(e) => setFooterForm({ ...footerForm, copyrightText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
               <div>
@@ -1843,7 +1843,7 @@ export function SectionManager() {
                   type="text"
                   value={footerForm.quote}
                   onChange={(e) => setFooterForm({ ...footerForm, quote: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
             </div>
@@ -1856,7 +1856,7 @@ export function SectionManager() {
                 type="text"
                 value={footerForm.disclaimer}
                 onChange={(e) => setFooterForm({ ...footerForm, disclaimer: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -1864,7 +1864,7 @@ export function SectionManager() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#941e33]/20 transition-all cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#2563eb]/20 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{isAr ? 'حفظ معلومات التواصل والتذييل' : 'Save Contact & Footer'}</span>

@@ -1,103 +1,179 @@
-import { Film, ArrowUp } from 'lucide-react';
+import { ArrowUp, Instagram, Youtube, Linkedin, Film } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { EditableText } from '../live-editor/EditableText';
-import { EditableImage } from '../live-editor/EditableImage';
 
 export function Footer() {
-  const { content, updateBranding, updateFooter } = useContent();
+  const { content, setIsAdminView } = useContent();
   const { language, t } = useLanguage();
   const isAr = language === 'ar';
-  const footer = content.footer;
-  const branding = content.branding;
+  const { branding, contact, footer, navigation } = content;
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return (
-    <footer id="main-footer" className="bg-[#111111] border-t border-[#232323] py-16 text-[#a8a6a1]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-12 border-b border-[#232323]">
-          {/* Brand */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2.5">
-              <EditableImage
-                src={branding.logoImage}
-                onSave={(newUrl) => updateBranding({ logoImage: newUrl })}
-                label={isAr ? 'شعار الفوتر' : 'Footer Logo'}
-                className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
-              >
-                {branding.logoImage ? (
-                  <img 
-                    src={branding.logoImage} 
-                    alt={branding.logoText || 'MOGRAFIX'} 
-                    className="w-8 h-8 object-contain rounded-lg" 
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg bg-[#941e33] flex items-center justify-center text-white font-black">
-                    <Film className="w-4 h-4" />
-                  </div>
-                )}
-              </EditableImage>
+  const navItems = [...navigation]
+    .filter((i) => i.visible)
+    .sort((a, b) => a.order - b.order);
 
-              <span className="font-extrabold text-2xl tracking-wider text-[#f1f2ed] uppercase font-quicksand">
-                <EditableText
-                  value={branding.logoText || 'MOGRAFIX'}
-                  onSave={(val) => updateBranding({ logoText: val })}
-                  label={isAr ? 'اسم العلامة' : 'Brand Name'}
+  const getNavLabel = (label: string) => {
+    if (!isAr) return label;
+    const map: Record<string, string> = {
+      'Home': 'الرئيسية',
+      'Showreel': 'العرض الترويجي',
+      'Work': 'الأعمال',
+      'Portfolio': 'الأعمال',
+      'About': 'من أنا',
+      'Services': 'الخدمات',
+      'Process': 'مراحل الإنتاج',
+      'Gallery': 'المعرض',
+      'Contact': 'تواصل معي'
+    };
+    return map[label] || label;
+  };
+
+  return (
+    <footer id="main-footer" className="relative bg-[#111111] border-t border-[#2b2b2b] text-[#a8a6a1] overflow-hidden">
+      {/* Decorative gradient glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-[#2563eb]/10 blur-3xl pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12 pb-12 border-b border-[#232323]">
+          {/* Brand Col */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="flex items-center gap-2.5">
+              {branding.logoImage ? (
+                <img 
+                  src={branding.logoImage} 
+                  alt={branding.logoText || 'SHPIXELS'} 
+                  className="h-9 w-auto max-w-[170px] sm:max-w-[200px] object-contain rounded-md" 
                 />
-              </span>
+              ) : (
+                <div className="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black">
+                  <Film className="w-5 h-5 text-white" />
+                </div>
+              )}
+              {!branding.logoImage && (
+                <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand">
+                  {branding.logoText || 'SHPIXELS'}
+                </span>
+              )}
             </div>
 
-            <p className="text-xs font-mono uppercase tracking-widest text-[#706e6a]">
-              <EditableText
-                value={footer.disclaimer || (isAr 
-                  ? 'استوديو الإخراج السينمائي وتصوير الإعلانات التجارية والفعاليات الفاخرة.' 
-                  : 'Professional videographer portfolio & creative production studio.')}
-                onSave={(val) => updateFooter({ disclaimer: val })}
-                label={isAr ? 'وصف الفوتر' : 'Footer Subtext'}
-              />
+            <p className="text-xs sm:text-sm text-[#706e6a] leading-relaxed max-w-sm">
+              {footer.disclaimer || (isAr
+                ? 'استوديو إنتاج سينمائي متخصص في صناعة الإعلانات الفاخرة، الأفلام التجارية والتصوير السينمائي بدقة 4K.'
+                : 'Bespoke cinematography studio specializing in luxury commercial advertisements, drone operations, and high-impact visual stories.')}
             </p>
+
+            <div className="flex items-center gap-3 pt-2">
+              {contact.instagram && (
+                <a
+                  href={contact.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#2563eb] hover:text-white transition-colors border border-[#2b2b2b]"
+                  title="Instagram"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
+              {contact.youtube && (
+                <a
+                  href={contact.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#2563eb] hover:text-white transition-colors border border-[#2b2b2b]"
+                  title="YouTube"
+                >
+                  <Youtube className="w-4 h-4" />
+                </a>
+              )}
+              {contact.linkedin && (
+                <a
+                  href={contact.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#2563eb] hover:text-white transition-colors border border-[#2b2b2b]"
+                  title="LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+              )}
+            </div>
           </div>
 
-          {/* Quote */}
-          <div className={`max-w-md text-xs sm:text-sm italic text-[#706e6a] ${isAr ? 'border-r-2 pr-4' : 'border-l-2 pl-4'} border-[#941e33]`}>
-            "
-            <EditableText
-              value={footer.quote || (isAr ? 'كل إطار سينمائي يحمل قصة، وكل حركة كاميرا تبني شعوراً لا يُنسى.' : 'Every frame tells a story, and every camera movement crafts unforgettable emotion.')}
-              onSave={(val) => updateFooter({ quote: val })}
-              multiline
-              label={isAr ? 'اقتباس الفوتر' : 'Footer Quote'}
-            />
-            "
+          {/* Quick Navigation Links */}
+          <div className="lg:col-span-3 space-y-3">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-[#f1f2ed] font-semibold">
+              {isAr ? 'روابط سريعة' : 'Navigation'}
+            </h4>
+            <ul className="space-y-2 text-xs">
+              {navItems.map((item) => (
+                <li key={item.id}>
+                  <a
+                    href={item.href}
+                    className="hover:text-[#f1f2ed] transition-colors"
+                  >
+                    {getNavLabel(item.label)}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Back to top */}
-          <button
-            onClick={scrollToTop}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1d1d1d] hover:bg-[#232323] text-xs font-mono uppercase text-[#f1f2ed] border border-[#2b2b2b] transition-colors cursor-pointer"
-          >
-            <span>{t('footer.top', 'Back to Top')}</span>
-            <ArrowUp className="w-3.5 h-3.5 text-[#941e33]" />
-          </button>
+          {/* Production Specialties */}
+          <div className="lg:col-span-3 space-y-3">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-[#f1f2ed] font-semibold">
+              {isAr ? 'تخصصات الإنتاج' : 'Specialties'}
+            </h4>
+            <ul className="space-y-2 text-xs text-[#706e6a]">
+              <li>Commercial Advertising (4K DCI)</li>
+              <li>High-End Luxury Weddings & Private Galas</li>
+              <li>Licensed Aerial Drone Cinematography</li>
+              <li>DaVinci Resolve Studio Color Grading</li>
+              <li>Creative Direction & Visual Storytelling</li>
+            </ul>
+          </div>
+
+          {/* Director Quote & Back to Top */}
+          <div className="lg:col-span-2 flex flex-col justify-between items-start md:items-end">
+            <button
+              onClick={scrollToTop}
+              className="p-3 rounded-full bg-[#1a1a1a] hover:bg-[#2563eb] text-[#f1f2ed] hover:text-white transition-all border border-[#2b2b2b] shadow-md cursor-pointer group"
+              title={isAr ? 'العودة للأعلى' : 'Scroll to top'}
+            >
+              <ArrowUp className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+            </button>
+
+            <div className="mt-6 md:mt-0 text-left md:text-right">
+              <span className="text-[10px] font-mono text-[#706e6a] uppercase block">
+                Sharif Abs
+              </span>
+              <p className="text-xs text-[#a8a6a1] italic max-w-[200px] mt-1">
+                "{footer.quote || 'Every single frame holds an indelible emotion.'}"
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Bottom bar without any admin button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[#706e6a]">
-          <div>
-            <EditableText
-              value={footer.copyrightText || '© 2026 MOGRAFIX. All rights reserved.'}
-              onSave={(val) => updateFooter({ copyrightText: val })}
-              label={isAr ? 'حقوق النشر' : 'Copyright'}
-            />
-          </div>
+        {/* Bottom bar */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-mono text-[#706e6a]">
+          <p>
+            {footer.copyrightText || `© ${new Date().getFullYear()} SHPIXELS. All Rights Reserved.`}
+          </p>
 
-          <div className="flex items-center gap-6">
-            <a href="#hero" className="hover:text-[#f1f2ed] transition-colors">{t('nav.home', 'Home')}</a>
-            <a href="#portfolio" className="hover:text-[#f1f2ed] transition-colors">{t('nav.work', 'Work')}</a>
-            <a href="#about" className="hover:text-[#f1f2ed] transition-colors">{t('nav.about', 'About')}</a>
-            <a href="#contact" className="hover:text-[#f1f2ed] transition-colors">{t('nav.contact', 'Contact')}</a>
+          <div className="flex items-center gap-4">
+            <span>Sony FX Cinema • DJI Cine • DaVinci Wide Gamut</span>
+            <span className="text-[#333]">|</span>
+            {/* Discreet admin portal access */}
+            <button
+              id="footer-admin-login-link"
+              onClick={() => setIsAdminView(true)}
+              className="hover:text-[#a8a6a1] transition-colors cursor-pointer"
+            >
+              Director Portal
+            </button>
           </div>
         </div>
       </div>

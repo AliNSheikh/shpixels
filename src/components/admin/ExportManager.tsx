@@ -74,7 +74,7 @@ export function ExportManager() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl flex flex-col justify-between">
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-[#941e33] text-white flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#2563eb] text-white flex items-center justify-center">
               <Download className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
@@ -88,7 +88,7 @@ export function ExportManager() {
           <div className="flex flex-wrap gap-3 pt-4 border-t border-[#232323]">
             <button
               onClick={exportJson}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md"
             >
               <Download className="w-4 h-4" />
               <span>Download JSON File</span>
@@ -106,7 +106,7 @@ export function ExportManager() {
         {/* Upload File Section */}
         <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl flex flex-col justify-between">
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-[#232323] text-[#b8283f] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[#232323] text-[#3b82f6] flex items-center justify-center">
               <Upload className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
@@ -119,7 +119,7 @@ export function ExportManager() {
 
           <div className="pt-4 border-t border-[#232323]">
             <label className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-semibold uppercase tracking-wider text-[#f1f2ed] border border-[#2b2b2b] cursor-pointer transition-colors">
-              <Upload className="w-4 h-4 text-[#941e33]" />
+              <Upload className="w-4 h-4 text-[#2563eb]" />
               <span>Select File (*.json)</span>
               <input
                 type="file"
@@ -135,7 +135,7 @@ export function ExportManager() {
       {/* Paste Raw JSON */}
       <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
         <div className="flex items-center gap-2">
-          <FileJson className="w-4 h-4 text-[#941e33]" />
+          <FileJson className="w-4 h-4 text-[#2563eb]" />
           <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
             Direct JSON Import / Paste
           </h3>
@@ -146,7 +146,7 @@ export function ExportManager() {
           value={pasteJsonText}
           onChange={(e) => setPasteJsonText(e.target.value)}
           placeholder="Paste raw JSON content here..."
-          className="w-full px-4 py-3 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:border-[#941e33] focus:outline-none"
+          className="w-full px-4 py-3 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:border-[#2563eb] focus:outline-none"
         />
 
         <button
@@ -168,7 +168,7 @@ export function ExportManager() {
         </div>
 
         <p className="text-xs text-[#a8a6a1] leading-relaxed max-w-xl">
-          Reset all website content back to the default MOGRAFIX seed data (including default project showreels, Mo Abdallah biography, and service categories).
+          Reset all website content back to the default SHPIXELS seed data (including default project showreels, Sharif Abs biography, and service categories).
         </p>
 
         <button

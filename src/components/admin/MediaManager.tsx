@@ -156,7 +156,7 @@ export function MediaManager() {
 
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase text-white transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase text-white transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>{isAr ? 'إضافة لقطة جديدة' : 'Add New Still'}</span>
@@ -168,7 +168,7 @@ export function MediaManager() {
           {content.gallery.map((item) => (
             <div
               key={item.id}
-              className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-[#232323] border border-[#2b2b2b] hover:border-[#941e33] transition-colors"
+              className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-[#232323] border border-[#2b2b2b] hover:border-[#2563eb] transition-colors"
             >
               <img
                 src={item.image}
@@ -181,7 +181,7 @@ export function MediaManager() {
                 <div className="flex justify-end gap-1">
                   <button
                     onClick={() => handleOpenEdit(item)}
-                    className="p-1 rounded bg-black/70 text-white hover:bg-[#941e33] transition-colors"
+                    className="p-1 rounded bg-black/70 text-white hover:bg-[#2563eb] transition-colors"
                     title={isAr ? 'تعديل' : 'Edit'}
                   >
                     <Edit3 className="w-3 h-3" />
@@ -280,7 +280,7 @@ export function MediaManager() {
                 <button
                   type="submit"
                   disabled={!formItem.image || !formItem.title}
-                  className="px-5 py-2 rounded-xl bg-[#941e33] hover:bg-[#b8283f] disabled:opacity-40 text-xs font-semibold uppercase text-white"
+                  className="px-5 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] disabled:opacity-40 text-xs font-semibold uppercase text-white"
                 >
                   {isAr ? 'حفظ اللقطة' : 'Save Still'}
                 </button>

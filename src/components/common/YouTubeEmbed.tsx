@@ -77,12 +77,12 @@ export function YouTubeEmbed({
             {/* Cinematic overlay gradients */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20 group-hover/poster:via-black/20 transition-all duration-300" />
             
-            {/* Big Crimson Play Button */}
+            {/* Big Blue Play Button */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative flex items-center justify-center">
                 {/* Glow ring */}
-                <div className="absolute w-20 h-20 rounded-full bg-[#941e33]/40 blur-xl group-hover/poster:bg-[#b8283f]/60 transition-all duration-500 scale-100 group-hover/poster:scale-125" />
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#941e33] hover:bg-[#b8283f] text-[#f1f2ed] flex items-center justify-center shadow-lg transition-transform duration-300 ease-out group-hover/poster:scale-110 active:scale-95 border border-[#b8283f]/50">
+                <div className="absolute w-20 h-20 rounded-full bg-[#2563eb]/40 blur-xl group-hover/poster:bg-[#3b82f6]/60 transition-all duration-500 scale-100 group-hover/poster:scale-125" />
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#2563eb] hover:bg-[#3b82f6] text-[#f1f2ed] flex items-center justify-center shadow-lg transition-transform duration-300 ease-out group-hover/poster:scale-110 active:scale-95 border border-[#3b82f6]/50">
                   <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-current translate-x-0.5" />
                 </div>
               </div>
@@ -91,7 +91,7 @@ export function YouTubeEmbed({
             {/* Video Title on Poster */}
             {title && (
               <div className="absolute bottom-4 left-4 right-4 text-left">
-                <span className="inline-block text-xs font-medium tracking-widest uppercase text-[#941e33] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded border border-[#941e33]/30 mb-1.5">
+                <span className="inline-block text-xs font-medium tracking-widest uppercase text-[#38bdf8] bg-black/60 backdrop-blur-md px-2.5 py-1 rounded border border-[#2563eb]/40 mb-1.5">
                   Play Video
                 </span>
                 <p className="text-white font-semibold text-sm sm:text-base line-clamp-1 drop-shadow-md">
@@ -106,7 +106,7 @@ export function YouTubeEmbed({
       {caption && (
         <div className="p-3 bg-[#1d1d1d] border-t border-[#2b2b2b] text-xs text-[#a8a6a1] flex items-center justify-between">
           <span className="font-mono text-[#706e6a]">{caption}</span>
-          <span className="text-[10px] tracking-wider uppercase text-[#941e33] font-semibold">YouTube 4K</span>
+          <span className="text-[10px] tracking-wider uppercase text-[#38bdf8] font-semibold">YouTube 4K</span>
         </div>
       )}
     </div>

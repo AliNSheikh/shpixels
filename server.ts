@@ -72,7 +72,7 @@ async function startServer() {
         contentData = JSON.parse(raw);
       }
 
-      const baseUrl = (contentData?.seo?.canonicalUrl || "https://mografix.com").replace(/\/$/, "");
+      const baseUrl = (contentData?.seo?.canonicalUrl || "https://shpixels.vercel.app").replace(/\/$/, "");
       const now = new Date().toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -151,7 +151,7 @@ async function startServer() {
 
   // Dynamic robots.txt
   app.get("/robots.txt", async (_req, res) => {
-    let baseUrl = "https://mografix.com";
+    let baseUrl = "https://shpixels.vercel.app";
     if (fs.existsSync(contentFilePath)) {
       try {
         const raw = await fs.promises.readFile(contentFilePath, "utf-8");

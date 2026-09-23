@@ -93,7 +93,7 @@ export function SiteSettings() {
 
         <button
           onClick={handleSaveAll}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto"
         >
           {savedSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
           <span>{savedSuccess ? 'Settings Saved!' : 'Save All Settings'}</span>
@@ -104,7 +104,7 @@ export function SiteSettings() {
         {/* Branding Section */}
         <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
           <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-            <Sparkles className="w-4 h-4 text-[#941e33]" />
+            <Sparkles className="w-4 h-4 text-[#2563eb]" />
             <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
               Brand Identity
             </h3>
@@ -119,7 +119,7 @@ export function SiteSettings() {
                 type="text"
                 value={branding.logoText}
                 onChange={(e) => setBranding({ ...branding, logoText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
             <div>
@@ -130,7 +130,7 @@ export function SiteSettings() {
                 type="text"
                 value={branding.logoSubtext}
                 onChange={(e) => setBranding({ ...branding, logoSubtext: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -139,7 +139,7 @@ export function SiteSettings() {
         {/* Hero Section Copy */}
         <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
           <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-            <Sliders className="w-4 h-4 text-[#941e33]" />
+            <Sliders className="w-4 h-4 text-[#2563eb]" />
             <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
               Hero Section Copy
             </h3>
@@ -154,7 +154,7 @@ export function SiteSettings() {
                 type="text"
                 value={hero.badgeText}
                 onChange={(e) => setHero({ ...hero, badgeText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
             <div>
@@ -165,7 +165,7 @@ export function SiteSettings() {
                 type="text"
                 value={hero.title}
                 onChange={(e) => setHero({ ...hero, title: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -178,7 +178,7 @@ export function SiteSettings() {
               rows={2}
               value={hero.subtitle}
               onChange={(e) => setHero({ ...hero, subtitle: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
             />
           </div>
 
@@ -191,7 +191,7 @@ export function SiteSettings() {
                 type="text"
                 value={hero.primaryCtaText}
                 onChange={(e) => setHero({ ...hero, primaryCtaText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
             <div>
@@ -202,7 +202,7 @@ export function SiteSettings() {
                 type="text"
                 value={hero.secondaryCtaText}
                 onChange={(e) => setHero({ ...hero, secondaryCtaText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export function SiteSettings() {
               type="text"
               value={hero.marqueeText}
               onChange={(e) => setHero({ ...hero, marqueeText: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
             />
           </div>
         </div>
@@ -223,7 +223,7 @@ export function SiteSettings() {
         {/* About Section Copy */}
         <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
           <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-            <Settings className="w-4 h-4 text-[#941e33]" />
+            <Settings className="w-4 h-4 text-[#2563eb]" />
             <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
               About Director (Mo Abdallah) Copy
             </h3>
@@ -238,7 +238,7 @@ export function SiteSettings() {
                 type="text"
                 value={about.heading}
                 onChange={(e) => setAbout({ ...about, heading: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
             <div>
@@ -249,7 +249,7 @@ export function SiteSettings() {
                 type="text"
                 value={about.highlightText}
                 onChange={(e) => setAbout({ ...about, highlightText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -262,7 +262,7 @@ export function SiteSettings() {
               rows={4}
               value={about.bioText}
               onChange={(e) => setAbout({ ...about, bioText: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
             />
           </div>
 
@@ -274,7 +274,7 @@ export function SiteSettings() {
               type="text"
               value={about.skillsText}
               onChange={(e) => setAbout({ ...about, skillsText: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
             />
           </div>
         </div>
@@ -296,7 +296,7 @@ export function SiteSettings() {
                 type="text"
                 value={footer.copyrightText}
                 onChange={(e) => setFooter({ ...footer, copyrightText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
             <div>
@@ -307,7 +307,7 @@ export function SiteSettings() {
                 type="text"
                 value={footer.quote || ''}
                 onChange={(e) => setFooter({ ...footer, quote: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -317,7 +317,7 @@ export function SiteSettings() {
       {/* Security Credentials */}
       <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
         <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-          <Key className="w-4 h-4 text-[#941e33]" />
+          <Key className="w-4 h-4 text-[#2563eb]" />
           <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
             Admin Passphrase Security
           </h3>
@@ -334,7 +334,7 @@ export function SiteSettings() {
               value={newPass}
               onChange={(e) => setNewPass(e.target.value)}
               placeholder="Enter new secret passphrase..."
-              className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+              className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
             />
             <button
               type="submit"

@@ -84,7 +84,7 @@ export function NavigationManager() {
 
         <button
           onClick={() => setIsAdding(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Add Menu Item</span>
@@ -131,7 +131,7 @@ export function NavigationManager() {
                   type="text"
                   value={item.label}
                   onChange={(e) => handleSaveItemChanges(index, 'label', e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
 
@@ -141,7 +141,7 @@ export function NavigationManager() {
                   type="text"
                   value={item.href}
                   onChange={(e) => handleSaveItemChanges(index, 'href', e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none font-mono"
+                  className="w-full px-3 py-1.5 rounded-lg bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
                 />
               </div>
 
@@ -189,7 +189,7 @@ export function NavigationManager() {
                   value={newItem.label}
                   onChange={(e) => setNewItem({ ...newItem, label: e.target.value })}
                   placeholder="e.g. Services, Contact, Awards"
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
 
@@ -203,7 +203,7 @@ export function NavigationManager() {
                   value={newItem.href}
                   onChange={(e) => setNewItem({ ...newItem, href: e.target.value })}
                   placeholder="e.g. #services, #contact, https://..."
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none font-mono"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
                 />
               </div>
 
@@ -217,7 +217,7 @@ export function NavigationManager() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold text-white uppercase"
+                  className="px-5 py-2 rounded-lg bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold text-white uppercase"
                 >
                   Add Item
                 </button>

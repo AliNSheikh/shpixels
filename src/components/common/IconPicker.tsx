@@ -68,9 +68,9 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] hover:border-[#941e33] transition-colors text-xs text-[#f1f2ed] w-full"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] hover:border-[#2563eb] transition-colors text-xs text-[#f1f2ed] w-full"
         >
-          <div className="w-6 h-6 rounded-lg bg-[#941e33]/30 border border-[#941e33]/50 flex items-center justify-center text-[#f1f2ed]">
+          <div className="w-6 h-6 rounded-lg bg-[#2563eb]/30 border border-[#2563eb]/50 flex items-center justify-center text-[#f1f2ed]">
             <CurrentIcon className="w-3.5 h-3.5" />
           </div>
           <span className="font-mono">{value || 'Film'}</span>
@@ -87,7 +87,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
               placeholder="Search icons..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#941e33]"
+              className="w-full px-3 py-1.5 rounded-lg bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#2563eb]"
             />
 
             <div className="grid grid-cols-6 gap-1.5 max-h-48 overflow-y-auto pr-1">
@@ -106,7 +106,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
                     title={iconName}
                     className={`p-2 rounded-lg flex items-center justify-center transition-colors ${
                       isSelected
-                        ? 'bg-[#941e33] text-white'
+                        ? 'bg-[#2563eb] text-white'
                         : 'bg-[#232323] text-[#a8a6a1] hover:text-[#f1f2ed] hover:bg-[#2b2b2b]'
                     }`}
                   >

@@ -212,13 +212,13 @@ export function ProjectManager() {
             className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] border border-[#2b2b2b] text-xs font-semibold uppercase tracking-wider text-[#f1f2ed] transition-all cursor-pointer"
             title={isAr ? 'إدارة تصنيفات المشاريع' : 'Manage Categories'}
           >
-            <Tag className="w-3.5 h-3.5 text-[#941e33]" />
+            <Tag className="w-3.5 h-3.5 text-[#2563eb]" />
             <span>{isAr ? 'إدارة التصنيفات' : 'Categories'}</span>
           </button>
 
           <button
             onClick={handleCreateNew}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>{isAr ? 'إضافة مشروع جديد' : 'New Project'}</span>
@@ -235,14 +235,14 @@ export function ProjectManager() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isAr ? 'بحث بالعنوان، العميل، أو التصنيف...' : 'Search projects by title, client, or category...'}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#941e33]"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#2563eb]"
           />
         </div>
 
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-4 py-2.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#941e33]"
+          className="px-4 py-2.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#2563eb]"
         >
           {categories.map((c) => (
             <option key={c} value={c}>
@@ -276,7 +276,7 @@ export function ProjectManager() {
               setSearchQuery('');
               setFilterCategory('All');
             }}
-            className="text-[#b8283f] hover:underline font-mono text-[11px]"
+            className="text-[#3b82f6] hover:underline font-mono text-[11px]"
           >
             {isAr ? 'عرض الكل' : 'Show All'}
           </button>
@@ -309,9 +309,9 @@ export function ProjectManager() {
                   onDragEnd={handleDragEnd}
                   className={`p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-all duration-150 ${
                     isDragged
-                      ? 'opacity-40 bg-[#232323] scale-[0.99] border-2 border-dashed border-[#941e33]'
+                      ? 'opacity-40 bg-[#232323] scale-[0.99] border-2 border-dashed border-[#2563eb]'
                       : isOver
-                      ? 'bg-[#232323] border-t-2 border-t-[#941e33]'
+                      ? 'bg-[#232323] border-t-2 border-t-[#2563eb]'
                       : 'hover:bg-[#232323]/50'
                   }`}
                 >
@@ -346,7 +346,7 @@ export function ProjectManager() {
                             max={projects.length}
                             value={displayOrder}
                             onChange={(e) => handleDirectIndexInput(globalIndex, e.target.value)}
-                            className="w-9 h-6 rounded bg-[#171717] border border-[#2b2b2b] text-[11px] font-mono text-center text-[#f1f2ed] focus:outline-none focus:border-[#941e33]"
+                            className="w-9 h-6 rounded bg-[#171717] border border-[#2b2b2b] text-[11px] font-mono text-center text-[#f1f2ed] focus:outline-none focus:border-[#2563eb]"
                           />
                         </div>
 
@@ -391,7 +391,7 @@ export function ProjectManager() {
                         className="w-full h-full object-cover"
                       />
                       {project.videos && project.videos.length > 0 && (
-                        <span className="absolute bottom-1 right-1 p-0.5 rounded bg-black/80 text-[#941e33]" title="4K YouTube Film Included">
+                        <span className="absolute bottom-1 right-1 p-0.5 rounded bg-black/80 text-[#2563eb]" title="4K YouTube Film Included">
                           <Video className="w-3 h-3" />
                         </span>
                       )}
@@ -404,7 +404,7 @@ export function ProjectManager() {
                           {project.title}
                         </h3>
                         {project.featured && (
-                          <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono uppercase bg-[#941e33]/20 text-[#b8283f] border border-[#941e33]/40 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono uppercase bg-[#2563eb]/20 text-[#38bdf8] border border-[#2563eb]/40 flex items-center gap-1">
                             <Sparkles className="w-2.5 h-2.5" /> {isAr ? 'مميز' : 'Featured'}
                           </span>
                         )}
@@ -424,7 +424,7 @@ export function ProjectManager() {
                         {project.videos && project.videos.length > 0 && (
                           <>
                             <span>•</span>
-                            <span className="text-[#941e33] text-[11px] font-mono hidden md:inline">
+                            <span className="text-[#2563eb] text-[11px] font-mono hidden md:inline">
                               YT: {project.videos[0].videoId}
                             </span>
                           </>
@@ -451,7 +451,7 @@ export function ProjectManager() {
                       onClick={() => handleToggleFeatured(project)}
                       className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
                         project.featured
-                          ? 'text-[#b8283f] hover:bg-[#941e33]/20'
+                          ? 'text-[#38bdf8] hover:bg-[#2563eb]/20'
                           : 'text-[#706e6a] hover:bg-[#232323]'
                       }`}
                       title={project.featured ? (isAr ? 'مميز في الأعلى' : 'Featured on Top') : (isAr ? 'تمييز المشروع' : 'Mark as Featured')}

@@ -16,11 +16,11 @@ export function AdminAuthModal() {
     <div className="min-h-screen bg-[#111111] flex items-center justify-center p-4">
       <div className="max-w-md w-full rounded-2xl bg-[#171717] border border-[#2b2b2b] p-8 shadow-2xl space-y-6 text-center">
         <div className="space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-[#941e33] text-white flex items-center justify-center mx-auto shadow-lg shadow-[#941e33]/25 border border-[#b8283f]/40">
+          <div className="w-16 h-16 rounded-2xl bg-[#2563eb] text-white flex items-center justify-center mx-auto shadow-lg shadow-[#2563eb]/25 border border-[#3b82f6]/40">
             <Film className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-black text-[#f1f2ed] tracking-wider uppercase font-quicksand">
-            {isAr ? 'لوحة تحكم MOGRAFIX' : 'MOGRAFIX CMS'}
+            {isAr ? 'لوحة تحكم SHPIXELS' : 'SHPIXELS CMS'}
           </h2>
           <p className="text-xs text-[#a8a6a1] font-mono">
             {isAr ? 'بوابة إدارة المحتوى والأعمال' : 'Administrator Content Management Portal'}
@@ -43,7 +43,7 @@ export function AdminAuthModal() {
           id="admin-login-submit-btn"
           type="button"
           onClick={handleDirectAccess}
-          className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-[#941e33] hover:bg-[#b8283f] transition-all shadow-xl flex items-center justify-center gap-2 border border-[#b8283f]/40 cursor-pointer"
+          className="w-full py-4 rounded-xl font-bold text-sm uppercase tracking-wider text-white bg-[#2563eb] hover:bg-[#3b82f6] transition-all shadow-xl flex items-center justify-center gap-2 border border-[#3b82f6]/40 cursor-pointer"
         >
           <span>{isAr ? 'الدخول إلى لوحة التحكم' : 'Enter Admin Dashboard'}</span>
           <ArrowRight className="w-4 h-4" />
@@ -51,7 +51,7 @@ export function AdminAuthModal() {
 
         <div className="pt-4 border-t border-[#232323] flex items-center justify-between text-xs text-[#706e6a]">
           <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#941e33]" />
+            <ShieldCheck className="w-3.5 h-3.5 text-[#2563eb]" />
             <span>{isAr ? 'مزامنة مباشرة للكود' : 'Direct Codebase Sync'}</span>
           </div>
           <button

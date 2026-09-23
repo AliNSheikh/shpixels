@@ -57,10 +57,7 @@ interface ContentContextType {
   // Links management
   updateLinks: (links: Partial<ContactData>) => void;
 
-  // Live on-page visual editing mode
-  isLiveEditMode: boolean;
-  setIsLiveEditMode: (enabled: boolean | ((prev: boolean) => boolean)) => void;
-  toggleLiveEditMode: () => void;
+  // Section updates (admin)
   updateSectionHeader: (sectionKey: string, headerUpdates: Partial<import('../types/content').SectionHeaderInfo>) => void;
   updateHero: (updates: Partial<import('../types/content').HeroData>) => void;
   updateAbout: (updates: Partial<import('../types/content').AboutData>) => void;
@@ -123,30 +120,6 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  // Live on-page visual editing mode state (persisted)
-  const LIVE_EDIT_KEY = 'mografix_live_edit_mode_v1';
-  const [isLiveEditMode, setIsLiveEditModeState] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem(LIVE_EDIT_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const setIsLiveEditMode = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
-    setIsLiveEditModeState((prev) => {
-      const next = typeof val === 'function' ? val(prev) : val;
-      try {
-        localStorage.setItem(LIVE_EDIT_KEY, String(next));
-      } catch {}
-      return next;
-    });
-  }, []);
-
-  const toggleLiveEditMode = useCallback(() => {
-    setIsLiveEditMode((prev) => !prev);
-  }, [setIsLiveEditMode]);
-
   // Admin view toggle (sync with hash/URL)
   const [isAdminView, setIsAdminView] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -176,7 +149,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Fetch codebase content on mount if available
+  // Fetch codebase content on mount if available (with fallback to /content.json for static deployment)
   useEffect(() => {
     fetch('/api/content')
       .then((res) => (res.ok ? res.json() : null))
@@ -186,9 +159,35 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
             ...prev,
             ...data
           }));
+        } else {
+          // Fallback to static public/content.json (useful for static Vercel / GitHub Pages)
+          fetch('/content.json')
+            .then((r) => (r.ok ? r.json() : null))
+            .then((staticData) => {
+              if (staticData && staticData.projects) {
+                setContent((prev) => ({
+                  ...prev,
+                  ...staticData
+                }));
+              }
+            })
+            .catch(() => {});
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback to static public/content.json if API is unavailable
+        fetch('/content.json')
+          .then((r) => (r.ok ? r.json() : null))
+          .then((staticData) => {
+            if (staticData && staticData.projects) {
+              setContent((prev) => ({
+                ...prev,
+                ...staticData
+              }));
+            }
+          })
+          .catch(() => {});
+      });
   }, []);
 
   // Sync document title, meta tags, Google Search Console, and Google Analytics
@@ -729,7 +728,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', 'mografix-content.json');
+    downloadAnchor.setAttribute('download', 'shpixels-content.json');
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -740,7 +739,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     try {
       const parsed = JSON.parse(jsonString);
       if (!parsed.hero || !parsed.projects) {
-        return { success: false, error: 'Invalid Mografix content JSON format.' };
+        return { success: false, error: 'Invalid SHPIXELS content JSON format.' };
       }
       setContent(parsed);
       saveToStorage(parsed);
@@ -802,9 +801,6 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         exportJson,
         importJson,
         lastSaved,
-        isLiveEditMode,
-        setIsLiveEditMode,
-        toggleLiveEditMode,
         updateSectionHeader,
         updateHero,
         updateAbout,

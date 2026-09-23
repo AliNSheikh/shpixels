@@ -30,7 +30,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#941e33] selection:text-white">
+    <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
       <Header />
       <main>
         <Hero />

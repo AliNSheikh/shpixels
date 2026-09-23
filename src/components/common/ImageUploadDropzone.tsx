@@ -98,7 +98,7 @@ export function ImageUploadDropzone({
               type="button"
               onClick={() => setMode('upload')}
               className={`px-2 py-0.5 rounded transition-colors ${
-                mode === 'upload' ? 'bg-[#941e33] text-white' : 'text-[#706e6a] hover:text-[#f1f2ed]'
+                mode === 'upload' ? 'bg-[#2563eb] text-white' : 'text-[#706e6a] hover:text-[#f1f2ed]'
               }`}
             >
               {language === 'ar' ? 'رفع من الكمبيوتر' : 'Desktop Upload'}
@@ -108,7 +108,7 @@ export function ImageUploadDropzone({
               type="button"
               onClick={() => setMode('url')}
               className={`px-2 py-0.5 rounded transition-colors ${
-                mode === 'url' ? 'bg-[#941e33] text-white' : 'text-[#706e6a] hover:text-[#f1f2ed]'
+                mode === 'url' ? 'bg-[#2563eb] text-white' : 'text-[#706e6a] hover:text-[#f1f2ed]'
               }`}
             >
               {language === 'ar' ? 'رابط URL' : 'Image URL'}
@@ -126,10 +126,10 @@ export function ImageUploadDropzone({
           onClick={() => fileInputRef.current?.click()}
           className={`relative cursor-pointer rounded-xl border-2 border-dashed transition-all p-4 text-center ${
             isDragging
-              ? 'border-[#941e33] bg-[#941e33]/10 scale-[1.01]'
+              ? 'border-[#2563eb] bg-[#2563eb]/10 scale-[1.01]'
               : value
-              ? 'border-[#2b2b2b] bg-[#1d1d1d] hover:border-[#941e33]/50'
-              : 'border-[#2b2b2b] bg-[#232323] hover:border-[#941e33] hover:bg-[#272727]'
+              ? 'border-[#2b2b2b] bg-[#1d1d1d] hover:border-[#2563eb]/50'
+              : 'border-[#2b2b2b] bg-[#232323] hover:border-[#2563eb] hover:bg-[#272727]'
           }`}
         >
           <input
@@ -162,7 +162,7 @@ export function ImageUploadDropzone({
             </div>
           ) : (
             <div className="py-4 space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-[#2b2b2b] text-[#941e33] flex items-center justify-center mx-auto">
+              <div className="w-10 h-10 rounded-xl bg-[#2b2b2b] text-[#2563eb] flex items-center justify-center mx-auto">
                 <Upload className="w-5 h-5" />
               </div>
               <div className="text-xs text-[#f1f2ed] font-medium">
@@ -186,7 +186,7 @@ export function ImageUploadDropzone({
                 handleUpdate(e.target.value);
               }}
               placeholder={placeholder}
-              className="w-full px-4 py-2.5 pl-10 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#941e33] focus:outline-none text-xs text-[#f1f2ed] font-mono"
+              className="w-full px-4 py-2.5 pl-10 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-xs text-[#f1f2ed] font-mono"
             />
             <Link className="w-4 h-4 text-[#706e6a] absolute left-3.5 top-1/2 -translate-y-1/2" />
           </div>

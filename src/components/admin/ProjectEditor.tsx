@@ -167,7 +167,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
       {/* Top Header */}
       <div className="flex items-center justify-between pb-4 border-b border-[#2b2b2b]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#941e33] text-white flex items-center justify-center font-black">
+          <div className="w-10 h-10 rounded-xl bg-[#2563eb] text-white flex items-center justify-center font-black">
             <Film className="w-5 h-5" />
           </div>
           <div>
@@ -221,7 +221,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={isAr ? 'مثال: VORTEX: إعلان رياضي سينمائي' : 'e.g. VORTEX: Athletic Commercial'}
-              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#941e33] focus:outline-none text-sm text-[#f1f2ed]"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed]"
             />
           </div>
 
@@ -236,7 +236,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 placeholder="Commercial & Brand Ads"
-                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#941e33] focus:outline-none text-sm text-[#f1f2ed]"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed]"
               />
               {/* Category Quick Chips */}
               <div className="flex flex-wrap gap-1.5">
@@ -247,7 +247,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
                     onClick={() => setFormData({ ...formData, category: cat })}
                     className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
                       formData.category === cat
-                        ? 'bg-[#941e33] text-white'
+                        ? 'bg-[#2563eb] text-white'
                         : 'bg-[#1f1f1f] text-[#706e6a] hover:text-[#f1f2ed]'
                     }`}
                   >
@@ -267,7 +267,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               value={formData.client}
               onChange={(e) => setFormData({ ...formData, client: e.target.value })}
               placeholder={isAr ? 'مثال: شركة نايكي أو علامة تجارية' : 'e.g. Vortex Athletics, Solace Music'}
-              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#941e33] focus:outline-none text-sm text-[#f1f2ed]"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed]"
             />
           </div>
 
@@ -280,7 +280,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               value={formData.year}
               onChange={(e) => setFormData({ ...formData, year: e.target.value })}
               placeholder="2026"
-              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#941e33] focus:outline-none text-sm text-[#f1f2ed] font-mono"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed] font-mono"
             />
           </div>
         </div>
@@ -295,7 +295,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder={isAr ? 'أدخل نبذة عن مفهوم التصوير، الكاميرا والعدسات المستخدمة، الإضاءة، ورؤية الإخراج...' : 'Describe the shooting concept, camera equipment, mood, and client goals...'}
-            className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#941e33] focus:outline-none text-sm text-[#f1f2ed] resize-none"
+            className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed] resize-none"
           />
         </div>
 
@@ -303,7 +303,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
         <div className="p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Image className="w-4 h-4 text-[#941e33]" />
+              <Image className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-xs font-mono uppercase tracking-wider text-[#f1f2ed] font-bold">
                 {isAr ? 'صورة الغلاف الرئيسية (رفع من الكمبيوتر مباشرة)' : 'Cover Image (Desktop Upload & Drag-and-Drop)'}
               </h3>
@@ -326,7 +326,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
         <div className="p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Video className="w-4 h-4 text-[#941e33]" />
+              <Video className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-xs font-mono uppercase tracking-wider text-[#f1f2ed] font-bold">
                 {isAr ? 'إدارة فيديوهات يوتيوب (تضمين Iframe 4K)' : 'YouTube Videos Management (Embed & Preview)'}
               </h3>
@@ -343,7 +343,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
                 <div key={vid.id || idx} className="p-3 sm:p-4 rounded-xl bg-[#232323] border border-[#2b2b2b] space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="w-2 h-2 rounded-full bg-[#941e33]" />
+                      <span className="w-2 h-2 rounded-full bg-[#2563eb]" />
                       <span className="text-xs sm:text-sm font-bold text-[#f1f2ed] truncate">
                         {vid.title || 'Untitled Video'}
                       </span>
@@ -416,7 +416,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
                 type="button"
                 onClick={handleAddVideo}
                 disabled={!newVideoUrl.trim()}
-                className="px-4 py-2 rounded-xl bg-[#941e33] hover:bg-[#b8283f] disabled:opacity-40 text-white text-xs font-semibold uppercase tracking-wider flex-shrink-0 flex items-center gap-1.5 transition-colors"
+                className="px-4 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] disabled:opacity-40 text-white text-xs font-semibold uppercase tracking-wider flex-shrink-0 flex items-center gap-1.5 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>{isAr ? 'إضافة الفيديو' : 'Add Video'}</span>
@@ -442,7 +442,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
         <div className="p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Image className="w-4 h-4 text-[#941e33]" />
+              <Image className="w-4 h-4 text-[#2563eb]" />
               <h3 className="text-xs font-mono uppercase tracking-wider text-[#f1f2ed] font-bold">
                 {isAr ? 'لقطات من الفيلم وكواليس التصوير' : 'Production Stills & Gallery'}
               </h3>
@@ -493,7 +493,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               type="checkbox"
               checked={formData.published}
               onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-              className="w-4 h-4 rounded text-[#941e33] focus:ring-0 bg-[#232323] border-[#2b2b2b]"
+              className="w-4 h-4 rounded text-[#2563eb] focus:ring-0 bg-[#232323] border-[#2b2b2b]"
             />
             <span className="text-xs font-medium text-[#f1f2ed]">
               {isAr ? 'منشور في الموقع' : 'Published to Public Site'}
@@ -505,7 +505,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               type="checkbox"
               checked={formData.featured}
               onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-              className="w-4 h-4 rounded text-[#941e33] focus:ring-0 bg-[#232323] border-[#2b2b2b]"
+              className="w-4 h-4 rounded text-[#2563eb] focus:ring-0 bg-[#232323] border-[#2b2b2b]"
             />
             <span className="text-xs font-medium text-[#f1f2ed]">
               {isAr ? 'شارة عمل مميز (Featured)' : 'Featured Project Badge'}
@@ -536,7 +536,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
           </button>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md flex items-center gap-2"
+            className="px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md flex items-center gap-2"
           >
             <Check className="w-4 h-4" />
             <span>{isAr ? 'حفظ المشروع' : 'Save Project'}</span>

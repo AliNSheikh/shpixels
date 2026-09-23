@@ -31,7 +31,7 @@ export function LinkManager() {
 
         <button
           onClick={handleSave}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md self-start sm:self-auto"
         >
           {savedSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
           <span>{savedSuccess ? 'Links Saved!' : 'Save All Links'}</span>
@@ -49,7 +49,7 @@ export function LinkManager() {
             {/* Email */}
             <div>
               <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-[#941e33]" />
+                <Mail className="w-3.5 h-3.5 text-[#2563eb]" />
                 <span>Inquiry Email Address</span>
               </label>
               <input
@@ -57,28 +57,28 @@ export function LinkManager() {
                 required
                 value={contactLinks.email}
                 onChange={(e) => setContactLinks({ ...contactLinks, email: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
 
             {/* Phone */}
             <div>
               <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5 flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-[#941e33]" />
+                <Phone className="w-3.5 h-3.5 text-[#2563eb]" />
                 <span>Studio Direct Telephone</span>
               </label>
               <input
                 type="text"
                 value={contactLinks.phone}
                 onChange={(e) => setContactLinks({ ...contactLinks, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
 
             {/* WhatsApp */}
             <div>
               <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-[#941e33]" />
+                <MessageSquare className="w-3.5 h-3.5 text-[#2563eb]" />
                 <span>WhatsApp Direct URL</span>
               </label>
               <div className="flex gap-2">
@@ -87,7 +87,7 @@ export function LinkManager() {
                   value={contactLinks.whatsapp}
                   onChange={(e) => setContactLinks({ ...contactLinks, whatsapp: e.target.value })}
                   placeholder="https://wa.me/..."
-                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none font-mono"
+                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
                 />
                 <a
                   href={contactLinks.whatsapp}
@@ -111,7 +111,7 @@ export function LinkManager() {
                 value={contactLinks.location}
                 onChange={(e) => setContactLinks({ ...contactLinks, location: e.target.value })}
                 placeholder="e.g. Worldwide & Middle East / Europe"
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
               />
             </div>
           </div>
@@ -127,16 +127,16 @@ export function LinkManager() {
             {/* Instagram */}
             <div>
               <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5 flex items-center gap-1.5">
-                <Instagram className="w-3.5 h-3.5 text-[#941e33]" />
-                <span>Instagram Profile URL (@mografiix)</span>
+                <Instagram className="w-3.5 h-3.5 text-[#2563eb]" />
+                <span>Instagram Profile URL</span>
               </label>
               <div className="flex gap-2">
                 <input
                   type="url"
                   value={contactLinks.instagram}
                   onChange={(e) => setContactLinks({ ...contactLinks, instagram: e.target.value })}
-                  placeholder="https://instagram.com/mografiix"
-                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none font-mono"
+                  placeholder="https://instagram.com/shpixels"
+                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
                 />
                 <a
                   href={contactLinks.instagram}
@@ -153,16 +153,16 @@ export function LinkManager() {
             {/* YouTube */}
             <div>
               <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5 flex items-center gap-1.5">
-                <Youtube className="w-3.5 h-3.5 text-[#941e33]" />
-                <span>YouTube Channel URL (@mografix)</span>
+                <Youtube className="w-3.5 h-3.5 text-[#2563eb]" />
+                <span>YouTube Channel URL</span>
               </label>
               <div className="flex gap-2">
                 <input
                   type="url"
                   value={contactLinks.youtube}
                   onChange={(e) => setContactLinks({ ...contactLinks, youtube: e.target.value })}
-                  placeholder="https://youtube.com/@mografix"
-                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none font-mono"
+                  placeholder="https://youtube.com/@shpixels"
+                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
                 />
                 <a
                   href={contactLinks.youtube}
@@ -179,7 +179,7 @@ export function LinkManager() {
             {/* LinkedIn */}
             <div>
               <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5 flex items-center gap-1.5">
-                <Linkedin className="w-3.5 h-3.5 text-[#941e33]" />
+                <Linkedin className="w-3.5 h-3.5 text-[#2563eb]" />
                 <span>LinkedIn URL</span>
               </label>
               <div className="flex gap-2">
@@ -188,7 +188,7 @@ export function LinkManager() {
                   value={contactLinks.linkedin}
                   onChange={(e) => setContactLinks({ ...contactLinks, linkedin: e.target.value })}
                   placeholder="https://linkedin.com/in/..."
-                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none font-mono"
+                  className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
                 />
                 <a
                   href={contactLinks.linkedin}

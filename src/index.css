@@ -2,8 +2,9 @@
 
 @layer base {
   :root {
-    --color-crimson: #941e33;
-    --color-crimson-bright: #b8283f;
+    --color-primary-blue: #2563eb;
+    --color-bright-blue: #3b82f6;
+    --color-deep-blue: #1d4ed8;
     --color-dark-bg: #171717;
     --color-dark-card: #1d1d1d;
     --color-dark-surface: #232323;
@@ -33,7 +34,7 @@
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #941e33;
+  background: #2563eb;
 }
 
 /* Font helpers */
@@ -61,10 +62,10 @@
 }
 
 /* Glow effects */
-.crimson-glow {
-  box-shadow: 0 0 35px -5px rgba(148, 30, 51, 0.4);
+.blue-glow, .crimson-glow {
+  box-shadow: 0 0 35px -5px rgba(37, 99, 235, 0.45);
 }
 
-.crimson-glow-sm {
-  box-shadow: 0 0 15px 0 rgba(148, 30, 51, 0.3);
+.blue-glow-sm, .crimson-glow-sm {
+  box-shadow: 0 0 15px 0 rgba(59, 130, 246, 0.35);
 }

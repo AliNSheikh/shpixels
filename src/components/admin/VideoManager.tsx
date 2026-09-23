@@ -28,7 +28,7 @@ export function VideoManager() {
     order: 1,
     visible: true,
     caption: '4K ProRes • DaVinci Resolve',
-    client: 'MOGRAFIX'
+    client: 'SHPIXELS'
   });
 
   const handleSaveHeroVideo = (e: React.FormEvent) => {
@@ -108,7 +108,7 @@ export function VideoManager() {
       <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-5 shadow-xl">
         <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#941e33] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#2563eb] animate-pulse" />
             <h3 className="text-sm sm:text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
               Primary Website Showreel (Hero & Showreel Sections)
             </h3>
@@ -126,11 +126,11 @@ export function VideoManager() {
               value={heroVideoInput}
               onChange={(e) => setHeroVideoInput(e.target.value)}
               placeholder="Paste YouTube Video URL or ID (e.g. ScMzIvxBSi4 or https://youtu.be/...)"
-              className="flex-1 px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#941e33]"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:outline-none focus:border-[#2563eb]"
             />
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md flex items-center justify-center gap-2 flex-shrink-0"
+              className="px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase tracking-wider text-white transition-all shadow-md flex items-center justify-center gap-2 flex-shrink-0"
             >
               {heroVideoSaved ? <Check className="w-4 h-4" /> : <Video className="w-4 h-4" />}
               <span>{heroVideoSaved ? 'Showreel Saved!' : 'Update Showreel'}</span>
@@ -164,7 +164,7 @@ export function VideoManager() {
             onClick={handleOpenAdd}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-semibold uppercase tracking-wider text-[#f1f2ed] border border-[#2b2b2b] transition-colors self-start sm:self-auto"
           >
-            <Plus className="w-4 h-4 text-[#941e33]" />
+            <Plus className="w-4 h-4 text-[#2563eb]" />
             <span>Add YouTube Video</span>
           </button>
         </div>
@@ -179,7 +179,7 @@ export function VideoManager() {
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="text-[10px] font-mono uppercase text-[#941e33] font-bold">
+                    <span className="text-[10px] font-mono uppercase text-[#2563eb] font-bold">
                       {vid.category}
                     </span>
                     <h4 className="text-sm font-bold text-[#f1f2ed] line-clamp-1">
@@ -262,7 +262,7 @@ export function VideoManager() {
                   value={formState.youtubeUrl}
                   onChange={(e) => handleUrlChange(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=... or Video ID"
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
                 {formState.videoId && (
                   <p className="text-[10px] font-mono text-emerald-400 mt-1">
@@ -281,7 +281,7 @@ export function VideoManager() {
                   value={formState.title}
                   onChange={(e) => setFormState({ ...formState, title: e.target.value })}
                   placeholder="e.g. Commercial Direction Showreel"
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                 />
               </div>
 
@@ -295,7 +295,7 @@ export function VideoManager() {
                     value={formState.category}
                     onChange={(e) => setFormState({ ...formState, category: e.target.value })}
                     placeholder="e.g. Commercial, Wedding, Drone"
-                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                   />
                 </div>
 
@@ -308,7 +308,7 @@ export function VideoManager() {
                     value={formState.client}
                     onChange={(e) => setFormState({ ...formState, client: e.target.value })}
                     placeholder="e.g. Solace Brands"
-                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
                   />
                 </div>
               </div>
@@ -322,7 +322,7 @@ export function VideoManager() {
                   value={formState.description}
                   onChange={(e) => setFormState({ ...formState, description: e.target.value })}
                   placeholder="Short summary of the video content..."
-                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#941e33] focus:outline-none resize-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none resize-none"
                 />
               </div>
 
@@ -344,7 +344,7 @@ export function VideoManager() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-[#941e33] hover:bg-[#b8283f] text-xs font-semibold uppercase text-white"
+                  className="px-5 py-2 rounded-lg bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold uppercase text-white"
                 >
                   Save Video
                 </button>
