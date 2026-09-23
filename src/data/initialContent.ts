@@ -17,6 +17,7 @@ export const initialContent: GlobalContent = {
     logoText: "SHPIXELS",
     logoSubtext: "SHARIF ABS • CINEMATOGRAPHY",
     logoImage: "/assets/shpixels-logo.svg",
+    favicon: "/assets/shpixels-icon.svg",
     accentColor: "#2563eb"
   },
   navigation: [

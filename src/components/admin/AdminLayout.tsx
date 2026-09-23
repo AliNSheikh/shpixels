@@ -62,7 +62,7 @@ export function AdminLayout() {
     { id: 'sections', label: isAr ? 'محرر كافة الأقسام والمحتوى' : 'Section & Pipeline Editor', icon: Layers },
     { id: 'videos', label: isAr ? 'فيديوهات YouTube 4K' : 'YouTube Videos', icon: Video },
     { id: 'media', label: isAr ? 'الوسائط والرفع المباشر' : 'Media & Desktop Upload', icon: Image },
-    { id: 'settings', label: isAr ? 'النصوص والإعدادات' : 'Site & Security Settings', icon: Settings },
+    { id: 'settings', label: isAr ? 'الشعار والهوية والإعدادات' : 'Logo, Brand & Settings', icon: Settings },
     { id: 'navigation', label: isAr ? 'قائمة التنقل' : 'Navigation Menu', icon: Menu },
     { id: 'links', label: isAr ? 'الروابط والتواصل' : 'Links & Social', icon: Globe },
     { id: 'seo', label: isAr ? 'أرشفة Google & Sitemap' : 'SEO & Google Indexing', icon: Search },

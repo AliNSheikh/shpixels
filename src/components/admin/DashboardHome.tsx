@@ -246,9 +246,9 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     },
     { 
       id: 'branding', 
-      name: isAr ? 'الشعارات وقائمة العملاء' : 'Logos & Client Roster', 
-      meta: `${content.clientLogos?.length || 6} ${isAr ? 'عملاء معتمدين' : 'Client Logos'}`, 
-      icon: ImageIcon, 
+      name: isAr ? 'الشعار، الأيقونة والهوية' : 'Logo, Favicon & Brand', 
+      meta: content.branding.logoImage ? (isAr ? 'شعار مخصص مفعل' : 'Custom Logo Active') : (isAr ? 'نص الشعار الافتراضي' : 'Default Brand'), 
+      icon: Sparkles, 
       color: 'text-emerald-400' 
     },
     { 
@@ -709,7 +709,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
                 return (
                   <div
                     key={sec.id}
-                    onClick={() => onNavigate('sections')}
+                    onClick={() => onNavigate(sec.id === 'branding' ? 'settings' : 'sections')}
                     className="p-3 rounded-xl bg-[#232323] border border-[#2b2b2b] hover:border-[#2563eb]/40 transition-colors cursor-pointer group flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">

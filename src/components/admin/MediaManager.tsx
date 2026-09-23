@@ -12,7 +12,28 @@ export function MediaManager() {
 
   const [heroBgInput, setHeroBgInput] = useState(content.hero.bgImageUrl || '');
   const [profileImgInput, setProfileImgInput] = useState(content.about.profileImage || '');
+  const [logoInput, setLogoInput] = useState(content.branding.logoImage || '/assets/shpixels-logo.svg');
+  const [faviconInput, setFaviconInput] = useState(content.branding.favicon || content.seo.favicon || '/assets/shpixels-icon.svg');
   const [savedKey, setSavedKey] = useState<string | null>(null);
+
+  const handleSaveLogo = (url: string) => {
+    setLogoInput(url);
+    updateContent({
+      branding: { ...content.branding, logoImage: url }
+    });
+    setSavedKey('logo');
+    setTimeout(() => setSavedKey(null), 2000);
+  };
+
+  const handleSaveFavicon = (url: string) => {
+    setFaviconInput(url);
+    updateContent({
+      branding: { ...content.branding, favicon: url },
+      seo: { ...content.seo, favicon: url }
+    });
+    setSavedKey('favicon');
+    setTimeout(() => setSavedKey(null), 2000);
+  };
 
   // Gallery item add/edit modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,6 +116,56 @@ export function MediaManager() {
         </p>
       </div>
 
+      {/* Global Brand Assets Quick Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Site Logo */}
+        <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-2 border-b border-[#232323]">
+            <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
+              {isAr ? 'شعار الموقع (Website Logo)' : 'Website Logo (Header & Footer)'}
+            </h3>
+            {savedKey === 'logo' && (
+              <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                <Check className="w-3 h-3" /> {isAr ? 'تم الحفظ' : 'Saved'}
+              </span>
+            )}
+          </div>
+
+          <ImageUploadDropzone
+            value={logoInput}
+            onChange={handleSaveLogo}
+            aspectRatio="aspect-[4/1]"
+            previewFit="contain"
+            placeholder="/assets/shpixels-logo.svg or https://..."
+            helperText={isAr ? 'رفع ملف الشعار بصيغة PNG شفافة أو SVG' : 'Upload custom logo file (transparent PNG or SVG recommended)'}
+          />
+        </div>
+
+        {/* Browser Favicon */}
+        <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-2 border-b border-[#232323]">
+            <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
+              {isAr ? 'أيقونة المتصفح (Browser Favicon)' : 'Browser Favicon (.ico, .svg, .png)'}
+            </h3>
+            {savedKey === 'favicon' && (
+              <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                <Check className="w-3 h-3" /> {isAr ? 'تم الحفظ' : 'Saved'}
+              </span>
+            )}
+          </div>
+
+          <ImageUploadDropzone
+            value={faviconInput}
+            onChange={handleSaveFavicon}
+            aspectRatio="aspect-square"
+            previewFit="contain"
+            compact={true}
+            placeholder="/assets/shpixels-icon.svg or https://..."
+            helperText={isAr ? 'رفع أيقونة المتصفح بدقة 32×32 أو 64×64 أو SVG' : 'Upload browser icon file (32×32px, 64×64px, or vector SVG)'}
+          />
+        </div>
+      </div>
+
       {/* Global Hero & Profile Image Quick Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Hero Background Image */}
@@ -123,7 +194,7 @@ export function MediaManager() {
         <div className="p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
           <div className="flex items-center justify-between pb-2 border-b border-[#232323]">
             <h3 className="text-sm font-bold text-[#f1f2ed] uppercase font-quicksand">
-              {isAr ? 'صورة المخرج الشخصية (عن المخرج)' : 'Director Portrait (Mo Abdallah)'}
+              {isAr ? 'صورة المخرج الشخصية (عن المخرج)' : 'Director Portrait (Sharif Abs)'}
             </h3>
             {savedKey === 'profileImg' && (
               <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">

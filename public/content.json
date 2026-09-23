@@ -1,20 +1,22 @@
 {
   "seo": {
-    "pageTitle": "MOGRAFIX | Videographer & Creative Visual Filmmaker",
-    "metaDescription": "MOGRAFIX - Professional videography, commercial brand ads, weddings, creative productions, and AI-driven motion graphics by Mohammad Abdallah.",
-    "ogTitle": "MOGRAFIX - Visual Storytelling Through Cinematic Motion",
-    "ogDescription": "7+ years of bringing ideas to life through cinematic filmmaking, commercial advertising, and AI-driven motion graphics.",
+    "pageTitle": "SHPIXELS | Sharif Abs - Cinematographer & Creative Filmmaker",
+    "metaDescription": "SHPIXELS - Professional videography, commercial brand ads, weddings, creative productions, and cinematic storytelling by Sharif Abs.",
+    "ogTitle": "SHPIXELS - Visual Storytelling Through Cinematic Motion",
+    "ogDescription": "Crafting impactful cinematic filmmaking, commercial advertising, and visual stories by Sharif Abs.",
     "ogImage": "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1200&q=80",
-    "canonicalUrl": "https://mografix.com/",
-    "favicon": "/favicon.ico",
+    "canonicalUrl": "https://shpixels.vercel.app/",
+    "favicon": "/assets/shpixels-icon.svg",
     "googleSiteVerification": "",
     "googleAnalyticsId": "",
     "sitemapEnabled": true
   },
   "branding": {
-    "logoText": "MOGRAFIX",
-    "logoSubtext": "FILMMAKER & CREATIVE STUDIO",
-    "accentColor": "#941e33"
+    "logoText": "SHPIXELS",
+    "logoSubtext": "SHARIF ABS • CINEMATOGRAPHY",
+    "logoImage": "/assets/shpixels-logo.svg",
+    "favicon": "/assets/shpixels-icon.svg",
+    "accentColor": "#2563eb"
   },
   "navigation": [
     {
@@ -76,8 +78,8 @@
   ],
   "hero": {
     "title": "VISUAL STORYTELLING THROUGH CINEMATIC MOTION",
-    "subtitle": "7+ years crafting high-impact commercial ads, emotionally resonant wedding films, healthcare storytelling, and cutting-edge AI motion graphics.",
-    "badgeText": "VIDEOGRAPHER & CREATIVE DIRECTOR",
+    "subtitle": "Sharif Abs crafting high-impact commercial ads, emotionally resonant wedding films, luxury visuals, and cutting-edge cinematography.",
+    "badgeText": "SHARIF ABS • CINEMATOGRAPHER & DIRECTOR",
     "primaryCtaText": "Explore Portfolio",
     "primaryCtaLink": "#portfolio",
     "secondaryCtaText": "Watch 2026 Showreel",
@@ -98,13 +100,13 @@
     ]
   },
   "about": {
-    "badge": "THE CREATIVE BEHIND THE LENS",
+    "badge": "THE CINEMATOGRAPHER BEHIND THE LENS",
     "heading": "Crafting visual stories that linger in the memory.",
-    "highlightText": "Mohammad Abdallah (Mo) — Filmmaker & Visual Storyteller",
+    "highlightText": "Sharif Abs — Filmmaker & Visual Storyteller",
     "bioParagraphs": [
-      "With over seven years behind the camera, I specialize in transforming concepts into compelling cinematic narratives. Originating from Syria and operating internationally, my work bridges raw human emotion and sharp commercial visual precision.",
-      "At MOGRAFIX, every frame is engineered with intention. Whether directing a high-energy brand advertisement, capturing intimate wedding vows, detailing sensitive medical procedures, or producing synthetic AI-assisted motion sequences, my philosophy remains constant: authentic emotion elevated by uncompromising cinematic craftsmanship.",
-      "Equipped with modern cinema cameras (RED & Sony Cinema Line), DJI certified aerial systems, and an advanced DaVinci Resolve color grading suite, I deliver end-to-end visual solutions tailored for modern digital screens and international broadcasts."
+      "With passion and precision behind the camera, I specialize in transforming concepts into compelling cinematic narratives. As the creative force behind SHPIXELS, my work bridges raw human emotion and sharp commercial visual excellence.",
+      "At SHPIXELS, every frame is engineered with intention. Whether directing a high-energy brand advertisement, capturing intimate wedding vows, detailing architectural landmarks, or producing sleek commercial visuals, my philosophy remains constant: authentic emotion elevated by uncompromising cinematic craftsmanship.",
+      "Equipped with modern cinema cameras (RED & Sony Cinema Line), certified aerial drone systems, and an advanced DaVinci Resolve color grading suite, I deliver end-to-end visual solutions tailored for modern digital screens and international broadcasts."
     ],
     "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
     "stats": [
@@ -272,7 +274,7 @@
       "title": "SYNTHESIS: AI Motion Experience",
       "description": "An experimental visual showcase merging live-action camera tracking with neural generative motion graphics, exploring digital transhumanism.",
       "category": "AI & Motion Graphics",
-      "client": "MOGRAFIX Labs",
+      "client": "SHPIXELS Labs",
       "year": "2026",
       "coverImage": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=80",
       "videos": [
@@ -394,17 +396,17 @@
   "featuredVideos": [
     {
       "id": "fvid-1",
-      "title": "MOGRAFIX Official 2026 Cinematography Showreel",
+      "title": "SHPIXELS Official 2026 Cinematography Showreel",
       "youtubeUrl": "https://www.youtube.com/watch?v=ScMzIvxBSi4",
       "videoId": "ScMzIvxBSi4",
       "thumbnail": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1200&q=80",
-      "description": "A curated 2-minute visual journey showcasing commercial advertisements, dramatic drone perspectives, medical precision, and AI motion sequences.",
+      "description": "A curated 2-minute visual journey showcasing commercial advertisements, dramatic drone perspectives, medical precision, and cinematic narratives.",
       "category": "Showreel",
       "featured": true,
       "order": 1,
       "visible": true,
       "caption": "Resolution: 4K UHD • Color: DaVinci Resolve Wide Gamut • Audio: Spatial Stereo",
-      "client": "MOGRAFIX Studio"
+      "client": "SHPIXELS Studio"
     },
     {
       "id": "fvid-2",
@@ -488,23 +490,23 @@
     }
   ],
   "contact": {
-    "email": "contact@mografix.com",
-    "phone": "+963 99 123 4567",
-    "whatsapp": "https://wa.me/963991234567",
-    "location": "Syria • Available Globally for Remote & On-Location Projects",
-    "instagram": "https://instagram.com/mografiix",
-    "youtube": "https://youtube.com/@mografix",
-    "tiktok": "https://tiktok.com/@mografiix",
-    "linkedin": "https://linkedin.com/in/mohammad-abdallah-mografix",
-    "behance": "https://behance.net/mografix",
+    "email": "contact@shpixels.com",
+    "phone": "+971 50 123 4567",
+    "whatsapp": "https://wa.me/971501234567",
+    "location": "Sharif Abs Studio • Available Globally for Remote & On-Location Projects",
+    "instagram": "https://instagram.com/shpixels",
+    "youtube": "https://youtube.com/@shpixels",
+    "tiktok": "https://tiktok.com/@shpixels",
+    "linkedin": "https://linkedin.com/in/sharif-abs",
+    "behance": "https://behance.net/shpixels",
     "ctaHeading": "LET'S CREATE SOMETHING UNFORGETTABLE",
-    "ctaSubtitle": "Have a commercial campaign, wedding, medical production, or creative concept? Share your vision and let's craft cinematic impact together.",
+    "ctaSubtitle": "Have a commercial campaign, wedding, film production, or creative concept? Share your vision and let's craft cinematic impact together.",
     "responseTimeNote": "Typically responds within 24 hours on business days."
   },
   "footer": {
-    "copyrightText": "© 2026 MOGRAFIX. All rights reserved. Directed by Mohammad Abdallah.",
+    "copyrightText": "© 2026 SHPIXELS. All rights reserved. Directed by Sharif Abs.",
     "quote": "Every frame carries purpose. Every story deserves cinematic depth.",
-    "disclaimer": "Professional videographer portfolio & creative production studio."
+    "disclaimer": "SHPIXELS — Professional videographer portfolio & creative production studio by Sharif Abs."
   },
   "categories": [
     "Commercial & Brand Ads",

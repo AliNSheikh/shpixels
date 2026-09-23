@@ -15,6 +15,7 @@ export interface BrandingData {
   logoText: string;
   logoSubtext: string;
   logoImage?: string;
+  favicon?: string;
   accentColor: string;
 }
 

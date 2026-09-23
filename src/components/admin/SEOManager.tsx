@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { ImageUploadDropzone } from '../common/ImageUploadDropzone';
 
 export function SEOManager() {
   const { content, updateContent } = useContent();
@@ -69,7 +70,13 @@ export function SEOManager() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateContent({ seo });
+    updateContent({ 
+      seo,
+      branding: {
+        ...content.branding,
+        favicon: seo.favicon || content.branding.favicon
+      }
+    });
 
     // Update document title dynamically in DOM
     if (seo.pageTitle) {
@@ -233,6 +240,20 @@ export function SEOManager() {
                 value={seo.canonicalUrl}
                 onChange={(e) => setSeo({ ...seo, canonicalUrl: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+
+            {/* Favicon Browser Icon */}
+            <div>
+              <ImageUploadDropzone
+                value={seo.favicon || ''}
+                onChange={(url) => setSeo({ ...seo, favicon: url })}
+                label={isAr ? 'أيقونة المتصفح (Browser Favicon - .ico, .svg, .png)' : 'Browser Favicon (.ico, .svg, .png)'}
+                aspectRatio="aspect-square"
+                previewFit="contain"
+                compact={true}
+                placeholder="/assets/shpixels-icon.svg"
+                helperText={isAr ? 'يتم تحديث أيقونة التبويب في المتصفح تلقائياً عند الحفظ' : 'Browser tab icon automatically updates in real-time'}
               />
             </div>
           </div>

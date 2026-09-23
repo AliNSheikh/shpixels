@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { ArrowUp, Instagram, Youtube, Linkedin, Film } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -7,6 +8,11 @@ export function Footer() {
   const { language, t } = useLanguage();
   const isAr = language === 'ar';
   const { branding, contact, footer, navigation } = content;
+  const [logoError, setLogoError] = useState(false);
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [branding.logoImage]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -42,18 +48,19 @@ export function Footer() {
           {/* Brand Col */}
           <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
-              {branding.logoImage ? (
+              {branding.logoImage && !logoError ? (
                 <img 
                   src={branding.logoImage} 
                   alt={branding.logoText || 'SHPIXELS'} 
                   className="h-9 w-auto max-w-[170px] sm:max-w-[200px] object-contain rounded-md" 
+                  onError={() => setLogoError(true)}
                 />
               ) : (
                 <div className="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black">
                   <Film className="w-5 h-5 text-white" />
                 </div>
               )}
-              {!branding.logoImage && (
+              {(!branding.logoImage || logoError) && (
                 <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand">
                   {branding.logoText || 'SHPIXELS'}
                 </span>

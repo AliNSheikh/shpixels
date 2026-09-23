@@ -765,6 +765,31 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(ADMIN_PASS_KEY, newPass);
   }, []);
 
+  // Dynamic favicon & page title synchronization
+  useEffect(() => {
+    const faviconUrl = content.branding?.favicon || content.seo?.favicon || '/assets/shpixels-icon.svg';
+    if (faviconUrl) {
+      let iconLink: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+      if (!iconLink) {
+        iconLink = document.createElement('link');
+        iconLink.rel = 'icon';
+        document.head.appendChild(iconLink);
+      }
+      iconLink.href = faviconUrl;
+      if (faviconUrl.startsWith('data:image/svg') || faviconUrl.endsWith('.svg')) {
+        iconLink.type = 'image/svg+xml';
+      } else if (faviconUrl.startsWith('data:image/png') || faviconUrl.endsWith('.png')) {
+        iconLink.type = 'image/png';
+      } else if (faviconUrl.startsWith('data:image/x-icon') || faviconUrl.endsWith('.ico')) {
+        iconLink.type = 'image/x-icon';
+      }
+    }
+
+    if (content.seo?.pageTitle) {
+      document.title = content.seo.pageTitle;
+    }
+  }, [content.branding?.favicon, content.seo?.favicon, content.seo?.pageTitle]);
+
   return (
     <ContentContext.Provider
       value={{

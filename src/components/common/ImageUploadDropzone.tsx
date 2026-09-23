@@ -10,6 +10,8 @@ interface ImageUploadDropzoneProps {
   aspectRatio?: string;
   placeholder?: string;
   helperText?: string;
+  previewFit?: 'contain' | 'cover';
+  compact?: boolean;
 }
 
 export function ImageUploadDropzone({
@@ -19,7 +21,9 @@ export function ImageUploadDropzone({
   label,
   aspectRatio = 'aspect-video',
   placeholder = 'https://...',
-  helperText
+  helperText,
+  previewFit = 'cover',
+  compact = false
 }: ImageUploadDropzoneProps) {
   const { language } = useLanguage();
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
@@ -33,8 +37,12 @@ export function ImageUploadDropzone({
   };
 
   const processFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      setError(language === 'ar' ? 'يرجى اختيار ملف صورة صالح (JPG, PNG, WebP)' : 'Please select a valid image file (JPG, PNG, WebP)');
+    const isImageFile = 
+      file.type.startsWith('image/') || 
+      /\.(ico|svg|png|jpe?g|webp|gif|bmp|avif)$/i.test(file.name);
+
+    if (!isImageFile) {
+      setError(language === 'ar' ? 'يرجى اختيار ملف صورة صالح (SVG, PNG, ICO, JPG, WebP)' : 'Please select a valid image file (SVG, PNG, ICO, JPG, WebP)');
       return;
     }
 
@@ -135,15 +143,19 @@ export function ImageUploadDropzone({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.ico,.svg"
             onChange={handleFileChange}
             className="hidden"
           />
 
           {value ? (
             <div className="space-y-3">
-              <div className={`relative ${aspectRatio} max-h-48 mx-auto rounded-lg overflow-hidden border border-[#2b2b2b] bg-black`}>
-                <img src={value} alt="Preview" className="w-full h-full object-cover" />
+              <div className={`relative ${aspectRatio} ${compact ? 'max-h-28' : 'max-h-48'} mx-auto rounded-lg overflow-hidden border border-[#2b2b2b] bg-[#111111] flex items-center justify-center p-2`}>
+                <img 
+                  src={value} 
+                  alt="Preview" 
+                  className={`max-w-full max-h-full ${previewFit === 'contain' ? 'object-contain' : 'w-full h-full object-cover'}`} 
+                />
                 <button
                   type="button"
                   onClick={(e) => {
@@ -161,15 +173,15 @@ export function ImageUploadDropzone({
               </p>
             </div>
           ) : (
-            <div className="py-4 space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-[#2b2b2b] text-[#2563eb] flex items-center justify-center mx-auto">
-                <Upload className="w-5 h-5" />
+            <div className={`${compact ? 'py-2.5' : 'py-4'} space-y-2`}>
+              <div className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-[#2b2b2b] text-[#2563eb] flex items-center justify-center mx-auto`}>
+                <Upload className={`${compact ? 'w-4 h-4' : 'w-5 h-5'}`} />
               </div>
               <div className="text-xs text-[#f1f2ed] font-medium">
                 {language === 'ar' ? 'اسحب وأفلت الصورة من جهازك، أو انقر للتصفح' : 'Drag & drop image from desktop, or click to browse'}
               </div>
               <p className="text-[10px] text-[#706e6a] font-mono">
-                PNG, JPG, WEBP, GIF (Up to 10MB)
+                SVG, PNG, ICO, JPG, WEBP (Up to 10MB)
               </p>
             </div>
           )}
@@ -192,8 +204,12 @@ export function ImageUploadDropzone({
           </div>
 
           {value && (
-            <div className={`relative ${aspectRatio} max-h-48 rounded-lg overflow-hidden border border-[#2b2b2b] bg-black`}>
-              <img src={value} alt="URL Preview" className="w-full h-full object-cover" />
+            <div className={`relative ${aspectRatio} ${compact ? 'max-h-28' : 'max-h-48'} rounded-lg overflow-hidden border border-[#2b2b2b] bg-[#111111] flex items-center justify-center p-2`}>
+              <img 
+                src={value} 
+                alt="URL Preview" 
+                className={`max-w-full max-h-full ${previewFit === 'contain' ? 'object-contain' : 'w-full h-full object-cover'}`} 
+              />
               <button
                 type="button"
                 onClick={() => handleUpdate('')}

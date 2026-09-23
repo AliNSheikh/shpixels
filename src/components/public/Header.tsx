@@ -9,6 +9,11 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [clickCount, setClickCount] = useState(0);
+  const [logoError, setLogoError] = useState(false);
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [content.branding.logoImage]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -97,11 +102,12 @@ export function Header() {
               }}
               className="group flex items-center focus:outline-none cursor-pointer"
             >
-              {content.branding.logoImage ? (
+              {content.branding.logoImage && !logoError ? (
                 <img 
                   src={content.branding.logoImage} 
                   alt={content.branding.logoText || 'SHPIXELS'} 
                   className="h-9 w-auto max-w-[170px] sm:max-w-[210px] object-contain rounded-md" 
+                  onError={() => setLogoError(true)}
                 />
               ) : (
                 <div className="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black tracking-tighter shadow-md group-hover:bg-[#3b82f6] transition-colors border border-[#3b82f6]/40">
@@ -110,7 +116,7 @@ export function Header() {
               )}
             </a>
 
-            {!content.branding.logoImage && (
+            {(!content.branding.logoImage || logoError) && (
               <div className="flex flex-col">
                 <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand flex items-center">
                   <span>{content.branding.logoText || 'SHPIXELS'}</span>
