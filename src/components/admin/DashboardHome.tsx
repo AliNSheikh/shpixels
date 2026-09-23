@@ -254,7 +254,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     },
     { 
       id: 'branding', 
-      name: isAr ? 'الشعار، الأيقونة والهوية' : 'Logo, Favicon & Brand', 
+      name: isAr ? 'الشعار، الأيقونة والإعدادات' : 'Logo, Brand & Site Settings', 
       meta: content.branding.logoImage ? (isAr ? 'شعار مخصص مفعل' : 'Custom Logo Active') : (isAr ? 'نص الشعار الافتراضي' : 'Default Brand'), 
       icon: Sparkles, 
       color: 'text-emerald-400' 

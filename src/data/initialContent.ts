@@ -451,6 +451,56 @@ export const initialContent: GlobalContent = {
     "Medical & Healthcare",
     "Aerial & Drone"
   ],
+  categoryDetails: {
+    "Commercial & Brand Ads": {
+      coverImage: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1200&q=85",
+      description: "High-impact commercial storytelling, automotive visual hooks, and broadcast advertising campaigns.",
+      descriptionAr: "إعلانات تجارية سينمائية عالية التأثير للعلامات التجارية.",
+      nameAr: "إعلانات تجارية",
+      color: "#2563eb"
+    },
+    "Sport & Gym": {
+      coverImage: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=85",
+      description: "High-octane fitness cinematography, athletic speed, and kinetic intensity.",
+      descriptionAr: "تصوير حركي ديناميكي للياقة البدنية والرياضيين.",
+      nameAr: "رياضة ولياقة",
+      color: "#ef4444"
+    },
+    "Weddings & Events": {
+      coverImage: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85",
+      description: "Emotionally resonant luxury wedding films and timeless celebration archives.",
+      descriptionAr: "توثيق سينمائي فاخر للأعراس واللحظات العاطفية الخالدة.",
+      nameAr: "أعراس وفعاليات",
+      color: "#d97706"
+    },
+    "AI & Motion Graphics": {
+      coverImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=85",
+      description: "Generative neural aesthetics, kinetic typography, and seamless visual effects.",
+      descriptionAr: "مؤثرات بصرية متقدمة وموشن جرافيكس مدعوم بالذكاء الاصطناعي.",
+      nameAr: "ذكاء اصطناعي وموشن",
+      color: "#8b5cf6"
+    },
+    "Medical & Healthcare": {
+      coverImage: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1200&q=85",
+      description: "Human-centered healthcare documentaries, clinical innovations, and medical portraits.",
+      descriptionAr: "أفلام طبية وثائقية للمستشفيات والكوادر الصحية.",
+      nameAr: "رعاية صحية وطبية",
+      color: "#06b6d4"
+    },
+    "Aerial & Drone": {
+      coverImage: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=1200&q=85",
+      description: "Licensed 4K aerial cinematography and sweeping landscape reveals.",
+      descriptionAr: "لقطات جوية 4K مرخصة وتوثيق معماري وطبيعي مذهل.",
+      nameAr: "تصوير جوي درون",
+      color: "#10b981"
+    }
+  },
+  adminAuth: {
+    // Salted SHA-256 for 'mografix2026' with salt 'shpixels_secure_salt_2026'
+    passwordHash: "a76e93895e656d0d9d44cfa068e219001b942bc70aaec1dff242bc61e93883a4",
+    salt: "shpixels_secure_salt_2026",
+    updatedAt: "2026-09-23T00:00:00.000Z"
+  },
   clientLogos: [
     { id: "cl-1", name: "Sony Cinema Line", logoUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=200&q=80" },
     { id: "cl-2", name: "DJI Aerial Systems", logoUrl: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=200&q=80" },

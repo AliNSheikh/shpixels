@@ -141,6 +141,29 @@ export interface CategoryItem {
   nameAr?: string;
   color?: string;
   icon?: string;
+  coverImage?: string;
+  description?: string;
+  descriptionAr?: string;
+}
+
+export interface CategoryDetail {
+  coverImage?: string;
+  description?: string;
+  descriptionAr?: string;
+  nameAr?: string;
+  color?: string;
+}
+
+export interface AdminAuthData {
+  passwordHash: string;
+  salt: string;
+  updatedAt: string;
+}
+
+export interface SupabaseConfigData {
+  url?: string;
+  anonKey?: string;
+  autoSync?: boolean;
 }
 
 export interface SectionHeaderInfo {
@@ -198,6 +221,9 @@ export interface GlobalContent {
   contact: ContactData;
   footer: FooterData;
   categories?: string[];
+  categoryDetails?: Record<string, CategoryDetail>;
+  adminAuth?: AdminAuthData;
+  supabaseConfig?: SupabaseConfigData;
   clientLogos?: ClientLogo[];
   sectionHeaders?: Record<string, SectionHeaderInfo>;
   lastPublished?: string;

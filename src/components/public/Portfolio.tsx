@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Play, Sparkles, FolderKanban } from 'lucide-react';
+import { Play, Sparkles, FolderKanban, Film, Layers } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { ProjectItem } from '../../types/content';
 import { ProjectModal } from './ProjectModal';
@@ -7,7 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { OptimizedImage } from '../common/OptimizedImage';
 
 export function Portfolio() {
-  const { content, categories: contextCategories } = useContent();
+  const { content, categories: contextCategories, categoryDetails } = useContent();
   const { language, t } = useLanguage();
   const isAr = language === 'ar';
 
@@ -36,9 +36,16 @@ export function Portfolio() {
     return publishedProjects.filter((p) => p.category === selectedCategory);
   }, [publishedProjects, selectedCategory]);
 
+  const currentCategoryDetail = useMemo(() => {
+    if (selectedCategory === 'All') return null;
+    return categoryDetails?.[selectedCategory] || null;
+  }, [selectedCategory, categoryDetails]);
+
   const getCategoryLabel = (cat: string) => {
     if (!isAr) return cat;
     if (cat === 'All') return 'الكل';
+    const detail = categoryDetails?.[cat];
+    if (detail?.nameAr) return detail.nameAr;
     const dict: Record<string, string> = {
       'Commercial & Brand Ads': 'إعلانات تجارية',
       'AI & Motion Graphics': 'ذكاء اصطناعي وموشن',
@@ -74,21 +81,58 @@ export function Portfolio() {
         </div>
 
         {/* Category Filter Tabs */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-4 mb-6 sm:mb-10 no-scrollbar">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-4 mb-6 sm:mb-8 no-scrollbar">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-all duration-200 whitespace-nowrap cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-all duration-200 whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
                 selectedCategory === cat
                   ? 'bg-[#2563eb] text-white shadow-lg shadow-[#2563eb]/25 border border-[#3b82f6]/50'
                   : 'bg-[#1d1d1d] text-[#a8a6a1] hover:text-[#f1f2ed] hover:bg-[#232323] border border-[#2b2b2b]'
               }`}
             >
-              {getCategoryLabel(cat)}
+              {cat !== 'All' && categoryDetails?.[cat]?.coverImage && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400/80" />
+              )}
+              <span>{getCategoryLabel(cat)}</span>
             </button>
           ))}
         </div>
+
+        {/* Category Cover Showcase Banner (Rendered when a specific category is selected) */}
+        {selectedCategory !== 'All' && currentCategoryDetail?.coverImage && (
+          <div className="mb-8 rounded-2xl overflow-hidden border border-[#2b2b2b] relative aspect-[21/9] sm:aspect-[24/7] bg-[#141414] shadow-2xl group animate-fadeIn">
+            <img
+              src={currentCategoryDetail.coverImage}
+              alt={selectedCategory}
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+            />
+            {/* Cinematic Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+            <div className="absolute inset-0 p-5 sm:p-8 flex flex-col justify-end">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-[#2b2b2b] text-[10px] font-mono uppercase text-[#38bdf8] mb-2 w-fit">
+                <Layers className="w-3 h-3" />
+                <span>{isAr ? 'تصنيف الأفلام' : 'Category Showcase'}</span>
+                <span>•</span>
+                <span>{filteredProjects.length} {isAr ? 'أعمال معروضة' : 'films'}</span>
+              </div>
+
+              <h3 className="text-xl sm:text-3xl font-black text-white uppercase font-quicksand drop-shadow-md">
+                {selectedCategory}
+                {isAr && currentCategoryDetail.nameAr && ` • ${currentCategoryDetail.nameAr}`}
+              </h3>
+
+              {currentCategoryDetail.description && (
+                <p className="text-xs sm:text-sm text-[#e0dfdc] max-w-2xl mt-1 leading-relaxed drop-shadow line-clamp-2">
+                  {currentCategoryDetail.description}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Projects Grid: TWO-COLUMN ON MOBILE, MULTI-COLUMN ON LARGER SCREENS */}
         {filteredProjects.length === 0 ? (
@@ -128,58 +172,46 @@ export function Portfolio() {
                     )}
                   </div>
 
-                  {/* Play Button Overlay on Hover */}
+                  {/* Play Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#2563eb] text-white flex items-center justify-center shadow-xl transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current translate-x-0.5" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#2563eb]/90 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white ml-0.5" />
                     </div>
-                  </div>
-
-                  {/* Client & Year Tag */}
-                  <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-[10px] sm:text-xs text-[#a8a6a1] z-10">
-                    <span className="font-mono text-[#f1f2ed] font-medium drop-shadow-md truncate max-w-[65%]">
-                      {project.client}
-                    </span>
-                    <span className="font-mono text-[10px] drop-shadow-md flex-shrink-0">
-                      {project.year}
-                    </span>
                   </div>
                 </div>
 
-                {/* Card Info */}
-                <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between space-y-2">
+                {/* Card Content Footer */}
+                <div className="p-3 sm:p-4 flex flex-col justify-between flex-1">
                   <div>
-                    <h3 className="text-xs sm:text-base font-bold text-[#f1f2ed] group-hover:text-white transition-colors font-quicksand">
+                    <h3 className="text-xs sm:text-base font-bold text-[#f1f2ed] line-clamp-1 group-hover:text-[#38bdf8] transition-colors font-quicksand">
                       {project.title}
                     </h3>
-                    <p className="text-[11px] sm:text-xs text-[#a8a6a1] mt-1 leading-relaxed line-clamp-2">
-                      {project.description}
+                    <p className="text-[11px] sm:text-xs text-[#a8a6a1] line-clamp-1 mt-0.5">
+                      {project.client || project.description}
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-[#232323] flex items-center justify-between text-[10px] sm:text-xs">
-                    <span className="font-semibold text-[#38bdf8] group-hover:text-white flex items-center gap-1 transition-colors">
-                      <Play className="w-3 h-3 fill-current" />
-                      <span>{t('portfolio.watchFilm', 'Watch Film')}</span>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#262626] text-[10px] sm:text-[11px] font-mono text-[#706e6a]">
+                    <span>{project.year || '2026'}</span>
+                    <span className="text-[#38bdf8] group-hover:underline flex items-center gap-1">
+                      <span>{isAr ? 'عرض الفيلم' : 'Watch Film'}</span>
+                      <span>→</span>
                     </span>
-                    {project.videos && project.videos.length > 0 && (
-                      <span className="text-[9px] font-mono text-[#706e6a] uppercase">
-                        4K DCI
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
 
-      {/* Project Details Modal */}
-      <ProjectModal
-        project={activeProject}
-        onClose={() => setActiveProject(null)}
-      />
+        {/* Active Project Modal */}
+        {activeProject && (
+          <ProjectModal
+            project={activeProject}
+            onClose={() => setActiveProject(null)}
+          />
+        )}
+      </div>
     </section>
   );
 }

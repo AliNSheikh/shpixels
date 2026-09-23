@@ -1,5 +1,4 @@
 export default async function handler(req: any, res: any) {
-  // Set aggressive no-cache headers
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
@@ -10,7 +9,7 @@ export default async function handler(req: any, res: any) {
   if (supabaseUrl && supabaseKey) {
     try {
       const cleanUrl = supabaseUrl.trim().replace(/\/$/, "");
-      const resp = await fetch(`${cleanUrl}/rest/v1/site_content?id=eq.current&select=*`, {
+      const resp = await fetch(`${cleanUrl}/rest/v1/site_content?id=eq.current&select=id,version,published_at,updated_at`, {
         headers: {
           apikey: supabaseKey,
           Authorization: `Bearer ${supabaseKey}`
@@ -20,20 +19,21 @@ export default async function handler(req: any, res: any) {
         const rows: any = await resp.json();
         if (Array.isArray(rows) && rows.length > 0) {
           const item = rows[0];
-          const payload = item.data || item.content;
-          if (payload) {
-            return res.status(200).json(payload);
-          }
+          return res.status(200).json({
+            version: item.version || 1,
+            lastPublished: item.published_at || item.updated_at || new Date().toISOString(),
+            serverTime: new Date().toISOString()
+          });
         }
       }
     } catch (err: any) {
-      console.warn("Vercel API Supabase read warning:", err.message);
+      console.warn("Vercel API Supabase version read warning:", err.message);
     }
   }
 
-  // Fallback response
   return res.status(200).json({
-    status: "ready",
-    message: "Connect Supabase for persistent cloud database storage on Vercel"
+    version: 1,
+    lastPublished: new Date().toISOString(),
+    serverTime: new Date().toISOString()
   });
 }

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { 
   Settings, Save, Check, Key, Sliders, Sparkles, Image as ImageIcon, 
   Globe, RotateCcw, Trash2, Eye, ShieldCheck, Palette,
-  UploadCloud, RefreshCw, Clock
+  UploadCloud, RefreshCw, Clock, Database, Server, Copy, 
+  ExternalLink, Lock, AlertCircle, CheckCircle2, ShieldAlert
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -22,6 +23,28 @@ const ACCENT_COLOR_PRESETS = [
 const DEFAULT_LOGO = '/assets/shpixels-logo.svg';
 const DEFAULT_FAVICON = '/assets/shpixels-icon.svg';
 
+const SUPABASE_SETUP_SQL = `-- SHPIXELS CMS Database Schema for Supabase
+CREATE TABLE IF NOT EXISTS site_content (
+  id TEXT PRIMARY KEY DEFAULT 'current',
+  data JSONB NOT NULL,
+  version INTEGER DEFAULT 1,
+  published_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS and permissions for instant synchronization
+ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can read site_content" ON site_content;
+CREATE POLICY "Public can read site_content" ON site_content FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow anon inserts" ON site_content;
+CREATE POLICY "Allow anon inserts" ON site_content FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon updates" ON site_content;
+CREATE POLICY "Allow anon updates" ON site_content FOR UPDATE USING (true);
+`;
+
 export function SiteSettings() {
   const { 
     content, 
@@ -32,12 +55,32 @@ export function SiteSettings() {
     publishSuccess: isGlobalPublishSuccess,
     hasUnsavedChanges,
     lastPublishedAt,
-    publicationVersion
+    publicationVersion,
+    supabaseConfigState,
+    updateSupabaseCredentials,
+    testDatabaseConnection,
+    syncNowToSupabase
   } = useContent();
   const { language } = useLanguage();
   const isAr = language === 'ar';
 
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Database / Supabase states
+  const [dbUrl, setDbUrl] = useState(supabaseConfigState.url);
+  const [dbAnonKey, setDbAnonKey] = useState(supabaseConfigState.anonKey);
+  const [dbStatusMsg, setDbStatusMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [isTestingDb, setIsTestingDb] = useState(false);
+  const [isSyncingDb, setIsSyncingDb] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+
+  // Security password change states
+  const [currentPass, setCurrentPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [passError, setPassError] = useState<string | null>(null);
+  const [passSuccess, setPassSuccess] = useState<string | null>(null);
+  const [isUpdatingPass, setIsUpdatingPass] = useState(false);
 
   // Form states
   const [branding, setBranding] = useState({
@@ -61,9 +104,86 @@ export function SiteSettings() {
 
   const [footer, setFooter] = useState({ ...content.footer });
 
-  // Security password change state
-  const [newPass, setNewPass] = useState('');
-  const [passUpdated, setPassUpdated] = useState(false);
+  // Handlers for Database & Password
+  const handleSaveDbCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dbUrl.trim() || !dbAnonKey.trim()) {
+      setDbStatusMsg({ text: isAr ? 'يرجى إدخال الرابط والمفتاح' : 'Please enter URL and Anon Key', isError: true });
+      return;
+    }
+    setIsTestingDb(true);
+    setDbStatusMsg(null);
+    try {
+      const res = await updateSupabaseCredentials(dbUrl.trim(), dbAnonKey.trim());
+      setDbStatusMsg({ text: res.message, isError: !res.success });
+    } catch (err: any) {
+      setDbStatusMsg({ text: err.message, isError: true });
+    } finally {
+      setIsTestingDb(false);
+    }
+  };
+
+  const handleTestDatabase = async () => {
+    setIsTestingDb(true);
+    setDbStatusMsg(null);
+    try {
+      const res = await testDatabaseConnection(dbUrl.trim(), dbAnonKey.trim());
+      setDbStatusMsg({ text: res.message, isError: !res.success });
+    } catch (err: any) {
+      setDbStatusMsg({ text: err.message, isError: true });
+    } finally {
+      setIsTestingDb(false);
+    }
+  };
+
+  const handleSyncToSupabase = async () => {
+    setIsSyncingDb(true);
+    setDbStatusMsg(null);
+    try {
+      const res = await syncNowToSupabase();
+      setDbStatusMsg({ text: res.message, isError: !res.success });
+    } catch (err: any) {
+      setDbStatusMsg({ text: err.message, isError: true });
+    } finally {
+      setIsSyncingDb(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPassError(null);
+    setPassSuccess(null);
+
+    if (!currentPass.trim()) {
+      setPassError(isAr ? 'يرجى إدخال كلمة المرور الحالية.' : 'Please enter current password.');
+      return;
+    }
+    if (!newPass.trim() || newPass.trim().length < 6) {
+      setPassError(isAr ? 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل.' : 'New password must be at least 6 characters.');
+      return;
+    }
+    if (newPass !== confirmPass) {
+      setPassError(isAr ? 'كلمتا المرور غير متطابقتين.' : 'Passwords do not match.');
+      return;
+    }
+
+    setIsUpdatingPass(true);
+    try {
+      const res = await changeAdminPassword(currentPass, newPass);
+      if (res.success) {
+        setPassSuccess(isAr ? '✓ تم تشفير وتحديث كلمة المرور بنجاح!' : '✓ Password encrypted & updated successfully!');
+        setCurrentPass('');
+        setNewPass('');
+        setConfirmPass('');
+      } else {
+        setPassError(res.error || (isAr ? 'فشل التحديث.' : 'Update failed.'));
+      }
+    } catch (err: any) {
+      setPassError(err.message || 'Error updating password');
+    } finally {
+      setIsUpdatingPass(false);
+    }
+  };
 
   // Preview contrast toggles
   const [logoPreviewBg, setLogoPreviewBg] = useState<'dark' | 'light' | 'checker'>('dark');
@@ -125,15 +245,6 @@ export function SiteSettings() {
     if (e) e.preventDefault();
     handleSaveAll();
     await publishSite('Settings and branding published');
-  };
-
-  const handleUpdatePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPass.trim()) return;
-    changeAdminPassword(newPass.trim());
-    setPassUpdated(true);
-    setNewPass('');
-    setTimeout(() => setPassUpdated(false), 3000);
   };
 
   return (
@@ -683,41 +794,238 @@ export function SiteSettings() {
       </form>
 
       {/* ============================================================ */}
-      {/* SECURITY CREDENTIALS */}
+      {/* DATABASE & VERCEL CLOUD PERSISTENCE (SUPABASE)              */}
       {/* ============================================================ */}
-      <div className="p-6 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-4 shadow-xl">
-        <div className="flex items-center gap-2 pb-2 border-b border-[#232323]">
-          <Key className="w-4 h-4 text-[#2563eb]" />
-          <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
-            {isAr ? 'كلمة سر لوحة التحكم (Admin Passphrase)' : 'Admin Passphrase Security'}
-          </h3>
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-6 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 blur-3xl pointer-events-none rounded-full" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#232323] gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+              <Database className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand flex items-center gap-2">
+                <span>{isAr ? 'قاعدة البيانات والنشر السحابي (Supabase & Vercel)' : 'Cloud Database & Vercel Persistence'}</span>
+                {supabaseConfigState.isConfigured ? (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
+                    ✓ {isAr ? 'قاعدة البيانات متصلة' : 'Database Active'}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-400 border border-amber-500/40">
+                    • {isAr ? 'وضع التخزين المحلي (Local)' : 'Local Storage Mode'}
+                  </span>
+                )}
+              </h3>
+              <p className="text-[11px] text-[#a8a6a1]">
+                {isAr 
+                  ? 'ربط قاعدة بيانات Supabase يضمن حفظ ونشر كافة التعديلات بشكل دائم عند استضافة الموقع على Vercel أو GitHub.' 
+                  : 'Connecting Supabase ensures all site changes, images, and content persist permanently on serverless Vercel deployments.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(SUPABASE_SETUP_SQL);
+                setCopiedSql(true);
+                setTimeout(() => setCopiedSql(false), 2500);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#232323] hover:bg-[#2c2c2c] border border-[#2b2b2b] text-[11px] font-mono text-[#f1f2ed] transition-colors cursor-pointer"
+              title={isAr ? 'نسخ كود SQL لإنشاء الجداول في Supabase' : 'Copy SQL Schema to create tables in Supabase SQL editor'}
+            >
+              <Copy className="w-3.5 h-3.5 text-[#38bdf8]" />
+              <span>{copiedSql ? (isAr ? 'تم نسخ كود SQL ✓' : 'SQL Copied ✓') : (isAr ? 'نسخ كود SQL' : 'Copy SQL Script')}</span>
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleUpdatePassword} className="space-y-3 max-w-md">
-          <label className="block text-xs font-mono uppercase text-[#a8a6a1]">
-            {isAr ? 'تعيين كلمة سر جديدة' : 'Set New Admin Passphrase'}
-          </label>
-          <div className="flex gap-2">
+        {dbStatusMsg && (
+          <div className={`p-3.5 rounded-xl text-xs font-mono flex items-center gap-2 animate-fadeIn ${
+            dbStatusMsg.isError 
+              ? 'bg-red-950/50 border border-red-800/60 text-red-300' 
+              : 'bg-emerald-950/50 border border-emerald-800/60 text-emerald-300'
+          }`}>
+            {dbStatusMsg.isError ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+            <span>{dbStatusMsg.text}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveDbCredentials} className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
+                {isAr ? 'رابط مشروع Supabase (Project URL)' : 'Supabase Project URL'}
+              </label>
+              <input
+                type="url"
+                placeholder="https://your-project-id.supabase.co"
+                value={dbUrl}
+                onChange={(e) => setDbUrl(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:border-[#2563eb] focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
+                {isAr ? 'المفتاح العام (anon / public key)' : 'Supabase Anon Public Key'}
+              </label>
+              <input
+                type="text"
+                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                value={dbAnonKey}
+                onChange={(e) => setDbAnonKey(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:border-[#2563eb] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleTestDatabase}
+                disabled={isTestingDb || !dbUrl}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2c2c2c] border border-[#2b2b2b] text-xs font-semibold text-[#f1f2ed] disabled:opacity-50 transition-colors cursor-pointer"
+              >
+                {isTestingDb ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#38bdf8]" />
+                ) : (
+                  <Server className="w-3.5 h-3.5 text-[#38bdf8]" />
+                )}
+                <span>{isAr ? 'فحص الاتصال (Ping)' : 'Test Connection'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSyncToSupabase}
+                disabled={isSyncingDb || !supabaseConfigState.isConfigured}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-600/40 text-xs font-semibold text-emerald-300 disabled:opacity-40 transition-colors cursor-pointer"
+              >
+                {isSyncingDb ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                ) : (
+                  <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
+                )}
+                <span>{isAr ? 'مزامنة المحتوى الحالي للقاعدة الآن' : 'Push Content to Supabase'}</span>
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isTestingDb}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-bold text-white shadow-md shadow-[#2563eb]/20 cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{isAr ? 'حفظ إعدادات قاعدة البيانات' : 'Save Database Credentials'}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* ============================================================ */}
+      {/* SECURITY CREDENTIALS (SALTED SHA-256 ENCRYPTED AUTH)         */}
+      {/* ============================================================ */}
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-6 shadow-xl relative overflow-hidden">
+        <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#2563eb]/20 text-[#38bdf8] flex items-center justify-center border border-[#2563eb]/30">
+              <Lock className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
+                {isAr ? 'أمان وكلمة مرور لوحة التحكم (Encrypted Password)' : 'Encrypted Admin Authentication Security'}
+              </h3>
+              <p className="text-[11px] text-[#a8a6a1]">
+                {isAr 
+                  ? 'يتم تخزين كلمة المرور بتشفير SHA-256 مع بصمة ملحية ديناميكية (Salt) لمنع أي اختراق أو استرجاع غير مصرح به.' 
+                  : 'Passwords are cryptographically hashed using salted SHA-256 to ensure maximum protection against unauthorized access.'}
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+            SHA-256 + Salt
+          </span>
+        </div>
+
+        {passSuccess && (
+          <div className="p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-800 text-emerald-300 text-xs font-mono flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <span>{passSuccess}</span>
+          </div>
+        )}
+
+        {passError && (
+          <div className="p-3.5 rounded-xl bg-red-950/50 border border-red-800 text-red-300 text-xs font-mono flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-400" />
+            <span>{passError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleChangePassword} className="space-y-4 max-w-xl">
+          <div>
+            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
+              {isAr ? 'كلمة المرور الحالية *' : 'Current Admin Password *'}
+            </label>
             <input
               type="password"
               required
-              value={newPass}
-              onChange={(e) => setNewPass(e.target.value)}
-              placeholder={isAr ? 'أدخل كلمة السر الجديدة...' : 'Enter new secret passphrase...'}
-              className="flex-1 px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
+              placeholder="••••••••"
+              value={currentPass}
+              onChange={(e) => setCurrentPass(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
+                {isAr ? 'كلمة المرور الجديدة *' : 'New Password (Min. 6 chars) *'}
+              </label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={newPass}
+                onChange={(e) => setNewPass(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
+                {isAr ? 'تأكيد كلمة المرور الجديدة *' : 'Confirm New Password *'}
+              </label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={confirmPass}
+                onChange={(e) => setConfirmPass(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
             <button
               type="submit"
-              className="px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-semibold text-[#f1f2ed] border border-[#2b2b2b] cursor-pointer"
+              disabled={isUpdatingPass}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-bold text-white shadow-lg shadow-[#2563eb]/20 cursor-pointer disabled:opacity-50"
             >
-              {isAr ? 'تحديث' : 'Update'}
+              {isUpdatingPass ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                  <span>{isAr ? 'جارِ التشفير والتحديث...' : 'Encrypting & Updating...'}</span>
+                </>
+              ) : (
+                <>
+                  <Key className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'تحديث وتشفير كلمة المرور' : 'Encrypt & Save Password'}</span>
+                </>
+              )}
             </button>
           </div>
-          {passUpdated && (
-            <p className="text-xs text-emerald-400 font-mono">
-              ✓ {isAr ? 'تم تحديث كلمة سر لوحة التحكم بنجاح.' : 'Admin passphrase updated and saved into local storage.'}
-            </p>
-          )}
         </form>
       </div>
     </div>

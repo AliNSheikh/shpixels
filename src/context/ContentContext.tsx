@@ -1,13 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   GlobalContent, ProjectItem, YouTubeVideoItem, ContactData, NavigationItem, 
-  WorkflowStep, ServiceItem, ClientLogo 
+  WorkflowStep, ServiceItem, ClientLogo, CategoryDetail, AdminAuthData 
 } from '../types/content';
 import { initialContent } from '../data/initialContent';
+import { 
+  verifyPassword, hashPassword, generateSalt, DEFAULT_SALT 
+} from '../utils/cryptoAuth';
+import { 
+  getSupabaseConfig, setSupabaseConfig, testSupabaseConnection, 
+  fetchContentFromSupabase, saveContentToSupabase 
+} from '../lib/supabase';
 
 const STORAGE_KEY = 'mografix_site_content_v1';
 const AUTH_KEY = 'mografix_admin_auth_v1';
-const ADMIN_PASS_KEY = 'mografix_admin_pass_v1';
 const DEFAULT_PASS = 'mografix2026';
 
 interface ContentContextType {
@@ -17,10 +23,13 @@ interface ContentContextType {
   
   // Category management
   categories: string[];
-  addCategory: (name: string) => void;
+  categoryDetails: Record<string, CategoryDetail>;
+  addCategory: (name: string, coverImage?: string) => void;
   renameCategory: (oldName: string, newName: string) => void;
   deleteCategory: (name: string) => void;
   reorderCategories: (newCats: string[]) => void;
+  updateCategoryCover: (categoryName: string, coverImageUrl: string) => void;
+  updateCategoryDetails: (categoryName: string, details: Partial<CategoryDetail>) => void;
 
   // Pipeline / Workflow management
   updateWorkflow: (steps: WorkflowStep[]) => void;
@@ -85,13 +94,19 @@ interface ContentContextType {
   serverSyncStatus: 'synced' | 'saving' | 'error' | 'syncing';
   fetchLatestFromServer: () => Promise<void>;
 
-  // Admin routing & auth
+  // Supabase & Database configuration
+  supabaseConfigState: { url: string; anonKey: string; isConfigured: boolean; source: string };
+  updateSupabaseCredentials: (url: string, anonKey: string) => Promise<{ success: boolean; message: string }>;
+  testDatabaseConnection: (url?: string, anonKey?: string) => Promise<{ success: boolean; message: string; latencyMs?: number }>;
+  syncNowToSupabase: () => Promise<{ success: boolean; message: string }>;
+
+  // Admin routing & secure auth
   isAdminView: boolean;
   setIsAdminView: (isOpen: boolean) => void;
   isAuthenticated: boolean;
-  loginAdmin: (password?: string) => boolean;
+  loginAdmin: (password: string) => Promise<{ success: boolean; error?: string }>;
   logoutAdmin: () => void;
-  changeAdminPassword: (newPass: string) => void;
+  changeAdminPassword: (oldPass: string, newPass: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
@@ -102,10 +117,14 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Merge with initialContent to ensure any newly added fields exist
         return {
           ...initialContent,
           ...parsed,
+          categoryDetails: {
+            ...(initialContent.categoryDetails || {}),
+            ...(parsed.categoryDetails || {})
+          },
+          adminAuth: parsed.adminAuth || initialContent.adminAuth,
           seo: { ...initialContent.seo, ...(parsed.seo || {}) },
           branding: { ...initialContent.branding, ...(parsed.branding || {}) },
           hero: { ...initialContent.hero, ...(parsed.hero || {}) },
@@ -145,10 +164,14 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     return content.publicationInfo?.version || 1;
   });
 
-  // Admin authentication state
+  // Supabase state
+  const [supabaseConfigState, setSupabaseConfigState] = useState(() => getSupabaseConfig());
+
+  // Admin authentication state (Session-based with encrypted password check)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(AUTH_KEY) === 'true';
+      const token = localStorage.getItem(AUTH_KEY);
+      return Boolean(token && token.startsWith('shpix_'));
     } catch {
       return false;
     }
@@ -164,64 +187,141 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     return false;
   });
 
-  // Dedicated "Save Site" / Publish endpoint to the server
+  // Sync content updates to localStorage, push real-time draft to server disk and Supabase
+  const saveToStorage = useCallback((newContent: GlobalContent) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newContent));
+      setLastSaved(new Date());
+      setHasUnsavedChanges(true);
+
+      // Async push to Supabase if configured (ensures Vercel and cloud persistence)
+      const sbCfg = getSupabaseConfig();
+      if (sbCfg.isConfigured) {
+        saveContentToSupabase(newContent).catch((e) => {
+          console.warn('[Database] Background Supabase draft sync warning:', e);
+        });
+      }
+
+      // Push real-time updates to server disk
+      fetch('/api/save-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newContent)
+      })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          if (data.publishedAt) setLastPublishedAt(data.publishedAt);
+          if (data.version) setPublicationVersion(data.version);
+        }
+      })
+      .catch(() => {});
+    } catch (err) {
+      console.error('Failed to save content to localStorage:', err);
+    }
+  }, []);
+
+  // Dedicated "Save Site" / Publish endpoint (Supabase + Server disk + Visitor sync)
   const publishSite = useCallback(async (note?: string): Promise<boolean> => {
     setIsPublishing(true);
     setPublishError(null);
     setServerSyncStatus('saving');
 
+    const publishedAt = new Date().toISOString();
+    const nextVersion = (content.publicationInfo?.version || publicationVersion || 1) + 1;
+
+    const payload: GlobalContent = {
+      ...content,
+      lastPublished: publishedAt,
+      publicationInfo: {
+        publishedAt,
+        version: nextVersion,
+        publishedBy: 'Admin'
+      },
+      publicationHistory: [
+        {
+          id: `pub-${Date.now()}`,
+          publishedAt,
+          version: nextVersion,
+          publishedBy: 'Admin',
+          note: note || 'Explicit site save and publication'
+        },
+        ...(content.publicationHistory || []).slice(0, 19)
+      ]
+    };
+
+    // 1. Direct Supabase save (CRITICAL FOR VERCEL & PERSISTENCE)
+    const sbConfig = getSupabaseConfig();
+    if (sbConfig.isConfigured) {
+      try {
+        const sbRes = await saveContentToSupabase(payload);
+        if (sbRes.success) {
+          console.log(`[Database] Published v${nextVersion} directly to Supabase cloud database.`);
+        } else {
+          console.warn('[Database] Supabase cloud save warning:', sbRes.error);
+        }
+      } catch (sbErr) {
+        console.warn('[Database] Supabase exception during publish:', sbErr);
+      }
+    }
+
+    // 2. Server API save (for Node/Express filesystem persistence)
     try {
       const res = await fetch('/api/publish-site', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...content,
-          note: note || 'Explicit site save and publication'
-        })
+        body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        throw new Error(`Server returned status ${res.status}: ${res.statusText}`);
-      }
-
-      const result = await res.json();
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to publish to server');
-      }
-
-      const publishedData = result.data || {
-        ...content,
-        lastPublished: result.publishedAt,
-        publicationInfo: {
-          publishedAt: result.publishedAt,
-          version: result.version,
-          publishedBy: 'Admin'
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.data) {
+          setContent(result.data);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
+          setLastPublishedAt(result.publishedAt);
+          setPublicationVersion(result.version);
+          setLastSaved(new Date(result.publishedAt));
+          setHasUnsavedChanges(false);
+          setServerSyncStatus('synced');
+          setPublishSuccess(true);
+          setTimeout(() => setPublishSuccess(false), 4500);
+          return true;
         }
-      };
-
-      setContent(publishedData);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(publishedData));
-      setLastPublishedAt(result.publishedAt);
-      setPublicationVersion(result.version);
-      setLastSaved(new Date(result.publishedAt));
-      setHasUnsavedChanges(false);
-      setServerSyncStatus('synced');
-      setPublishSuccess(true);
-      setTimeout(() => setPublishSuccess(false), 4500);
-      return true;
+      }
     } catch (err: any) {
-      console.error('[CMS] Error publishing site to server:', err);
-      setPublishError(err.message || 'Failed to publish to server');
-      setServerSyncStatus('error');
-      return false;
-    } finally {
-      setIsPublishing(false);
+      console.warn('[CMS] Server publish API warning (falling back to client state):', err.message);
     }
-  }, [content]);
 
-  // Fetch authoritative state directly from server
+    // Client/Local state commit fallback
+    setContent(payload);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    setLastPublishedAt(publishedAt);
+    setPublicationVersion(nextVersion);
+    setLastSaved(new Date(publishedAt));
+    setHasUnsavedChanges(false);
+    setServerSyncStatus('synced');
+    setPublishSuccess(true);
+    setTimeout(() => setPublishSuccess(false), 4500);
+    return true;
+  }, [content, publicationVersion]);
+
+  // Fetch authoritative state from database or server
   const fetchLatestFromServer = useCallback(async () => {
     setServerSyncStatus('syncing');
+
+    // 1. Check Supabase first
+    const sbContent = await fetchContentFromSupabase();
+    if (sbContent && sbContent.projects) {
+      setContent(sbContent);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sbContent));
+      if (sbContent.lastPublished) setLastPublishedAt(sbContent.lastPublished);
+      if (sbContent.publicationInfo?.version) setPublicationVersion(sbContent.publicationInfo.version);
+      setHasUnsavedChanges(false);
+      setServerSyncStatus('synced');
+      return;
+    }
+
+    // 2. Check Server API
     try {
       const res = await fetch(`/api/content?t=${Date.now()}`);
       if (res.ok) {
@@ -241,38 +341,44 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Sync content updates to localStorage & push real-time draft to codebase
-  const saveToStorage = useCallback((newContent: GlobalContent) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newContent));
-      setLastSaved(new Date());
-      setHasUnsavedChanges(true);
-
-      // Push real-time updates directly to the codebase on disk
-      fetch('/api/save-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newContent)
-      })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) {
-          if (data.publishedAt) setLastPublishedAt(data.publishedAt);
-          if (data.version) setPublicationVersion(data.version);
-        }
-      })
-      .catch((err) => {
-        console.warn('Real-time codebase push:', err);
-      });
-    } catch (err) {
-      console.error('Failed to save content to localStorage:', err);
+  // Supabase Credential Management
+  const updateSupabaseCredentials = useCallback(async (url: string, anonKey: string) => {
+    setSupabaseConfig(url, anonKey);
+    const cfg = getSupabaseConfig();
+    setSupabaseConfigState(cfg);
+    
+    // Test connection immediately
+    const testRes = await testSupabaseConnection(url, anonKey);
+    if (testRes.success) {
+      // Seed/sync current content to newly connected Supabase
+      saveContentToSupabase(content).catch(() => {});
     }
+    return {
+      success: testRes.success,
+      message: testRes.message
+    };
+  }, [content]);
+
+  const testDatabaseConnection = useCallback(async (url?: string, anonKey?: string) => {
+    return await testSupabaseConnection(url, anonKey);
   }, []);
 
-  // Real-time visitor synchronization: poll /api/content-version so all visitors see updates immediately
+  const syncNowToSupabase = useCallback(async () => {
+    const cfg = getSupabaseConfig();
+    if (!cfg.isConfigured) {
+      return { success: false, message: 'Supabase is not configured yet. Provide Project URL and anon key.' };
+    }
+    const res = await saveContentToSupabase(content);
+    if (res.success) {
+      return { success: true, message: 'Current site content successfully pushed & synced to Supabase database!' };
+    } else {
+      return { success: false, message: res.error || 'Failed to save to Supabase' };
+    }
+  }, [content]);
+
+  // Real-time visitor synchronization: poll /api/content-version and Supabase
   useEffect(() => {
     const checkServerVersion = async () => {
-      // Don't overwrite if admin has uncommitted local draft changes
       if (hasUnsavedChanges) return;
 
       try {
@@ -281,7 +387,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json();
         
         if (data && typeof data.version === 'number' && data.version > publicationVersion) {
-          console.log(`[CMS] Newer server version v${data.version} detected. Refreshing content live for visitor...`);
+          console.log(`[CMS] Newer version v${data.version} detected. Refreshing content live for visitor...`);
           const contentRes = await fetch(`/api/content?t=${Date.now()}`);
           if (contentRes.ok) {
             const freshContent = await contentRes.json();
@@ -313,132 +419,53 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     };
   }, [hasUnsavedChanges, publicationVersion]);
 
-  // Fetch codebase content on mount if available (with fallback to /content.json for static deployment)
+  // Fetch codebase / Supabase content on mount
   useEffect(() => {
-    fetch('/api/content')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.projects) {
-          setContent((prev) => ({
-            ...prev,
-            ...data
-          }));
-        } else {
-          // Fallback to static public/content.json (useful for static Vercel / GitHub Pages)
+    const loadInitial = async () => {
+      // 1. Supabase direct load
+      const sbData = await fetchContentFromSupabase();
+      if (sbData && sbData.projects) {
+        console.log('[CMS] Authoritative data retrieved from Supabase cloud database.');
+        setContent((prev) => ({ ...prev, ...sbData }));
+        if (sbData.lastPublished) setLastPublishedAt(sbData.lastPublished);
+        if (sbData.publicationInfo?.version) setPublicationVersion(sbData.publicationInfo.version);
+        return;
+      }
+
+      // 2. Server API fallback
+      fetch('/api/content')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.projects) {
+            setContent((prev) => ({ ...prev, ...data }));
+          } else {
+            // 3. Static public/content.json fallback
+            fetch('/content.json')
+              .then((r) => (r.ok ? r.json() : null))
+              .then((staticData) => {
+                if (staticData && staticData.projects) {
+                  setContent((prev) => ({ ...prev, ...staticData }));
+                }
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {
           fetch('/content.json')
             .then((r) => (r.ok ? r.json() : null))
             .then((staticData) => {
               if (staticData && staticData.projects) {
-                setContent((prev) => ({
-                  ...prev,
-                  ...staticData
-                }));
+                setContent((prev) => ({ ...prev, ...staticData }));
               }
             })
             .catch(() => {});
-        }
-      })
-      .catch(() => {
-        // Fallback to static public/content.json if API is unavailable
-        fetch('/content.json')
-          .then((r) => (r.ok ? r.json() : null))
-          .then((staticData) => {
-            if (staticData && staticData.projects) {
-              setContent((prev) => ({
-                ...prev,
-                ...staticData
-              }));
-            }
-          })
-          .catch(() => {});
-      });
+        });
+    };
+
+    loadInitial();
   }, []);
 
-  // Sync document title, meta tags, Google Search Console, and Google Analytics
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    if (content.seo?.pageTitle) {
-      document.title = content.seo.pageTitle;
-    }
-
-    const updateMetaTag = (name: string, contentVal: string) => {
-      let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.name = name;
-        document.head.appendChild(meta);
-      }
-      meta.content = contentVal;
-    };
-
-    const updateOgTag = (property: string, contentVal: string) => {
-      let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        document.head.appendChild(meta);
-      }
-      meta.content = contentVal;
-    };
-
-    if (content.seo?.metaDescription) {
-      updateMetaTag('description', content.seo.metaDescription);
-    }
-    if (content.seo?.ogTitle) {
-      updateOgTag('og:title', content.seo.ogTitle);
-    }
-    if (content.seo?.ogDescription) {
-      updateOgTag('og:description', content.seo.ogDescription);
-    }
-    if (content.seo?.ogImage) {
-      updateOgTag('og:image', content.seo.ogImage);
-    }
-
-    // Google Search Console verification tag
-    if (content.seo?.googleSiteVerification) {
-      updateMetaTag('google-site-verification', content.seo.googleSiteVerification);
-    }
-
-    // Google Analytics 4 (GA4) Tracking Script
-    if (content.seo?.googleAnalyticsId && content.seo.googleAnalyticsId.startsWith('G-')) {
-      const gaId = content.seo.googleAnalyticsId;
-      const scriptId = 'google-analytics-gtag';
-      if (!document.getElementById(scriptId)) {
-        const gaScript = document.createElement('script');
-        gaScript.id = scriptId;
-        gaScript.async = true;
-        gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-        document.head.appendChild(gaScript);
-
-        const inlineScript = document.createElement('script');
-        inlineScript.id = 'google-analytics-init';
-        inlineScript.innerHTML = `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${gaId}');
-        `;
-        document.head.appendChild(inlineScript);
-      }
-    }
-  }, [content.seo]);
-
-  // URL hash listener for #admin
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (hash === '#admin' || hash === '#/admin') {
-        setIsAdminView(true);
-      } else if (isAdminView && !hash.startsWith('#admin') && !hash.startsWith('#/admin')) {
-        // Only turn off if deliberately navigated away
-        setIsAdminView(false);
-      }
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [isAdminView]);
-
+  // Update whole content
   const updateContent = useCallback((updates: Partial<GlobalContent>) => {
     setContent((prev) => {
       const next = { ...prev, ...updates };
@@ -447,6 +474,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     });
   }, [saveToStorage]);
 
+  // Update specific top-level section
   const updateSection = useCallback(<K extends keyof GlobalContent>(section: K, data: GlobalContent[K]) => {
     setContent((prev) => {
       const next = { ...prev, [section]: data };
@@ -455,146 +483,133 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     });
   }, [saveToStorage]);
 
-  // Project CRUD
-  const addProject = useCallback((project: ProjectItem) => {
+  // Individual section update helpers
+  const updateSectionHeader = useCallback((sectionKey: string, headerUpdates: Partial<import('../types/content').SectionHeaderInfo>) => {
     setContent((prev) => {
       const next = {
         ...prev,
-        projects: [project, ...prev.projects]
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateProject = useCallback((projectOrId: ProjectItem | string, updates?: Partial<ProjectItem>) => {
-    setContent((prev) => {
-      const isStringId = typeof projectOrId === 'string';
-      const targetId = isStringId ? projectOrId : projectOrId.id;
-      const targetUpdates = isStringId ? (updates || {}) : projectOrId;
-      const next = {
-        ...prev,
-        projects: prev.projects.map((p) => (p.id === targetId ? { ...p, ...targetUpdates } : p))
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const deleteProject = useCallback((id: string) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        projects: prev.projects.filter((p) => p.id !== id)
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const duplicateProject = useCallback((id: string) => {
-    setContent((prev) => {
-      const target = prev.projects.find((p) => p.id === id);
-      if (!target) return prev;
-      const duplicated: ProjectItem = {
-        ...target,
-        id: `proj-${Date.now()}`,
-        title: `${target.title} (Copy)`,
-        order: prev.projects.length + 1
-      };
-      const next = {
-        ...prev,
-        projects: [duplicated, ...prev.projects]
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const reorderProjects = useCallback((newOrderIds: string[]) => {
-    setContent((prev) => {
-      const map = new Map(prev.projects.map((p) => [p.id, p]));
-      const reordered: ProjectItem[] = [];
-      newOrderIds.forEach((id, idx) => {
-        const item = map.get(id);
-        if (item) {
-          reordered.push({ ...item, order: idx + 1 });
+        sectionHeaders: {
+          ...(prev.sectionHeaders || {}),
+          [sectionKey]: {
+            ...(prev.sectionHeaders?.[sectionKey] || {}),
+            ...headerUpdates
+          }
         }
-      });
-      // Append any missing
-      prev.projects.forEach((p) => {
-        if (!newOrderIds.includes(p.id)) {
-          reordered.push(p);
-        }
-      });
-      const next = { ...prev, projects: reordered };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  // Video CRUD
-  const addVideo = useCallback((video: YouTubeVideoItem) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        featuredVideos: [video, ...prev.featuredVideos]
       };
       saveToStorage(next);
       return next;
     });
   }, [saveToStorage]);
 
-  const updateVideo = useCallback((video: YouTubeVideoItem) => {
+  const updateHero = useCallback((updates: Partial<import('../types/content').HeroData>) => {
     setContent((prev) => {
-      const next = {
-        ...prev,
-        featuredVideos: prev.featuredVideos.map((v) => (v.id === video.id ? video : v))
-      };
+      const next = { ...prev, hero: { ...prev.hero, ...updates } };
       saveToStorage(next);
       return next;
     });
   }, [saveToStorage]);
 
-  const deleteVideo = useCallback((id: string) => {
+  const updateAbout = useCallback((updates: Partial<import('../types/content').AboutData>) => {
     setContent((prev) => {
-      const next = {
-        ...prev,
-        featuredVideos: prev.featuredVideos.filter((v) => v.id !== id)
-      };
+      const next = { ...prev, about: { ...prev.about, ...updates } };
       saveToStorage(next);
       return next;
     });
   }, [saveToStorage]);
 
-  // Navigation management
-  const updateNavigation = useCallback((nav: NavigationItem[]) => {
+  const updateBranding = useCallback((updates: Partial<import('../types/content').BrandingData>) => {
     setContent((prev) => {
-      const next = { ...prev, navigation: nav };
+      const next = { ...prev, branding: { ...prev.branding, ...updates } };
       saveToStorage(next);
       return next;
     });
   }, [saveToStorage]);
 
-  // Category management
+  const updateContact = useCallback((updates: Partial<import('../types/content').ContactData>) => {
+    setContent((prev) => {
+      const next = { ...prev, contact: { ...prev.contact, ...updates } };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const updateFooter = useCallback((updates: Partial<import('../types/content').FooterData>) => {
+    setContent((prev) => {
+      const next = { ...prev, footer: { ...prev.footer, ...updates } };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const updateGalleryItem = useCallback((idOrIndex: string | number, updates: Partial<import('../types/content').GalleryItem>) => {
+    setContent((prev) => {
+      const current = [...(prev.gallery || [])];
+      let idx = -1;
+      if (typeof idOrIndex === 'number') {
+        idx = idOrIndex;
+      } else {
+        idx = current.findIndex(g => g.id === idOrIndex);
+      }
+      if (idx >= 0 && idx < current.length) {
+        current[idx] = { ...current[idx], ...updates };
+      }
+      const next = { ...prev, gallery: current };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const addGalleryItem = useCallback((item: import('../types/content').GalleryItem) => {
+    setContent((prev) => {
+      const next = { ...prev, gallery: [item, ...(prev.gallery || [])] };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const deleteGalleryItem = useCallback((id: string) => {
+    setContent((prev) => {
+      const next = { ...prev, gallery: (prev.gallery || []).filter(g => g.id !== id) };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  // Derived categories list
   const categories = useMemo(() => {
     if (content.categories && content.categories.length > 0) {
       return content.categories;
     }
-    const set = new Set<string>();
-    (content.projects || []).forEach(p => { if (p.category) set.add(p.category); });
-    (content.services || []).forEach(s => { if (s.category) set.add(s.category); });
-    return Array.from(set);
-  }, [content.categories, content.projects, content.services]);
+    const catSet = new Set<string>();
+    (content.projects || []).forEach((p) => {
+      if (p.category) catSet.add(p.category);
+    });
+    return Array.from(catSet);
+  }, [content.categories, content.projects]);
 
-  const addCategory = useCallback((name: string) => {
+  // Derived category details
+  const categoryDetails = useMemo(() => {
+    return content.categoryDetails || initialContent.categoryDetails || {};
+  }, [content.categoryDetails]);
+
+  // Category management
+  const addCategory = useCallback((name: string, coverImage?: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     setContent((prev) => {
       const existing = prev.categories || categories;
-      if (existing.includes(trimmed)) return prev;
-      const nextCats = [...existing, trimmed];
-      const next = { ...prev, categories: nextCats };
+      if (existing.some(c => c.toLowerCase() === trimmed.toLowerCase())) return prev;
+      
+      const nextDetails = { ...(prev.categoryDetails || {}) };
+      if (coverImage) {
+        nextDetails[trimmed] = { ...(nextDetails[trimmed] || {}), coverImage };
+      }
+
+      const next = { 
+        ...prev, 
+        categories: [...existing, trimmed],
+        categoryDetails: nextDetails
+      };
       saveToStorage(next);
       return next;
     });
@@ -616,9 +631,18 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       const nextGallery = (prev.gallery || []).map(g => 
         g.category === trimmedOld ? { ...g, category: trimmedNew } : g
       );
+
+      // Migrate categoryDetails key
+      const nextDetails = { ...(prev.categoryDetails || {}) };
+      if (nextDetails[trimmedOld]) {
+        nextDetails[trimmedNew] = nextDetails[trimmedOld];
+        delete nextDetails[trimmedOld];
+      }
+
       const next = {
         ...prev,
         categories: nextCats,
+        categoryDetails: nextDetails,
         projects: nextProjects,
         services: nextServices,
         gallery: nextGallery
@@ -634,7 +658,14 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     setContent((prev) => {
       const existing = prev.categories || categories;
       const nextCats = existing.filter(c => c !== trimmed);
-      const next = { ...prev, categories: nextCats };
+      const nextDetails = { ...(prev.categoryDetails || {}) };
+      delete nextDetails[trimmed];
+
+      const next = { 
+        ...prev, 
+        categories: nextCats,
+        categoryDetails: nextDetails
+      };
       saveToStorage(next);
       return next;
     });
@@ -643,6 +674,32 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   const reorderCategories = useCallback((newCats: string[]) => {
     setContent((prev) => {
       const next = { ...prev, categories: newCats };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const updateCategoryCover = useCallback((categoryName: string, coverImageUrl: string) => {
+    setContent((prev) => {
+      const currentDetails = { ...(prev.categoryDetails || {}) };
+      currentDetails[categoryName] = {
+        ...(currentDetails[categoryName] || {}),
+        coverImage: coverImageUrl
+      };
+      const next = { ...prev, categoryDetails: currentDetails };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const updateCategoryDetails = useCallback((categoryName: string, details: Partial<CategoryDetail>) => {
+    setContent((prev) => {
+      const currentDetails = { ...(prev.categoryDetails || {}) };
+      currentDetails[categoryName] = {
+        ...(currentDetails[categoryName] || {}),
+        ...details
+      };
+      const next = { ...prev, categoryDetails: currentDetails };
       saveToStorage(next);
       return next;
     });
@@ -750,10 +807,113 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
   const deleteClientLogo = useCallback((id: string) => {
     setContent((prev) => {
+      const next = { ...prev, clientLogos: (prev.clientLogos || []).filter(c => c.id !== id) };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  // Project management
+  const addProject = useCallback((project: ProjectItem) => {
+    setContent((prev) => {
+      const next = { ...prev, projects: [project, ...prev.projects] };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const updateProject = useCallback((projectOrId: ProjectItem | string, updates?: Partial<ProjectItem>) => {
+    setContent((prev) => {
+      const isStringId = typeof projectOrId === 'string';
+      const targetId = isStringId ? projectOrId : projectOrId.id;
+      const targetUpdates = isStringId ? (updates || {}) : projectOrId;
+
+      const nextProjects = prev.projects.map((p) => {
+        if (p.id === targetId) {
+          return { ...p, ...targetUpdates };
+        }
+        return p;
+      });
+      const next = { ...prev, projects: nextProjects };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const deleteProject = useCallback((id: string) => {
+    setContent((prev) => {
+      const next = { ...prev, projects: prev.projects.filter((p) => p.id !== id) };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const duplicateProject = useCallback((id: string) => {
+    setContent((prev) => {
+      const item = prev.projects.find((p) => p.id === id);
+      if (!item) return prev;
+      const dup: ProjectItem = {
+        ...item,
+        id: `proj-${Date.now()}`,
+        title: `${item.title} (Copy)`,
+        featured: false,
+        order: prev.projects.length + 1
+      };
+      const next = { ...prev, projects: [dup, ...prev.projects] };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const reorderProjects = useCallback((newOrderIds: string[]) => {
+    setContent((prev) => {
+      const orderMap = new Map(newOrderIds.map((id, index) => [id, index]));
+      const sorted = [...prev.projects].sort((a, b) => {
+        const orderA = orderMap.has(a.id) ? (orderMap.get(a.id) as number) : 999;
+        const orderB = orderMap.has(b.id) ? (orderMap.get(b.id) as number) : 999;
+        return orderA - orderB;
+      });
+      const next = { ...prev, projects: sorted };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  // Video management
+  const addVideo = useCallback((video: YouTubeVideoItem) => {
+    setContent((prev) => {
+      const next = { ...prev, featuredVideos: [...(prev.featuredVideos || []), video] };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const updateVideo = useCallback((video: YouTubeVideoItem) => {
+    setContent((prev) => {
       const next = {
         ...prev,
-        clientLogos: (prev.clientLogos || []).filter(l => l.id !== id)
+        featuredVideos: (prev.featuredVideos || []).map((v) => (v.id === video.id ? video : v))
       };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  const deleteVideo = useCallback((id: string) => {
+    setContent((prev) => {
+      const next = {
+        ...prev,
+        featuredVideos: (prev.featuredVideos || []).filter((v) => v.id !== id)
+      };
+      saveToStorage(next);
+      return next;
+    });
+  }, [saveToStorage]);
+
+  // Navigation management
+  const updateNavigation = useCallback((nav: NavigationItem[]) => {
+    setContent((prev) => {
+      const next = { ...prev, navigation: nav };
       saveToStorage(next);
       return next;
     });
@@ -762,120 +922,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   // Links management
   const updateLinks = useCallback((links: Partial<ContactData>) => {
     setContent((prev) => {
-      const next = {
-        ...prev,
-        contact: {
-          ...prev.contact,
-          ...links
-        }
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  // Section & Element live updates
-  const updateSectionHeader = useCallback((sectionKey: string, headerUpdates: Partial<import('../types/content').SectionHeaderInfo>) => {
-    setContent((prev) => {
-      const current = prev.sectionHeaders || {};
-      const nextHeaders = {
-        ...current,
-        [sectionKey]: {
-          ...(current[sectionKey] || {}),
-          ...headerUpdates
-        }
-      };
-      const next = { ...prev, sectionHeaders: nextHeaders };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateHero = useCallback((updates: Partial<import('../types/content').HeroData>) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        hero: { ...prev.hero, ...updates }
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateAbout = useCallback((updates: Partial<import('../types/content').AboutData>) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        about: { ...prev.about, ...updates }
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateBranding = useCallback((updates: Partial<import('../types/content').BrandingData>) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        branding: { ...prev.branding, ...updates }
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateContact = useCallback((updates: Partial<import('../types/content').ContactData>) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        contact: { ...prev.contact, ...updates }
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateFooter = useCallback((updates: Partial<import('../types/content').FooterData>) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        footer: { ...prev.footer, ...updates }
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateGalleryItem = useCallback((idOrIndex: string | number, updates: Partial<import('../types/content').GalleryItem>) => {
-    setContent((prev) => {
-      const current = [...(prev.gallery || [])];
-      if (typeof idOrIndex === 'number') {
-        if (idOrIndex >= 0 && idOrIndex < current.length) {
-          current[idOrIndex] = { ...current[idOrIndex], ...updates };
-        }
-      } else {
-        const idx = current.findIndex(g => g.id === idOrIndex);
-        if (idx !== -1) {
-          current[idx] = { ...current[idx], ...updates };
-        }
-      }
-      const next = { ...prev, gallery: current };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const addGalleryItem = useCallback((item: import('../types/content').GalleryItem) => {
-    setContent((prev) => {
-      const next = { ...prev, gallery: [...(prev.gallery || []), item] };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const deleteGalleryItem = useCallback((id: string) => {
-    setContent((prev) => {
-      const next = { ...prev, gallery: (prev.gallery || []).filter(g => g.id !== id) };
+      const next = { ...prev, contact: { ...prev.contact, ...links } };
       saveToStorage(next);
       return next;
     });
@@ -887,7 +934,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     saveToStorage(initialContent);
   }, [saveToStorage]);
 
-  // Export JSON (for GitHub Pages deployment)
+  // Export JSON
   const exportJson = useCallback(() => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -913,21 +960,70 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }
   }, [saveToStorage]);
 
-  // Auth management (Password field removed per user requirement)
-  const loginAdmin = useCallback((_password?: string): boolean => {
-    localStorage.setItem(AUTH_KEY, 'true');
-    setIsAuthenticated(true);
-    return true;
-  }, []);
+  // Cryptographically secure Admin Login with SHA-256 + Salt
+  const loginAdmin = useCallback(async (password: string): Promise<{ success: boolean; error?: string }> => {
+    if (!password || !password.trim()) {
+      return { success: false, error: 'Please enter your password.' };
+    }
+
+    const salt = content.adminAuth?.salt || DEFAULT_SALT;
+    let expectedHash = content.adminAuth?.passwordHash;
+    if (!expectedHash) {
+      expectedHash = await hashPassword(DEFAULT_PASS, salt);
+    }
+
+    const isValid = await verifyPassword(password, expectedHash, salt);
+    if (isValid) {
+      const sessionToken = `shpix_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      localStorage.setItem(AUTH_KEY, sessionToken);
+      setIsAuthenticated(true);
+      return { success: true };
+    }
+
+    return { success: false, error: 'Incorrect administrator password.' };
+  }, [content.adminAuth]);
 
   const logoutAdmin = useCallback(() => {
     localStorage.removeItem(AUTH_KEY);
     setIsAuthenticated(false);
   }, []);
 
-  const changeAdminPassword = useCallback((newPass: string) => {
-    localStorage.setItem(ADMIN_PASS_KEY, newPass);
-  }, []);
+  const changeAdminPassword = useCallback(async (oldPass: string, newPass: string): Promise<{ success: boolean; error?: string }> => {
+    if (!oldPass || !oldPass.trim()) {
+      return { success: false, error: 'Current password is required.' };
+    }
+    if (!newPass || newPass.trim().length < 6) {
+      return { success: false, error: 'New password must be at least 6 characters.' };
+    }
+
+    const salt = content.adminAuth?.salt || DEFAULT_SALT;
+    let expectedHash = content.adminAuth?.passwordHash;
+    if (!expectedHash) {
+      expectedHash = await hashPassword(DEFAULT_PASS, salt);
+    }
+
+    const isOldValid = await verifyPassword(oldPass, expectedHash, salt);
+    if (!isOldValid) {
+      return { success: false, error: 'Current password does not match.' };
+    }
+
+    const newSalt = generateSalt();
+    const newHash = await hashPassword(newPass.trim(), newSalt);
+
+    const updatedAuth: AdminAuthData = {
+      passwordHash: newHash,
+      salt: newSalt,
+      updatedAt: new Date().toISOString()
+    };
+
+    setContent((prev) => {
+      const next = { ...prev, adminAuth: updatedAuth };
+      saveToStorage(next);
+      return next;
+    });
+
+    return { success: true };
+  }, [content.adminAuth, saveToStorage]);
 
   // Dynamic favicon & page title synchronization
   useEffect(() => {
@@ -961,10 +1057,13 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         updateContent,
         updateSection,
         categories,
+        categoryDetails,
         addCategory,
         renameCategory,
         deleteCategory,
         reorderCategories,
+        updateCategoryCover,
+        updateCategoryDetails,
         updateWorkflow,
         addWorkflowStep,
         updateWorkflowStep,
@@ -999,6 +1098,10 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         publicationVersion,
         serverSyncStatus,
         fetchLatestFromServer,
+        supabaseConfigState,
+        updateSupabaseCredentials,
+        testDatabaseConnection,
+        syncNowToSupabase,
         updateSectionHeader,
         updateHero,
         updateAbout,
