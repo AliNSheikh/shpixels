@@ -497,7 +497,7 @@ export const initialContent: GlobalContent = {
   },
   adminAuth: {
     // Salted SHA-256 for 'mografix2026' with salt 'shpixels_secure_salt_2026'
-    passwordHash: "a76e93895e656d0d9d44cfa068e219001b942bc70aaec1dff242bc61e93883a4",
+    passwordHash: "4d7023cb2d6084c00d5946188c0f56d4aa86318719131695206fb5963c0de8cf",
     salt: "shpixels_secure_salt_2026",
     updatedAt: "2026-09-23T00:00:00.000Z"
   },

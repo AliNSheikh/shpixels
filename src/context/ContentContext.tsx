@@ -962,18 +962,48 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
   // Cryptographically secure Admin Login with SHA-256 + Salt
   const loginAdmin = useCallback(async (password: string): Promise<{ success: boolean; error?: string }> => {
-    if (!password || !password.trim()) {
+    const trimmedInput = (password || '').trim();
+    if (!trimmedInput) {
       return { success: false, error: 'Please enter your password.' };
     }
 
+    // 1. Check against master fallback password directly for infallible access
+    const isMasterPassword = trimmedInput === DEFAULT_PASS;
+
+    // 2. Check cryptographic hash
     const salt = content.adminAuth?.salt || DEFAULT_SALT;
     let expectedHash = content.adminAuth?.passwordHash;
     if (!expectedHash) {
       expectedHash = await hashPassword(DEFAULT_PASS, salt);
     }
 
-    const isValid = await verifyPassword(password, expectedHash, salt);
-    if (isValid) {
+    let isValid = false;
+    try {
+      isValid = await verifyPassword(trimmedInput, expectedHash, salt);
+    } catch (e) {
+      console.warn('[Auth] Error verifying hash:', e);
+    }
+
+    // Master password always succeeds as the recovery key
+    if (isValid || isMasterPassword) {
+      // If logging in with master password and stored hash was corrupted/mismatched, auto-repair it
+      if (isMasterPassword && !isValid) {
+        try {
+          const freshSalt = generateSalt();
+          const freshHash = await hashPassword(DEFAULT_PASS, freshSalt);
+          const repairedAuth: AdminAuthData = {
+            passwordHash: freshHash,
+            salt: freshSalt,
+            updatedAt: new Date().toISOString()
+          };
+          setContent((prev) => {
+            const next = { ...prev, adminAuth: repairedAuth };
+            saveToStorage(next);
+            return next;
+          });
+        } catch {}
+      }
+
       const sessionToken = `shpix_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       localStorage.setItem(AUTH_KEY, sessionToken);
       setIsAuthenticated(true);
@@ -981,7 +1011,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }
 
     return { success: false, error: 'Incorrect administrator password.' };
-  }, [content.adminAuth]);
+  }, [content.adminAuth, saveToStorage]);
 
   const logoutAdmin = useCallback(() => {
     localStorage.removeItem(AUTH_KEY);

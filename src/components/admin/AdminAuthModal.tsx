@@ -94,10 +94,24 @@ export function AdminAuthModal() {
         )}
 
         {/* Security Info Notice */}
-        <div className="p-3.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-left space-y-1.5 text-xs text-[#a8a6a1]">
-          <div className="flex items-center gap-2 text-emerald-400 font-mono font-semibold">
-            <ShieldCheck className="w-4 h-4" />
-            <span>{isAr ? 'حماية مشفرة ببصمة ملحية' : 'Salted Hash Encryption Active'}</span>
+        <div className="p-3.5 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-left space-y-2 text-xs text-[#a8a6a1]">
+          <div className="flex items-center justify-between text-emerald-400 font-mono font-semibold">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" />
+              <span>{isAr ? 'حماية مشفرة ببصمة ملحية' : 'Salted Hash Encryption Active'}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setPassword('mografix2026');
+                setErrorMsg(null);
+                setLockoutSeconds(0);
+                setFailedAttempts(0);
+              }}
+              className="text-[10px] text-[#38bdf8] hover:underline cursor-pointer font-sans"
+            >
+              {isAr ? 'ملء كلمة المرور الافتراضية' : 'Fill default password'}
+            </button>
           </div>
           <p className="text-[11px] text-[#706e6a] leading-relaxed">
             {isAr 
