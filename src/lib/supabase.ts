@@ -1,260 +1,189 @@
 /**
  * Supabase Data Client & Persistent Database Integration for SHPIXELS
  * 
- * Works seamlessly with Supabase REST API without bulky external dependencies,
- * allowing instant database sync on Vercel, Node, and local development.
+ * Production architecture:
+ * - Public reads: Direct Supabase client using Anon Key OR serverless /api/content
+ * - Realtime subscriptions: Directly on table 'site_content' with filter id=eq.current
+ * - Admin writes: Through secure serverless endpoint /api/publish or /api/publish-site
  */
 
+import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { GlobalContent } from '../types/content';
 
-const SUPABASE_STORAGE_URL_KEY = 'shpixels_supabase_url';
-const SUPABASE_STORAGE_KEY_KEY = 'shpixels_supabase_anon_key';
-
-// Pre-configured default credentials for seamless instant connection
-export const DEFAULT_SUPABASE_URL = 'https://bzfxervcwhvoxpvfsnec.supabase.co';
-export const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6ZnhlcnZjd2h2b3hwdmZzbmVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTYwOTQsImV4cCI6MjEwNTczMjA5NH0.FcnwXNlffUopnN4UsjhcPnzGitsNjFhRt8tAxvRgYaQ';
-
-export interface SupabaseConfig {
-  url: string;
-  anonKey: string;
-  isConfigured: boolean;
-  source: 'env' | 'custom' | 'default' | 'none';
-}
-
-/**
- * Retrieves the currently active Supabase configuration
- */
-export function getSupabaseConfig(): SupabaseConfig {
-  // 1. Check Vite env vars (preferred for Vercel deployment)
+// Environment variable retrieval with production defaults
+export function getSupabaseUrl(): string {
   const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+  if (envUrl && envUrl.trim()) return envUrl.trim().replace(/\/$/, '');
+  return 'https://bzfxervcwhvoxpvfsnec.supabase.co';
+}
+
+export function getSupabaseAnonKey(): string {
   const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
-
-  if (envUrl && envKey) {
-    return {
-      url: envUrl.trim().replace(/\/$/, ''),
-      anonKey: envKey.trim(),
-      isConfigured: true,
-      source: 'env'
-    };
-  }
-
-  // 2. Check localStorage (allows admin to override or update via Dashboard UI)
-  if (typeof window !== 'undefined') {
-    try {
-      const storedUrl = localStorage.getItem(SUPABASE_STORAGE_URL_KEY);
-      const storedKey = localStorage.getItem(SUPABASE_STORAGE_KEY_KEY);
-      if (storedUrl && storedKey) {
-        return {
-          url: storedUrl.trim().replace(/\/$/, ''),
-          anonKey: storedKey.trim(),
-          isConfigured: true,
-          source: 'custom'
-        };
-      }
-    } catch {}
-  }
-
-  // 3. Fallback to active pre-configured project credentials
-  if (DEFAULT_SUPABASE_URL && DEFAULT_SUPABASE_ANON_KEY) {
-    return {
-      url: DEFAULT_SUPABASE_URL.trim().replace(/\/$/, ''),
-      anonKey: DEFAULT_SUPABASE_ANON_KEY.trim(),
-      isConfigured: true,
-      source: 'default'
-    };
-  }
-
-  return {
-    url: '',
-    anonKey: '',
-    isConfigured: false,
-    source: 'none'
-  };
+  if (envKey && envKey.trim()) return envKey.trim();
+  return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6ZnhlcnZjd2h2b3hwdmZzbmVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTYwOTQsImV4cCI6MjEwNTczMjA5NH0.FcnwXNlffUopnN4UsjhcPnzGitsNjFhRt8tAxvRgYaQ';
 }
 
-/**
- * Saves custom Supabase configuration to local storage
- */
-export function setSupabaseConfig(url: string, anonKey: string): void {
-  if (typeof window !== 'undefined') {
-    try {
-      const cleanUrl = url.trim().replace(/\/$/, '');
-      const cleanKey = anonKey.trim();
-      localStorage.setItem(SUPABASE_STORAGE_URL_KEY, cleanUrl);
-      localStorage.setItem(SUPABASE_STORAGE_KEY_KEY, cleanKey);
-    } catch (e) {
-      console.error('Failed to save Supabase credentials:', e);
-    }
-  }
-}
+let supabaseInstance: SupabaseClient | null = null;
 
-/**
- * Clears custom Supabase credentials
- */
-export function clearSupabaseConfig(): void {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.removeItem(SUPABASE_STORAGE_URL_KEY);
-      localStorage.removeItem(SUPABASE_STORAGE_KEY_KEY);
-    } catch {}
-  }
-}
-
-/**
- * Tests connection to a Supabase instance
- */
-export async function testSupabaseConnection(
-  customUrl?: string, 
-  customKey?: string
-): Promise<{ success: boolean; message: string; latencyMs?: number }> {
-  const config = getSupabaseConfig();
-  const url = customUrl ? customUrl.trim().replace(/\/$/, '') : config.url;
-  const key = customKey ? customKey.trim() : config.anonKey;
-
-  if (!url || !key) {
-    return {
-      success: false,
-      message: 'Supabase URL and Anon Key must both be provided.'
-    };
-  }
-
-  const startTime = Date.now();
-  try {
-    // Attempt querying the site_content table
-    const endpoint = `${url}/rest/v1/site_content?select=id,version,updated_at&limit=1`;
-    const response = await fetch(endpoint, {
-      method: 'GET',
-      headers: {
-        'apikey': key,
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json'
+export function getSupabaseClient(): SupabaseClient {
+  if (!supabaseInstance) {
+    const url = getSupabaseUrl();
+    const key = getSupabaseAnonKey();
+    supabaseInstance = createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10
+        }
       }
     });
+  }
+  return supabaseInstance;
+}
 
-    const latencyMs = Date.now() - startTime;
+export interface SupabaseContentResult {
+  data: GlobalContent | null;
+  version: number;
+  publishedAt: string | null;
+  updatedAt: string | null;
+  error?: string;
+}
 
-    if (response.ok) {
+/**
+ * Reads the authoritative content row from Supabase
+ */
+export async function fetchAuthoritativeContent(): Promise<SupabaseContentResult> {
+  const client = getSupabaseClient();
+  try {
+    const { data: rows, error } = await client
+      .from('site_content')
+      .select('id, data, version, published_at, updated_at')
+      .eq('id', 'current')
+      .limit(1);
+
+    if (error) {
+      return { data: null, version: 0, publishedAt: null, updatedAt: null, error: error.message };
+    }
+
+    if (rows && rows.length > 0 && rows[0]?.data) {
+      const row = rows[0];
+      const content = row.data as GlobalContent;
+      const ver = Number(row.version || 1);
+      
+      if (!content.publicationInfo) content.publicationInfo = { publishedAt: row.published_at || new Date().toISOString(), version: ver };
+      content.publicationInfo.version = ver;
+      if (row.published_at) content.lastPublished = row.published_at;
+
       return {
-        success: true,
-        message: `Successfully connected to Supabase table 'site_content' (${latencyMs}ms)`,
-        latencyMs
+        data: content,
+        version: ver,
+        publishedAt: row.published_at,
+        updatedAt: row.updated_at
       };
     }
 
-    if (response.status === 404 || response.status === 400) {
-      // Check if project is reachable but table doesn't exist yet
-      const healthCheck = await fetch(`${url}/rest/v1/`, {
-        headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
-      });
-
-      if (healthCheck.ok) {
-        return {
-          success: false,
-          message: "Connected to Supabase API, but 'site_content' table is missing. Run the SQL schema script provided.",
-          latencyMs
-        };
-      }
-    }
-
-    const errText = await response.text();
-    return {
-      success: false,
-      message: `Supabase returned ${response.status}: ${errText.slice(0, 150)}`
-    };
+    return { data: null, version: 0, publishedAt: null, updatedAt: null, error: 'No row found in site_content with id=current' };
   } catch (err: any) {
-    return {
-      success: false,
-      message: `Network connection failed: ${err.message || 'Unable to reach Supabase'}`
-    };
+    return { data: null, version: 0, publishedAt: null, updatedAt: null, error: err.message };
   }
 }
 
 /**
- * Fetches site content directly from Supabase
+ * Subscribes to Supabase Realtime changes on site_content for id=current
  */
-export async function fetchContentFromSupabase(): Promise<GlobalContent | null> {
-  const config = getSupabaseConfig();
-  if (!config.isConfigured) return null;
+export function subscribeToContentChanges(
+  onUpdate: (payload: { data: GlobalContent; version: number; publishedAt: string | null }) => void,
+  onStatusChange?: (status: 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR') => void
+): RealtimeChannel {
+  const client = getSupabaseClient();
 
-  try {
-    const endpoint = `${config.url}/rest/v1/site_content?id=eq.current&select=*`;
-    const response = await fetch(endpoint, {
-      method: 'GET',
-      headers: {
-        'apikey': config.anonKey,
-        'Authorization': `Bearer ${config.anonKey}`,
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
-
-    if (!response.ok) {
-      console.warn(`[Supabase] Fetch returned status ${response.status}`);
-      return null;
-    }
-
-    const rows = await response.json();
-    if (Array.isArray(rows) && rows.length > 0) {
-      const row = rows[0];
-      const data = row.data || row.content;
-      if (data && typeof data === 'object') {
-        // Inject publication version if saved in table column
-        if (row.version && data.publicationInfo) {
-          data.publicationInfo.version = row.version;
-        }
-        return data;
-      }
-    }
-    return null;
-  } catch (err) {
-    console.error('[Supabase] Failed to fetch content:', err);
-    return null;
-  }
-}
-
-/**
- * Saves site content directly into Supabase 'site_content' table
- */
-export async function saveContentToSupabase(content: GlobalContent): Promise<{ success: boolean; error?: string }> {
-  const config = getSupabaseConfig();
-  if (!config.isConfigured) {
-    return { success: false, error: 'Supabase is not configured' };
-  }
-
-  try {
-    const endpoint = `${config.url}/rest/v1/site_content`;
-    const version = content.publicationInfo?.version || 1;
-    const now = new Date().toISOString();
-
-    const payload = {
-      id: 'current',
-      data: content,
-      content: content,
-      version: version,
-      published_at: content.lastPublished || now,
-      last_published: content.lastPublished || now,
-      updated_at: now
-    };
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'apikey': config.anonKey,
-        'Authorization': `Bearer ${config.anonKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
+  const channel = client
+    .channel('site_content_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'site_content',
+        filter: 'id=eq.current'
       },
-      body: JSON.stringify(payload)
+      (payload) => {
+        const newRecord = payload.new as any;
+        if (newRecord && newRecord.data) {
+          const content = newRecord.data as GlobalContent;
+          const version = Number(newRecord.version || 1);
+          const publishedAt = newRecord.published_at || null;
+          onUpdate({ data: content, version, publishedAt });
+        }
+      }
+    )
+    .subscribe((status) => {
+      if (onStatusChange) {
+        onStatusChange(status as any);
+      }
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Supabase returned status ${response.status}: ${text}`);
+  return channel;
+}
+
+/**
+ * Diagnostics check for Admin dashboard
+ */
+export async function checkDatabaseHealth(): Promise<{
+  connected: boolean;
+  tableExists: boolean;
+  version: number;
+  publishedAt: string | null;
+  updatedAt: string | null;
+  error?: string;
+}> {
+  const client = getSupabaseClient();
+  try {
+    const { data, error } = await client
+      .from('site_content')
+      .select('version, published_at, updated_at')
+      .eq('id', 'current')
+      .limit(1);
+
+    if (error) {
+      return {
+        connected: false,
+        tableExists: error.code !== '42P01', // 42P01 is undefined_table in PostgreSQL
+        version: 0,
+        publishedAt: null,
+        updatedAt: null,
+        error: error.message
+      };
     }
 
-    return { success: true };
+    if (data && data.length > 0) {
+      return {
+        connected: true,
+        tableExists: true,
+        version: Number(data[0].version || 1),
+        publishedAt: data[0].published_at,
+        updatedAt: data[0].updated_at
+      };
+    }
+
+    return {
+      connected: true,
+      tableExists: true,
+      version: 0,
+      publishedAt: null,
+      updatedAt: null
+    };
   } catch (err: any) {
-    console.error('[Supabase] Failed to save content:', err);
-    return { success: false, error: err.message || 'Supabase save error' };
+    return {
+      connected: false,
+      tableExists: false,
+      version: 0,
+      publishedAt: null,
+      updatedAt: null,
+      error: err.message
+    };
   }
 }

@@ -1,75 +1,108 @@
+import { getServerSupabase, validateContentPayload, verifyAdminAuthorization } from './_supabase';
+
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
-  }
-
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-  const data = req.body;
-  if (!data || typeof data !== 'object') {
-    return res.status(400).json({ success: false, error: 'Invalid content payload' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
 
-  const publishedAt = new Date().toISOString();
-  const version = (data.publicationInfo?.version || 1) + 1;
+  // 1. Verify admin authorization
+  if (!verifyAdminAuthorization(req)) {
+    return res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Admin authentication token or session required for publishing.'
+    });
+  }
 
-  const finalPayload = {
-    ...data,
-    lastPublished: publishedAt,
-    publicationInfo: {
-      publishedAt,
-      version,
-      publishedBy: data.publicationInfo?.publishedBy || 'Admin'
-    }
-  };
+  // 2. Validate payload
+  const rawPayload = req.body?.data || req.body;
+  const validation = validateContentPayload(rawPayload);
+  if (!validation.isValid) {
+    return res.status(400).json({ success: false, error: validation.error });
+  }
 
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const cleanUrl = supabaseUrl.trim().replace(/\/$/, '');
-      const resp = await fetch(`${cleanUrl}/rest/v1/site_content`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-          Prefer: 'resolution=merge-duplicates'
+  // 3. Connect to Supabase
+  const { client, error: clientErr } = getServerSupabase();
+  if (!client) {
+    return res.status(503).json({
+      success: false,
+      error: clientErr || 'Server-side Supabase client could not be initialized.'
+    });
+  }
+
+  try {
+    // 4. Fetch current version to increment atomically
+    const { data: currentRows } = await client
+      .from('site_content')
+      .select('version')
+      .eq('id', 'current')
+      .limit(1);
+
+    const currentVersion = Number(currentRows?.[0]?.version || 0);
+    const nextVersion = currentVersion + 1;
+    const now = new Date().toISOString();
+
+    const note = req.body?.note || 'Published from SHPIXELS Admin CMS';
+
+    // Build mutated payload with authoritative version and history
+    const finalContent = {
+      ...rawPayload,
+      lastPublished: now,
+      publicationInfo: {
+        publishedAt: now,
+        version: nextVersion,
+        publishedBy: 'Admin'
+      },
+      publicationHistory: [
+        {
+          id: `pub-${Date.now()}`,
+          publishedAt: now,
+          version: nextVersion,
+          publishedBy: 'Admin',
+          note
         },
-        body: JSON.stringify({
+        ...(rawPayload.publicationHistory || []).slice(0, 19)
+      ]
+    };
+
+    // 5. Canonical UPSERT on conflict (id)
+    const { data: upsertData, error: upsertError } = await client
+      .from('site_content')
+      .upsert(
+        {
           id: 'current',
-          data: finalPayload,
-          content: finalPayload,
-          version,
-          published_at: publishedAt,
-          updated_at: publishedAt
-        })
-      });
+          data: finalContent,
+          version: nextVersion,
+          published_at: now,
+          updated_at: now,
+          updated_by: 'Admin'
+        },
+        { onConflict: 'id' }
+      )
+      .select('id, version, published_at, updated_at')
+      .single();
 
-      if (!resp.ok) {
-        const txt = await resp.text();
-        console.error('Supabase write error on Vercel:', txt);
-        return res.status(500).json({ success: false, error: `Supabase save failed: ${txt.slice(0, 150)}` });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Successfully saved and published to Supabase database',
-        publishedAt,
-        version,
-        data: finalPayload
+    if (upsertError) {
+      console.error('[API/publish] Supabase upsert failed:', upsertError);
+      return res.status(500).json({
+        success: false,
+        error: `Supabase database error: ${upsertError.message}`
       });
-    } catch (err: any) {
-      return res.status(500).json({ success: false, error: err.message });
     }
-  }
 
-  return res.status(200).json({
-    success: true,
-    message: 'Published locally (Configure Supabase tokens to enable permanent database sync on Vercel)',
-    publishedAt,
-    version,
-    data: finalPayload
-  });
+    return res.status(200).json({
+      success: true,
+      message: 'Successfully published to Supabase database',
+      version: nextVersion,
+      published_at: now,
+      updated_at: now,
+      data: finalContent
+    });
+  } catch (err: any) {
+    console.error('[API/publish] Unexpected exception:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Internal server error' });
+  }
 }

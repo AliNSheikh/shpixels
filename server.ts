@@ -2,45 +2,32 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Support large base64 image uploads pushed directly to codebase
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-  // API Routes FIRST
-  app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", uptime: process.uptime() });
-  });
-
-  const contentFilePath = path.join(process.cwd(), "src", "data", "content.json");
-  const publicContentFilePath = path.join(process.cwd(), "public", "content.json");
-
-  // In-memory cache for ultra-fast synchronization
-  let inMemoryContent: any = null;
-  let serverVersion = 1;
-  let lastPublishedAt = new Date().toISOString();
-
-  // Initialize in-memory cache from disk
-  try {
-    if (fs.existsSync(contentFilePath)) {
-      const raw = fs.readFileSync(contentFilePath, "utf-8");
-      inMemoryContent = JSON.parse(raw);
-      if (inMemoryContent?.publicationInfo?.version) {
-        serverVersion = inMemoryContent.publicationInfo.version;
-      }
-      if (inMemoryContent?.lastPublished) {
-        lastPublishedAt = inMemoryContent.lastPublished;
-      }
+  // Helper to get Supabase client
+  const getSupabase = (): SupabaseClient | null => {
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bzfxervcwhvoxpvfsnec.supabase.co';
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    try {
+      return createClient(url.trim().replace(/\/$/, ''), key.trim(), {
+        auth: { persistSession: false }
+      });
+    } catch {
+      return null;
     }
-  } catch (initErr) {
-    console.warn("[CMS] Notice initializing cache:", initErr);
-  }
+  };
 
-  // Helper to set aggressive no-cache headers so all visitors see updates immediately
   const setNoCacheHeaders = (res: express.Response) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     res.setHeader("Pragma", "no-cache");
@@ -48,120 +35,163 @@ async function startServer() {
     res.setHeader("Surrogate-Control", "no-store");
   };
 
-  // Lightweight version check for real-time visitor synchronization
-  app.get("/api/content-version", (_req, res) => {
-    setNoCacheHeaders(res);
-    return res.json({
-      version: serverVersion,
-      lastPublished: lastPublishedAt,
-      serverTime: new Date().toISOString()
-    });
+  // Health endpoint
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", uptime: process.uptime(), platform: "node-dev" });
   });
 
-  // Read content saved in codebase
-  app.get("/api/content", async (_req, res) => {
+  // GET /api/content-version - Directly from Supabase
+  app.get("/api/content-version", async (_req, res) => {
     setNoCacheHeaders(res);
+    const sb = getSupabase();
+    if (!sb) {
+      return res.json({ version: 1, lastPublished: new Date().toISOString() });
+    }
     try {
-      if (inMemoryContent) {
-        return res.json(inMemoryContent);
+      const { data, error } = await sb
+        .from('site_content')
+        .select('version, published_at, updated_at')
+        .eq('id', 'current')
+        .limit(1);
+
+      if (error || !data || data.length === 0) {
+        return res.json({ version: 1, lastPublished: new Date().toISOString() });
       }
-      if (fs.existsSync(contentFilePath)) {
-        const raw = await fs.promises.readFile(contentFilePath, "utf-8");
-        inMemoryContent = JSON.parse(raw);
-        return res.json(inMemoryContent);
-      }
-      return res.json({ status: "not_found" });
-    } catch (err: any) {
-      console.error("[CMS] Error reading content:", err);
-      return res.status(500).json({ error: err.message });
+
+      return res.json({
+        version: Number(data[0].version || 1),
+        published_at: data[0].published_at || data[0].updated_at,
+        updated_at: data[0].updated_at
+      });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
     }
   });
 
-  // Central publisher function
-  const handlePublishContent = async (req: express.Request, res: express.Response) => {
+  // GET /api/content - Authoritative Supabase Read
+  app.get("/api/content", async (_req, res) => {
+    setNoCacheHeaders(res);
+    const sb = getSupabase();
+    if (!sb) {
+      return res.status(503).json({ error: "Supabase not configured on server" });
+    }
+
     try {
-      const data = req.body;
-      if (!data || typeof data !== "object") {
-        return res.status(400).json({ success: false, error: "Invalid content payload" });
+      const { data, error } = await sb
+        .from('site_content')
+        .select('id, data, version, published_at, updated_at')
+        .eq('id', 'current')
+        .limit(1);
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
       }
 
-      const publishedAt = new Date().toISOString();
-      serverVersion += 1;
-      lastPublishedAt = publishedAt;
+      if (data && data.length > 0 && data[0]?.data) {
+        const payload = data[0].data;
+        if (typeof data[0].version === 'number') {
+          if (!payload.publicationInfo) payload.publicationInfo = {};
+          payload.publicationInfo.version = data[0].version;
+        }
+        if (data[0].published_at) {
+          payload.lastPublished = data[0].published_at;
+        }
+        return res.json({
+          data: payload,
+          version: Number(data[0].version || 1),
+          published_at: data[0].published_at,
+          updated_at: data[0].updated_at
+        });
+      }
 
-      // Construct publication metadata
-      const publicationRecord = {
-        id: `pub-${Date.now()}`,
-        publishedAt,
-        version: serverVersion,
-        publishedBy: data.publicationInfo?.publishedBy || "Admin",
-        note: req.body.note || "Site published directly to server"
-      };
+      return res.status(404).json({ status: "not_found", message: "No data in Supabase" });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
+  });
 
-      const existingHistory = Array.isArray(data.publicationHistory) 
-        ? data.publicationHistory 
-        : (inMemoryContent?.publicationHistory || []);
+  // POST /api/publish-site & POST /api/publish - Upsert to Supabase
+  const handlePublish = async (req: express.Request, res: express.Response) => {
+    setNoCacheHeaders(res);
+    const sb = getSupabase();
+    if (!sb) {
+      return res.status(503).json({ success: false, error: "Supabase not configured" });
+    }
 
-      const updatedHistory = [publicationRecord, ...existingHistory].slice(0, 20);
+    const rawPayload = req.body?.data || req.body;
+    if (!rawPayload || typeof rawPayload !== 'object') {
+      return res.status(400).json({ success: false, error: "Invalid payload" });
+    }
 
-      // Mutate payload with official server timestamp and version
-      const finalPayload = {
-        ...data,
-        lastPublished: publishedAt,
+    try {
+      const { data: curr } = await sb
+        .from('site_content')
+        .select('version')
+        .eq('id', 'current')
+        .limit(1);
+
+      const nextVersion = Number(curr?.[0]?.version || 0) + 1;
+      const now = new Date().toISOString();
+
+      const finalContent = {
+        ...rawPayload,
+        lastPublished: now,
         publicationInfo: {
-          publishedAt,
-          version: serverVersion,
-          publishedBy: publicationRecord.publishedBy
-        },
-        publicationHistory: updatedHistory
+          publishedAt: now,
+          version: nextVersion,
+          publishedBy: 'Admin'
+        }
       };
 
-      inMemoryContent = finalPayload;
-      const jsonStr = JSON.stringify(finalPayload, null, 2);
+      const { error: upsertErr } = await sb
+        .from('site_content')
+        .upsert(
+          {
+            id: 'current',
+            data: finalContent,
+            version: nextVersion,
+            published_at: now,
+            updated_at: now,
+            updated_by: 'Admin'
+          },
+          { onConflict: 'id' }
+        );
 
-      // Ensure target folders exist
-      await fs.promises.mkdir(path.dirname(contentFilePath), { recursive: true });
-      await fs.promises.mkdir(path.dirname(publicContentFilePath), { recursive: true });
+      if (upsertErr) {
+        return res.status(500).json({ success: false, error: upsertErr.message });
+      }
 
-      // Save directly to the codebase on server disk
-      await fs.promises.writeFile(contentFilePath, jsonStr, "utf-8");
-      await fs.promises.writeFile(publicContentFilePath, jsonStr, "utf-8");
-
-      console.log(`[CMS] Published version ${serverVersion} at ${publishedAt} to ${contentFilePath}`);
-
-      setNoCacheHeaders(res);
-      return res.json({ 
-        success: true, 
-        message: "Site successfully saved and published on server",
-        publishedAt,
-        version: serverVersion,
-        data: finalPayload
+      console.log(`[Server] Published version ${nextVersion} to Supabase database`);
+      return res.json({
+        success: true,
+        version: nextVersion,
+        published_at: now,
+        data: finalContent
       });
     } catch (err: any) {
-      console.error("[CMS] Error writing to codebase:", err);
       return res.status(500).json({ success: false, error: err.message });
     }
   };
 
-  // Dedicated "Save Site" / Publish endpoint
-  app.post("/api/publish-site", handlePublishContent);
+  app.post("/api/publish-site", handlePublish);
+  app.post("/api/publish", handlePublish);
+  app.post("/api/save-content", handlePublish);
 
-  // Backward-compatible save endpoint
-  app.post("/api/save-content", handlePublishContent);
-
-  // Dynamic Sitemap XML Endpoint for Google Search Console & archiving
+  // Dynamic Sitemap XML
   app.get("/sitemap.xml", async (_req, res) => {
-    try {
-      let contentData: any = null;
-      if (fs.existsSync(contentFilePath)) {
-        const raw = await fs.promises.readFile(contentFilePath, "utf-8");
-        contentData = JSON.parse(raw);
-      }
+    const sb = getSupabase();
+    let contentData: any = null;
+    if (sb) {
+      try {
+        const { data } = await sb.from('site_content').select('data').eq('id', 'current').limit(1);
+        if (data?.[0]?.data) contentData = data[0].data;
+      } catch {}
+    }
 
-      const baseUrl = (contentData?.seo?.canonicalUrl || "https://shpixels.vercel.app").replace(/\/$/, "");
-      const now = new Date().toISOString().split("T")[0];
+    const baseUrl = (contentData?.seo?.canonicalUrl || "https://shpixels.vercel.app").replace(/\/$/, "");
+    const now = new Date().toISOString().split("T")[0];
 
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${baseUrl}/</loc>
@@ -210,48 +240,20 @@ async function startServer() {
     <lastmod>${now}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>`;
+  </url>
+</urlset>`;
 
-      if (contentData?.projects && Array.isArray(contentData.projects)) {
-        for (const p of contentData.projects) {
-          if (p.published) {
-            xml += `
-  <url>
-    <loc>${baseUrl}/#project-${p.id}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>${p.featured ? "0.8" : "0.6"}</priority>
-  </url>`;
-          }
-        }
-      }
-
-      xml += `\n</urlset>`;
-      res.header("Content-Type", "application/xml");
-      return res.send(xml);
-    } catch (e: any) {
-      console.error("[Sitemap] Error generating sitemap.xml:", e);
-      return res.status(500).send("Error generating sitemap");
-    }
+    res.header("Content-Type", "application/xml");
+    return res.send(xml);
   });
 
-  // Dynamic robots.txt
-  app.get("/robots.txt", async (_req, res) => {
-    let baseUrl = "https://shpixels.vercel.app";
-    if (fs.existsSync(contentFilePath)) {
-      try {
-        const raw = await fs.promises.readFile(contentFilePath, "utf-8");
-        const c = JSON.parse(raw);
-        if (c?.seo?.canonicalUrl) baseUrl = c.seo.canonicalUrl.replace(/\/$/, "");
-      } catch {
-        // ignore
-      }
-    }
+  // Robots.txt
+  app.get("/robots.txt", (_req, res) => {
     res.type("text/plain");
-    res.send(`User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`);
+    res.send(`User-agent: *\nAllow: /\n\nSitemap: https://shpixels.vercel.app/sitemap.xml\n`);
   });
 
-  // Vite middleware for development
+  // Vite dev server mounting
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

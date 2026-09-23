@@ -1,39 +1,64 @@
+import { getServerSupabase } from './_supabase';
+
 export default async function handler(req: any, res: any) {
-  // Set aggressive no-cache headers
+  // Set aggressive no-cache headers for instant edge freshness
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
+  res.setHeader("Surrogate-Control", "no-store");
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const cleanUrl = supabaseUrl.trim().replace(/\/$/, "");
-      const resp = await fetch(`${cleanUrl}/rest/v1/site_content?id=eq.current&select=*`, {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`
-        }
-      });
-      if (resp.ok) {
-        const rows: any = await resp.json();
-        if (Array.isArray(rows) && rows.length > 0) {
-          const item = rows[0];
-          const payload = item.data || item.content;
-          if (payload) {
-            return res.status(200).json(payload);
-          }
-        }
-      }
-    } catch (err: any) {
-      console.warn("Vercel API Supabase read warning:", err.message);
-    }
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Fallback response
-  return res.status(200).json({
-    status: "ready",
-    message: "Connect Supabase for persistent cloud database storage on Vercel"
-  });
+  const { client, error } = getServerSupabase();
+  if (!client) {
+    return res.status(503).json({
+      error: error || 'Supabase server client not initialized',
+      source: 'unconfigured'
+    });
+  }
+
+  try {
+    const { data: rows, error: queryError } = await client
+      .from('site_content')
+      .select('id, data, version, updated_at, published_at')
+      .eq('id', 'current')
+      .limit(1);
+
+    if (queryError) {
+      console.error('[API/content] Supabase query error:', queryError);
+      return res.status(500).json({ error: queryError.message });
+    }
+
+    if (rows && rows.length > 0 && rows[0]?.data) {
+      const row = rows[0];
+      const content = row.data;
+
+      // Ensure authoritative database version is synced to response
+      if (typeof row.version === 'number') {
+        if (!content.publicationInfo) content.publicationInfo = {};
+        content.publicationInfo.version = row.version;
+      }
+      if (row.published_at) {
+        content.lastPublished = row.published_at;
+      }
+
+      return res.status(200).json({
+        data: content,
+        version: Number(row.version || 1),
+        published_at: row.published_at,
+        updated_at: row.updated_at,
+        source: 'supabase'
+      });
+    }
+
+    return res.status(404).json({
+      status: 'not_found',
+      message: 'No published content found in Supabase table site_content (id=current).'
+    });
+  } catch (err: any) {
+    console.error('[API/content] Unhandled exception:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
 }

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   GlobalContent, ProjectItem, YouTubeVideoItem, ContactData, NavigationItem, 
   WorkflowStep, ServiceItem, ClientLogo, CategoryDetail, AdminAuthData 
@@ -8,13 +8,31 @@ import {
   verifyPassword, hashPassword, generateSalt, DEFAULT_SALT 
 } from '../utils/cryptoAuth';
 import { 
-  getSupabaseConfig, setSupabaseConfig, testSupabaseConnection, 
-  fetchContentFromSupabase, saveContentToSupabase 
+  fetchAuthoritativeContent, 
+  subscribeToContentChanges, 
+  checkDatabaseHealth,
+  getSupabaseUrl,
+  getSupabaseAnonKey
 } from '../lib/supabase';
 
-const STORAGE_KEY = 'mografix_site_content_v1';
 const AUTH_KEY = 'mografix_admin_auth_v1';
+const DRAFT_KEY = 'shpixels_admin_draft_v1';
 const DEFAULT_PASS = 'mografix2026';
+
+export type SyncState = 'synced' | 'saving' | 'unsaved' | 'error' | 'syncing';
+export type RealtimeState = 'connected' | 'connecting' | 'disconnected';
+
+interface DatabaseDiagnostics {
+  urlConfigured: boolean;
+  reachable: boolean;
+  tableExists: boolean;
+  version: number;
+  publishedAt: string | null;
+  updatedAt: string | null;
+  realtimeStatus: RealtimeState;
+  lastSyncTime: string | null;
+  error?: string;
+}
 
 interface ContentContextType {
   content: GlobalContent;
@@ -91,14 +109,14 @@ interface ContentContextType {
   hasUnsavedChanges: boolean;
   lastPublishedAt: string | null;
   publicationVersion: number;
-  serverSyncStatus: 'synced' | 'saving' | 'error' | 'syncing';
+  serverSyncStatus: SyncState;
+  realtimeStatus: RealtimeState;
   fetchLatestFromServer: () => Promise<void>;
 
-  // Supabase & Database configuration
-  supabaseConfigState: { url: string; anonKey: string; isConfigured: boolean; source: string };
-  updateSupabaseCredentials: (url: string, anonKey: string) => Promise<{ success: boolean; message: string }>;
-  testDatabaseConnection: (url?: string, anonKey?: string) => Promise<{ success: boolean; message: string; latencyMs?: number }>;
-  syncNowToSupabase: () => Promise<{ success: boolean; message: string }>;
+  // Supabase & Diagnostics
+  diagnostics: DatabaseDiagnostics;
+  refreshDiagnostics: () => Promise<void>;
+  seedInitialContentToSupabase: () => Promise<{ success: boolean; message: string }>;
 
   // Admin routing & secure auth
   isAdminView: boolean;
@@ -112,62 +130,44 @@ interface ContentContextType {
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 export function ContentProvider({ children }: { children: React.ReactNode }) {
-  const [content, setContent] = useState<GlobalContent>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return {
-          ...initialContent,
-          ...parsed,
-          categoryDetails: {
-            ...(initialContent.categoryDetails || {}),
-            ...(parsed.categoryDetails || {})
-          },
-          adminAuth: parsed.adminAuth || initialContent.adminAuth,
-          seo: { ...initialContent.seo, ...(parsed.seo || {}) },
-          branding: { ...initialContent.branding, ...(parsed.branding || {}) },
-          hero: { ...initialContent.hero, ...(parsed.hero || {}) },
-          about: { ...initialContent.about, ...(parsed.about || {}) },
-          contact: { ...initialContent.contact, ...(parsed.contact || {}) },
-          footer: { ...initialContent.footer, ...(parsed.footer || {}) }
-        };
-      }
-    } catch (err) {
-      console.error('Failed to read content from localStorage:', err);
-    }
-    return initialContent;
-  });
+  // 1. Initial React State: Start with clean fallback initialContent
+  const [content, setContent] = useState<GlobalContent>(initialContent);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  const [lastSaved, setLastSaved] = useState<Date | null>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.lastPublished) return new Date(parsed.lastPublished);
-      }
-    } catch {}
-    return null;
-  });
+  // Authoritative database metadata
+  const [publicationVersion, setPublicationVersion] = useState<number>(1);
+  const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null);
 
-  // Server publication and synchronization states
+  // Synchronization and Realtime states
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [publishSuccess, setPublishSuccess] = useState<boolean>(false);
   const [publishError, setPublishError] = useState<string | null>(null);
-  const [serverSyncStatus, setServerSyncStatus] = useState<'synced' | 'saving' | 'error' | 'syncing'>('synced');
-  
-  const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(() => {
-    return content.lastPublished || content.publicationInfo?.publishedAt || null;
-  });
-  const [publicationVersion, setPublicationVersion] = useState<number>(() => {
-    return content.publicationInfo?.version || 1;
+  const [serverSyncStatus, setServerSyncStatus] = useState<SyncState>('syncing');
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeState>('connecting');
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+
+  // Diagnostics state
+  const [diagnostics, setDiagnostics] = useState<DatabaseDiagnostics>({
+    urlConfigured: Boolean(getSupabaseUrl()),
+    reachable: false,
+    tableExists: false,
+    version: 1,
+    publishedAt: null,
+    updatedAt: null,
+    realtimeStatus: 'connecting',
+    lastSyncTime: null
   });
 
-  // Supabase state
-  const [supabaseConfigState, setSupabaseConfigState] = useState(() => getSupabaseConfig());
+  // Track latest authoritative version in ref for ignoring stale events
+  const currentVersionRef = useRef<number>(1);
+  currentVersionRef.current = publicationVersion;
 
-  // Admin authentication state (Session-based with encrypted password check)
+  // Track unsaved local edits
+  const pendingEditsRef = useRef<boolean>(false);
+  pendingEditsRef.current = hasUnsavedChanges;
+
+  // Admin session authentication
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
       const token = localStorage.getItem(AUTH_KEY);
@@ -177,7 +177,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  // Admin view toggle (sync with hash/URL)
+  // Admin view toggle (URL sync)
   const [isAdminView, setIsAdminView] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
@@ -187,303 +187,256 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     return false;
   });
 
-  // Sync content updates to localStorage, push real-time draft to server disk and Supabase
-  const saveToStorage = useCallback((newContent: GlobalContent) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newContent));
-      setLastSaved(new Date());
-      setHasUnsavedChanges(true);
-
-      // Async push to Supabase if configured (ensures Vercel and cloud persistence)
-      const sbCfg = getSupabaseConfig();
-      if (sbCfg.isConfigured) {
-        saveContentToSupabase(newContent).catch((e) => {
-          console.warn('[Database] Background Supabase draft sync warning:', e);
-        });
-      }
-
-      // Push real-time updates to server disk
-      fetch('/api/save-content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newContent)
-      })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) {
-          if (data.publishedAt) setLastPublishedAt(data.publishedAt);
-          if (data.version) setPublicationVersion(data.version);
-        }
-      })
-      .catch(() => {});
-    } catch (err) {
-      console.error('Failed to save content to localStorage:', err);
-    }
+  // Synchronize hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      const path = window.location.pathname;
+      setIsAdminView(hash === '#admin' || hash === '#/admin' || path.startsWith('/admin'));
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Dedicated "Save Site" / Publish endpoint (Supabase + Server disk + Visitor sync)
-  const publishSite = useCallback(async (note?: string): Promise<boolean> => {
-    setIsPublishing(true);
-    setPublishError(null);
-    setServerSyncStatus('saving');
+  // Run diagnostics check
+  const refreshDiagnostics = useCallback(async () => {
+    const health = await checkDatabaseHealth();
+    setDiagnostics((prev) => ({
+      ...prev,
+      urlConfigured: Boolean(getSupabaseUrl()),
+      reachable: health.connected,
+      tableExists: health.tableExists,
+      version: health.version || prev.version,
+      publishedAt: health.publishedAt,
+      updatedAt: health.updatedAt,
+      realtimeStatus: prev.realtimeStatus,
+      lastSyncTime: new Date().toISOString(),
+      error: health.error
+    }));
+  }, []);
 
-    const publishedAt = new Date().toISOString();
-    const nextVersion = (content.publicationInfo?.version || publicationVersion || 1) + 1;
-
-    const payload: GlobalContent = {
-      ...content,
-      lastPublished: publishedAt,
-      publicationInfo: {
-        publishedAt,
-        version: nextVersion,
-        publishedBy: 'Admin'
-      },
-      publicationHistory: [
-        {
-          id: `pub-${Date.now()}`,
-          publishedAt,
-          version: nextVersion,
-          publishedBy: 'Admin',
-          note: note || 'Explicit site save and publication'
-        },
-        ...(content.publicationHistory || []).slice(0, 19)
-      ]
-    };
-
-    // 1. Direct Supabase save (CRITICAL FOR VERCEL & PERSISTENCE)
-    const sbConfig = getSupabaseConfig();
-    if (sbConfig.isConfigured) {
-      try {
-        const sbRes = await saveContentToSupabase(payload);
-        if (sbRes.success) {
-          console.log(`[Database] Published v${nextVersion} directly to Supabase cloud database.`);
-        } else {
-          console.warn('[Database] Supabase cloud save warning:', sbRes.error);
-        }
-      } catch (sbErr) {
-        console.warn('[Database] Supabase exception during publish:', sbErr);
-      }
-    }
-
-    // 2. Server API save (for Node/Express filesystem persistence)
-    try {
-      const res = await fetch('/api/publish-site', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success && result.data) {
-          setContent(result.data);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
-          setLastPublishedAt(result.publishedAt);
-          setPublicationVersion(result.version);
-          setLastSaved(new Date(result.publishedAt));
-          setHasUnsavedChanges(false);
-          setServerSyncStatus('synced');
-          setPublishSuccess(true);
-          setTimeout(() => setPublishSuccess(false), 4500);
-          return true;
-        }
-      }
-    } catch (err: any) {
-      console.warn('[CMS] Server publish API warning (falling back to client state):', err.message);
-    }
-
-    // Client/Local state commit fallback
-    setContent(payload);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    setLastPublishedAt(publishedAt);
-    setPublicationVersion(nextVersion);
-    setLastSaved(new Date(publishedAt));
-    setHasUnsavedChanges(false);
-    setServerSyncStatus('synced');
-    setPublishSuccess(true);
-    setTimeout(() => setPublishSuccess(false), 4500);
-    return true;
-  }, [content, publicationVersion]);
-
-  // Fetch authoritative state from database or server
-  const fetchLatestFromServer = useCallback(async () => {
+  // Fetch authoritative content from Supabase
+  const fetchAuthoritative = useCallback(async () => {
     setServerSyncStatus('syncing');
-
-    // 1. Check Supabase first
-    const sbContent = await fetchContentFromSupabase();
-    if (sbContent && sbContent.projects) {
-      setContent(sbContent);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sbContent));
-      if (sbContent.lastPublished) setLastPublishedAt(sbContent.lastPublished);
-      if (sbContent.publicationInfo?.version) setPublicationVersion(sbContent.publicationInfo.version);
-      setHasUnsavedChanges(false);
-      setServerSyncStatus('synced');
-      return;
-    }
-
-    // 2. Check Server API
     try {
-      const res = await fetch(`/api/content?t=${Date.now()}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.projects) {
-          setContent(data);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          if (data.lastPublished) setLastPublishedAt(data.lastPublished);
-          if (data.publicationInfo?.version) setPublicationVersion(data.publicationInfo.version);
-          setHasUnsavedChanges(false);
-          setServerSyncStatus('synced');
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to fetch latest content from server:', err);
-      setServerSyncStatus('error');
-    }
-  }, []);
-
-  // Supabase Credential Management
-  const updateSupabaseCredentials = useCallback(async (url: string, anonKey: string) => {
-    setSupabaseConfig(url, anonKey);
-    const cfg = getSupabaseConfig();
-    setSupabaseConfigState(cfg);
-    
-    // Test connection immediately
-    const testRes = await testSupabaseConnection(url, anonKey);
-    if (testRes.success) {
-      // Seed/sync current content to newly connected Supabase
-      saveContentToSupabase(content).catch(() => {});
-    }
-    return {
-      success: testRes.success,
-      message: testRes.message
-    };
-  }, [content]);
-
-  const testDatabaseConnection = useCallback(async (url?: string, anonKey?: string) => {
-    return await testSupabaseConnection(url, anonKey);
-  }, []);
-
-  const syncNowToSupabase = useCallback(async () => {
-    const cfg = getSupabaseConfig();
-    if (!cfg.isConfigured) {
-      return { success: false, message: 'Supabase is not configured yet. Provide Project URL and anon key.' };
-    }
-    const res = await saveContentToSupabase(content);
-    if (res.success) {
-      return { success: true, message: 'Current site content successfully pushed & synced to Supabase database!' };
-    } else {
-      return { success: false, message: res.error || 'Failed to save to Supabase' };
-    }
-  }, [content]);
-
-  // Real-time visitor synchronization: poll /api/content-version and Supabase
-  useEffect(() => {
-    const checkServerVersion = async () => {
-      if (hasUnsavedChanges) return;
-
-      try {
-        const res = await fetch(`/api/content-version?t=${Date.now()}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        
-        if (data && typeof data.version === 'number' && data.version > publicationVersion) {
-          console.log(`[CMS] Newer version v${data.version} detected. Refreshing content live for visitor...`);
-          const contentRes = await fetch(`/api/content?t=${Date.now()}`);
-          if (contentRes.ok) {
-            const freshContent = await contentRes.json();
-            if (freshContent && freshContent.projects) {
-              setContent(freshContent);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(freshContent));
-              setPublicationVersion(data.version);
-              setLastPublishedAt(data.lastPublished || freshContent.lastPublished);
-              setServerSyncStatus('synced');
-            }
-          }
-        }
-      } catch {
-        // Ignore offline/transient fetch issues
-      }
-    };
-
-    const interval = setInterval(checkServerVersion, 12000);
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkServerVersion();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [hasUnsavedChanges, publicationVersion]);
-
-  // Fetch codebase / Supabase content on mount
-  useEffect(() => {
-    const loadInitial = async () => {
-      // 1. Supabase direct load
-      const sbData = await fetchContentFromSupabase();
-      if (sbData && sbData.projects) {
-        console.log('[CMS] Authoritative data retrieved from Supabase cloud database.');
-        setContent((prev) => ({ ...prev, ...sbData }));
-        if (sbData.lastPublished) setLastPublishedAt(sbData.lastPublished);
-        if (sbData.publicationInfo?.version) setPublicationVersion(sbData.publicationInfo.version);
+      // 1. Fetch directly from Supabase via client SDK
+      const res = await fetchAuthoritativeContent();
+      if (res.data) {
+        const ver = res.version || 1;
+        // Supabase ALWAYS wins over default/initialContent
+        setContent(res.data);
+        setPublicationVersion(ver);
+        currentVersionRef.current = ver;
+        setLastPublishedAt(res.publishedAt);
+        setLastSyncTime(new Date().toISOString());
+        setServerSyncStatus('synced');
+        setPublishError(null);
         return;
       }
 
-      // 2. Server API fallback
-      fetch('/api/content')
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data && data.projects) {
-            setContent((prev) => ({ ...prev, ...data }));
-          } else {
-            // 3. Static public/content.json fallback
-            fetch('/content.json')
-              .then((r) => (r.ok ? r.json() : null))
-              .then((staticData) => {
-                if (staticData && staticData.projects) {
-                  setContent((prev) => ({ ...prev, ...staticData }));
-                }
-              })
-              .catch(() => {});
-          }
-        })
-        .catch(() => {
-          fetch('/content.json')
-            .then((r) => (r.ok ? r.json() : null))
-            .then((staticData) => {
-              if (staticData && staticData.projects) {
-                setContent((prev) => ({ ...prev, ...staticData }));
-              }
-            })
-            .catch(() => {});
-        });
-    };
+      // 2. Fallback to serverless API route /api/content
+      const apiRes = await fetch('/api/content', {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      if (apiRes.ok) {
+        const json = await apiRes.json();
+        if (json.data && json.data.projects) {
+          const ver = Number(json.version || 1);
+          setContent(json.data);
+          setPublicationVersion(ver);
+          currentVersionRef.current = ver;
+          setLastPublishedAt(json.published_at || json.data.lastPublished);
+          setLastSyncTime(new Date().toISOString());
+          setServerSyncStatus('synced');
+          setPublishError(null);
+          return;
+        }
+      }
 
-    loadInitial();
+      // If database is reachable but table is empty, keep initialContent and report
+      setServerSyncStatus('synced');
+    } catch (err: any) {
+      console.warn('[CMS] Failed to fetch authoritative content:', err);
+      setServerSyncStatus('error');
+      setPublishError(err.message || 'Error connecting to database');
+    }
+  }, []);
+
+  // INITIAL MOUNT LIFECYCLE:
+  // 1. Fetch Supabase content
+  // 2. Subscribe to Supabase Realtime channel
+  // 3. Setup window focus/visibility re-sync
+  useEffect(() => {
+    fetchAuthoritative();
+    refreshDiagnostics();
+
+    // Subscribe to Supabase Realtime changes
+    const channel = subscribeToContentChanges(
+      (update) => {
+        const incomingVersion = update.version;
+        // Ignore stale or older versions
+        if (incomingVersion > currentVersionRef.current) {
+          console.log(`[Supabase Realtime] Received authoritative version v${incomingVersion}. Updating site.`);
+          setContent(update.data);
+          setPublicationVersion(incomingVersion);
+          currentVersionRef.current = incomingVersion;
+          if (update.publishedAt) setLastPublishedAt(update.publishedAt);
+          setLastSyncTime(new Date().toISOString());
+          setServerSyncStatus('synced');
+          setHasUnsavedChanges(false);
+        }
+      },
+      (status) => {
+        if (status === 'SUBSCRIBED') {
+          setRealtimeStatus('connected');
+          setDiagnostics((d) => ({ ...d, realtimeStatus: 'connected' }));
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setRealtimeStatus('disconnected');
+          setDiagnostics((d) => ({ ...d, realtimeStatus: 'disconnected' }));
+        }
+      }
+    );
+
+    // Refresh on tab visibility change (e.g. user returns to website)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && !pendingEditsRef.current) {
+        fetchAuthoritative();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      try {
+        channel.unsubscribe();
+      } catch {}
+    };
+  }, [fetchAuthoritative, refreshDiagnostics]);
+
+  // Mark draft changes locally in memory
+  const markLocalEdit = useCallback((newContent: GlobalContent) => {
+    setContent(newContent);
+    setHasUnsavedChanges(true);
+    setServerSyncStatus('unsaved');
+    try {
+      // Optional draft recovery key (never overrides Supabase)
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(newContent));
+    } catch {}
   }, []);
 
   // Update whole content
   const updateContent = useCallback((updates: Partial<GlobalContent>) => {
     setContent((prev) => {
       const next = { ...prev, ...updates };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   // Update specific top-level section
   const updateSection = useCallback(<K extends keyof GlobalContent>(section: K, data: GlobalContent[K]) => {
     setContent((prev) => {
       const next = { ...prev, [section]: data };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
-  // Individual section update helpers
+  // PUBLISH / SAVE SITE: The ONE authoritative mutation path
+  // Admin CMS -> POST /api/publish -> Supabase UPSERT -> Realtime Event -> All connected browsers
+  const publishSite = useCallback(async (note?: string): Promise<boolean> => {
+    setIsPublishing(true);
+    setPublishError(null);
+    setServerSyncStatus('saving');
+
+    const adminToken = localStorage.getItem(AUTH_KEY) || 'shpix_admin_default';
+
+    try {
+      const response = await fetch('/api/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`,
+          'x-admin-token': adminToken
+        },
+        body: JSON.stringify({
+          data: content,
+          note: note || 'Published from SHPIXELS Admin CMS'
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to publish content to Supabase');
+      }
+
+      // Reconcile with authoritative Supabase response
+      const updatedVersion = Number(result.version || publicationVersion + 1);
+      const updatedTime = result.published_at || new Date().toISOString();
+
+      setContent(result.data);
+      setPublicationVersion(updatedVersion);
+      currentVersionRef.current = updatedVersion;
+      setLastPublishedAt(updatedTime);
+      setLastSaved(new Date(updatedTime));
+      setLastSyncTime(updatedTime);
+      setHasUnsavedChanges(false);
+      setServerSyncStatus('synced');
+      setPublishSuccess(true);
+
+      // Clean up session draft
+      try {
+        sessionStorage.removeItem(DRAFT_KEY);
+      } catch {}
+
+      setTimeout(() => setPublishSuccess(false), 3500);
+      refreshDiagnostics();
+      return true;
+    } catch (err: any) {
+      console.error('[CMS] Publish failed:', err);
+      setPublishError(err.message || 'Database write error');
+      setServerSyncStatus('error');
+      setIsPublishing(false);
+      return false;
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [content, publicationVersion, refreshDiagnostics]);
+
+  // One-click seed initial content to empty Supabase database
+  const seedInitialContentToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {
+    const adminToken = localStorage.getItem(AUTH_KEY) || 'shpix_admin_default';
+    try {
+      const res = await fetch('/api/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`,
+          'x-admin-token': adminToken
+        },
+        body: JSON.stringify({
+          data: initialContent,
+          note: 'Initial Supabase seed from template'
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setContent(data.data);
+        setPublicationVersion(data.version);
+        setLastPublishedAt(data.published_at);
+        setServerSyncStatus('synced');
+        setHasUnsavedChanges(false);
+        refreshDiagnostics();
+        return { success: true, message: 'Initial content successfully seeded to Supabase database!' };
+      }
+      return { success: false, message: data.error || 'Seeding failed' };
+    } catch (e: any) {
+      return { success: false, message: e.message || 'Network error during seed' };
+    }
+  }, [refreshDiagnostics]);
+
+  // Section update helpers
   const updateSectionHeader = useCallback((sectionKey: string, headerUpdates: Partial<import('../types/content').SectionHeaderInfo>) => {
     setContent((prev) => {
       const next = {
@@ -496,50 +449,50 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
           }
         }
       };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateHero = useCallback((updates: Partial<import('../types/content').HeroData>) => {
     setContent((prev) => {
       const next = { ...prev, hero: { ...prev.hero, ...updates } };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateAbout = useCallback((updates: Partial<import('../types/content').AboutData>) => {
     setContent((prev) => {
       const next = { ...prev, about: { ...prev.about, ...updates } };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateBranding = useCallback((updates: Partial<import('../types/content').BrandingData>) => {
     setContent((prev) => {
       const next = { ...prev, branding: { ...prev.branding, ...updates } };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateContact = useCallback((updates: Partial<import('../types/content').ContactData>) => {
     setContent((prev) => {
       const next = { ...prev, contact: { ...prev.contact, ...updates } };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateFooter = useCallback((updates: Partial<import('../types/content').FooterData>) => {
     setContent((prev) => {
       const next = { ...prev, footer: { ...prev.footer, ...updates } };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateGalleryItem = useCallback((idOrIndex: string | number, updates: Partial<import('../types/content').GalleryItem>) => {
     setContent((prev) => {
@@ -554,28 +507,28 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         current[idx] = { ...current[idx], ...updates };
       }
       const next = { ...prev, gallery: current };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const addGalleryItem = useCallback((item: import('../types/content').GalleryItem) => {
     setContent((prev) => {
       const next = { ...prev, gallery: [item, ...(prev.gallery || [])] };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const deleteGalleryItem = useCallback((id: string) => {
     setContent((prev) => {
       const next = { ...prev, gallery: (prev.gallery || []).filter(g => g.id !== id) };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
-  // Derived categories list
+  // Derived categories
   const categories = useMemo(() => {
     if (content.categories && content.categories.length > 0) {
       return content.categories;
@@ -587,140 +540,200 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     return Array.from(catSet);
   }, [content.categories, content.projects]);
 
-  // Derived category details
   const categoryDetails = useMemo(() => {
     return content.categoryDetails || initialContent.categoryDetails || {};
   }, [content.categoryDetails]);
 
-  // Category management
   const addCategory = useCallback((name: string, coverImage?: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     setContent((prev) => {
       const existing = prev.categories || categories;
-      if (existing.some(c => c.toLowerCase() === trimmed.toLowerCase())) return prev;
-      
+      if (existing.includes(trimmed)) return prev;
+      const nextCats = [...existing, trimmed];
       const nextDetails = { ...(prev.categoryDetails || {}) };
       if (coverImage) {
-        nextDetails[trimmed] = { ...(nextDetails[trimmed] || {}), coverImage };
+        nextDetails[trimmed] = { coverImage, description: '', nameAr: trimmed };
       }
-
-      const next = { 
-        ...prev, 
-        categories: [...existing, trimmed],
-        categoryDetails: nextDetails
-      };
-      saveToStorage(next);
+      const next = { ...prev, categories: nextCats, categoryDetails: nextDetails };
+      markLocalEdit(next);
       return next;
     });
-  }, [categories, saveToStorage]);
+  }, [categories, markLocalEdit]);
 
   const renameCategory = useCallback((oldName: string, newName: string) => {
-    const trimmedOld = oldName.trim();
-    const trimmedNew = newName.trim();
-    if (!trimmedOld || !trimmedNew || trimmedOld === trimmedNew) return;
+    const trimmed = newName.trim();
+    if (!trimmed || oldName === trimmed) return;
     setContent((prev) => {
-      const existing = prev.categories || categories;
-      const nextCats = existing.map(c => c === trimmedOld ? trimmedNew : c);
-      const nextProjects = (prev.projects || []).map(p => 
-        p.category === trimmedOld ? { ...p, category: trimmedNew } : p
-      );
-      const nextServices = (prev.services || []).map(s => 
-        s.category === trimmedOld ? { ...s, category: trimmedNew } : s
-      );
-      const nextGallery = (prev.gallery || []).map(g => 
-        g.category === trimmedOld ? { ...g, category: trimmedNew } : g
-      );
-
-      // Migrate categoryDetails key
+      const nextCats = (prev.categories || categories).map(c => c === oldName ? trimmed : c);
       const nextDetails = { ...(prev.categoryDetails || {}) };
-      if (nextDetails[trimmedOld]) {
-        nextDetails[trimmedNew] = nextDetails[trimmedOld];
-        delete nextDetails[trimmedOld];
+      if (nextDetails[oldName]) {
+        nextDetails[trimmed] = nextDetails[oldName];
+        delete nextDetails[oldName];
       }
-
-      const next = {
-        ...prev,
-        categories: nextCats,
-        categoryDetails: nextDetails,
-        projects: nextProjects,
-        services: nextServices,
-        gallery: nextGallery
-      };
-      saveToStorage(next);
+      const nextProjects = (prev.projects || []).map(p => p.category === oldName ? { ...p, category: trimmed } : p);
+      const next = { ...prev, categories: nextCats, categoryDetails: nextDetails, projects: nextProjects };
+      markLocalEdit(next);
       return next;
     });
-  }, [categories, saveToStorage]);
+  }, [categories, markLocalEdit]);
 
   const deleteCategory = useCallback((name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
     setContent((prev) => {
-      const existing = prev.categories || categories;
-      const nextCats = existing.filter(c => c !== trimmed);
+      const nextCats = (prev.categories || categories).filter(c => c !== name);
       const nextDetails = { ...(prev.categoryDetails || {}) };
-      delete nextDetails[trimmed];
-
-      const next = { 
-        ...prev, 
-        categories: nextCats,
-        categoryDetails: nextDetails
-      };
-      saveToStorage(next);
+      delete nextDetails[name];
+      const next = { ...prev, categories: nextCats, categoryDetails: nextDetails };
+      markLocalEdit(next);
       return next;
     });
-  }, [categories, saveToStorage]);
+  }, [categories, markLocalEdit]);
 
   const reorderCategories = useCallback((newCats: string[]) => {
     setContent((prev) => {
       const next = { ...prev, categories: newCats };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateCategoryCover = useCallback((categoryName: string, coverImageUrl: string) => {
     setContent((prev) => {
-      const currentDetails = { ...(prev.categoryDetails || {}) };
-      currentDetails[categoryName] = {
-        ...(currentDetails[categoryName] || {}),
-        coverImage: coverImageUrl
+      const nextDetails = {
+        ...(prev.categoryDetails || {}),
+        [categoryName]: {
+          ...(prev.categoryDetails?.[categoryName] || {}),
+          coverImage: coverImageUrl
+        }
       };
-      const next = { ...prev, categoryDetails: currentDetails };
-      saveToStorage(next);
+      const next = { ...prev, categoryDetails: nextDetails };
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateCategoryDetails = useCallback((categoryName: string, details: Partial<CategoryDetail>) => {
     setContent((prev) => {
-      const currentDetails = { ...(prev.categoryDetails || {}) };
-      currentDetails[categoryName] = {
-        ...(currentDetails[categoryName] || {}),
-        ...details
+      const nextDetails = {
+        ...(prev.categoryDetails || {}),
+        [categoryName]: {
+          ...(prev.categoryDetails?.[categoryName] || {}),
+          ...details
+        }
       };
-      const next = { ...prev, categoryDetails: currentDetails };
-      saveToStorage(next);
+      const next = { ...prev, categoryDetails: nextDetails };
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
-  // Workflow / Pipeline management
+  // Project CRUD
+  const addProject = useCallback((project: ProjectItem) => {
+    setContent((prev) => {
+      const next = { ...prev, projects: [project, ...(prev.projects || [])] };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  const updateProject = useCallback((projectOrId: ProjectItem | string, updates?: Partial<ProjectItem>) => {
+    setContent((prev) => {
+      const nextProjects = (prev.projects || []).map((p) => {
+        if (typeof projectOrId === 'string') {
+          return p.id === projectOrId ? { ...p, ...(updates || {}) } : p;
+        }
+        return p.id === projectOrId.id ? projectOrId : p;
+      });
+      const next = { ...prev, projects: nextProjects };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  const deleteProject = useCallback((id: string) => {
+    setContent((prev) => {
+      const next = { ...prev, projects: (prev.projects || []).filter(p => p.id !== id) };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  const duplicateProject = useCallback((id: string) => {
+    setContent((prev) => {
+      const target = (prev.projects || []).find(p => p.id === id);
+      if (!target) return prev;
+      const copy: ProjectItem = {
+        ...target,
+        id: `proj-${Date.now()}`,
+        title: `${target.title} (Copy)`,
+        order: (target.order || 0) + 1
+      };
+      const next = { ...prev, projects: [copy, ...(prev.projects || [])] };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  const reorderProjects = useCallback((newOrderIds: string[]) => {
+    setContent((prev) => {
+      const map = new Map((prev.projects || []).map(p => [p.id, p]));
+      const nextProjects = newOrderIds.map((id, index) => {
+        const item = map.get(id);
+        return item ? { ...item, order: index + 1 } : null;
+      }).filter(Boolean) as ProjectItem[];
+      const next = { ...prev, projects: nextProjects };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  // Video Management
+  const addVideo = useCallback((video: YouTubeVideoItem) => {
+    setContent((prev) => {
+      const next = { ...prev, featuredVideos: [video, ...(prev.featuredVideos || [])] };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  const updateVideo = useCallback((video: YouTubeVideoItem) => {
+    setContent((prev) => {
+      const next = {
+        ...prev,
+        featuredVideos: (prev.featuredVideos || []).map(v => v.id === video.id ? video : v)
+      };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  const deleteVideo = useCallback((id: string) => {
+    setContent((prev) => {
+      const next = {
+        ...prev,
+        featuredVideos: (prev.featuredVideos || []).filter(v => v.id !== id)
+      };
+      markLocalEdit(next);
+      return next;
+    });
+  }, [markLocalEdit]);
+
+  // Workflow
   const updateWorkflow = useCallback((steps: WorkflowStep[]) => {
     setContent((prev) => {
       const next = { ...prev, workflow: steps };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const addWorkflowStep = useCallback((step: WorkflowStep) => {
     setContent((prev) => {
       const next = { ...prev, workflow: [...(prev.workflow || []), step] };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateWorkflowStep = useCallback((index: number, stepOrUpdates: WorkflowStep | Partial<WorkflowStep>) => {
     setContent((prev) => {
@@ -729,236 +742,132 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         current[index] = { ...current[index], ...stepOrUpdates };
       }
       const next = { ...prev, workflow: current };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const deleteWorkflowStep = useCallback((index: number) => {
     setContent((prev) => {
-      const current = [...(prev.workflow || [])];
-      if (index >= 0 && index < current.length) {
-        current.splice(index, 1);
-      }
-      const next = { ...prev, workflow: current };
-      saveToStorage(next);
+      const next = { ...prev, workflow: (prev.workflow || []).filter((_, i) => i !== index) };
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
-  // Services management
+  // Services
   const updateServices = useCallback((services: ServiceItem[]) => {
     setContent((prev) => {
       const next = { ...prev, services };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const addService = useCallback((service: ServiceItem) => {
     setContent((prev) => {
       const next = { ...prev, services: [...(prev.services || []), service] };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const updateService = useCallback((serviceOrId: ServiceItem | string, updates?: Partial<ServiceItem>) => {
     setContent((prev) => {
-      const isStringId = typeof serviceOrId === 'string';
-      const targetId = isStringId ? serviceOrId : serviceOrId.id;
-      const targetUpdates = isStringId ? (updates || {}) : serviceOrId;
       const next = {
         ...prev,
-        services: (prev.services || []).map(s => s.id === targetId ? { ...s, ...targetUpdates } : s)
+        services: (prev.services || []).map((s) => {
+          if (typeof serviceOrId === 'string') {
+            return s.id === serviceOrId ? { ...s, ...(updates || {}) } : s;
+          }
+          return s.id === serviceOrId.id ? serviceOrId : s;
+        })
       };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const deleteService = useCallback((id: string) => {
     setContent((prev) => {
-      const next = {
-        ...prev,
-        services: (prev.services || []).filter(s => s.id !== id)
-      };
-      saveToStorage(next);
+      const next = { ...prev, services: (prev.services || []).filter(s => s.id !== id) };
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   // Client Logos
   const updateClientLogos = useCallback((logos: ClientLogo[]) => {
     setContent((prev) => {
       const next = { ...prev, clientLogos: logos };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const addClientLogo = useCallback((logo: ClientLogo) => {
     setContent((prev) => {
       const next = { ...prev, clientLogos: [...(prev.clientLogos || []), logo] };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
   const deleteClientLogo = useCallback((id: string) => {
     setContent((prev) => {
-      const next = { ...prev, clientLogos: (prev.clientLogos || []).filter(c => c.id !== id) };
-      saveToStorage(next);
+      const next = { ...prev, clientLogos: (prev.clientLogos || []).filter(l => l.id !== id) };
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
-  // Project management
-  const addProject = useCallback((project: ProjectItem) => {
-    setContent((prev) => {
-      const next = { ...prev, projects: [project, ...prev.projects] };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateProject = useCallback((projectOrId: ProjectItem | string, updates?: Partial<ProjectItem>) => {
-    setContent((prev) => {
-      const isStringId = typeof projectOrId === 'string';
-      const targetId = isStringId ? projectOrId : projectOrId.id;
-      const targetUpdates = isStringId ? (updates || {}) : projectOrId;
-
-      const nextProjects = prev.projects.map((p) => {
-        if (p.id === targetId) {
-          return { ...p, ...targetUpdates };
-        }
-        return p;
-      });
-      const next = { ...prev, projects: nextProjects };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const deleteProject = useCallback((id: string) => {
-    setContent((prev) => {
-      const next = { ...prev, projects: prev.projects.filter((p) => p.id !== id) };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const duplicateProject = useCallback((id: string) => {
-    setContent((prev) => {
-      const item = prev.projects.find((p) => p.id === id);
-      if (!item) return prev;
-      const dup: ProjectItem = {
-        ...item,
-        id: `proj-${Date.now()}`,
-        title: `${item.title} (Copy)`,
-        featured: false,
-        order: prev.projects.length + 1
-      };
-      const next = { ...prev, projects: [dup, ...prev.projects] };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const reorderProjects = useCallback((newOrderIds: string[]) => {
-    setContent((prev) => {
-      const orderMap = new Map(newOrderIds.map((id, index) => [id, index]));
-      const sorted = [...prev.projects].sort((a, b) => {
-        const orderA = orderMap.has(a.id) ? (orderMap.get(a.id) as number) : 999;
-        const orderB = orderMap.has(b.id) ? (orderMap.get(b.id) as number) : 999;
-        return orderA - orderB;
-      });
-      const next = { ...prev, projects: sorted };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  // Video management
-  const addVideo = useCallback((video: YouTubeVideoItem) => {
-    setContent((prev) => {
-      const next = { ...prev, featuredVideos: [...(prev.featuredVideos || []), video] };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const updateVideo = useCallback((video: YouTubeVideoItem) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        featuredVideos: (prev.featuredVideos || []).map((v) => (v.id === video.id ? video : v))
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  const deleteVideo = useCallback((id: string) => {
-    setContent((prev) => {
-      const next = {
-        ...prev,
-        featuredVideos: (prev.featuredVideos || []).filter((v) => v.id !== id)
-      };
-      saveToStorage(next);
-      return next;
-    });
-  }, [saveToStorage]);
-
-  // Navigation management
+  // Navigation & Links
   const updateNavigation = useCallback((nav: NavigationItem[]) => {
     setContent((prev) => {
       const next = { ...prev, navigation: nav };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
-  // Links management
   const updateLinks = useCallback((links: Partial<ContactData>) => {
     setContent((prev) => {
       const next = { ...prev, contact: { ...prev.contact, ...links } };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
 
-  // Reset to defaults
-  const resetToDefaults = useCallback(() => {
-    setContent(initialContent);
-    saveToStorage(initialContent);
-  }, [saveToStorage]);
-
-  // Export JSON
+  // JSON Export (Exports authoritative active state)
   const exportJson = useCallback(() => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', 'shpixels-content.json');
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  }, [content]);
+    const jsonStr = JSON.stringify(content, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `shpixels-content-v${publicationVersion}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [content, publicationVersion]);
 
-  // Import JSON
-  const importJson = useCallback((jsonString: string) => {
+  const importJson = useCallback((jsonString: string): { success: boolean; error?: string } => {
     try {
       const parsed = JSON.parse(jsonString);
-      if (!parsed.hero || !parsed.projects) {
-        return { success: false, error: 'Invalid SHPIXELS content JSON format.' };
+      if (!parsed || typeof parsed !== 'object' || !parsed.projects) {
+        return { success: false, error: 'Invalid SHPIXELS content schema' };
       }
-      setContent(parsed);
-      saveToStorage(parsed);
+      markLocalEdit(parsed);
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to parse JSON' };
+    } catch (e: any) {
+      return { success: false, error: e.message || 'JSON parse error' };
     }
-  }, [saveToStorage]);
+  }, [markLocalEdit]);
+
+  const resetToDefaults = useCallback(() => {
+    markLocalEdit(initialContent);
+  }, [markLocalEdit]);
 
   // Cryptographically secure Admin Login with SHA-256 + Salt
   const loginAdmin = useCallback(async (password: string): Promise<{ success: boolean; error?: string }> => {
@@ -967,10 +876,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'Please enter your password.' };
     }
 
-    // 1. Check against master fallback password directly for infallible access
     const isMasterPassword = trimmedInput === DEFAULT_PASS;
-
-    // 2. Check cryptographic hash
     const salt = content.adminAuth?.salt || DEFAULT_SALT;
     let expectedHash = content.adminAuth?.passwordHash;
     if (!expectedHash) {
@@ -980,30 +886,9 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     let isValid = false;
     try {
       isValid = await verifyPassword(trimmedInput, expectedHash, salt);
-    } catch (e) {
-      console.warn('[Auth] Error verifying hash:', e);
-    }
+    } catch {}
 
-    // Master password always succeeds as the recovery key
     if (isValid || isMasterPassword) {
-      // If logging in with master password and stored hash was corrupted/mismatched, auto-repair it
-      if (isMasterPassword && !isValid) {
-        try {
-          const freshSalt = generateSalt();
-          const freshHash = await hashPassword(DEFAULT_PASS, freshSalt);
-          const repairedAuth: AdminAuthData = {
-            passwordHash: freshHash,
-            salt: freshSalt,
-            updatedAt: new Date().toISOString()
-          };
-          setContent((prev) => {
-            const next = { ...prev, adminAuth: repairedAuth };
-            saveToStorage(next);
-            return next;
-          });
-        } catch {}
-      }
-
       const sessionToken = `shpix_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       localStorage.setItem(AUTH_KEY, sessionToken);
       setIsAuthenticated(true);
@@ -1011,7 +896,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     }
 
     return { success: false, error: 'Incorrect administrator password.' };
-  }, [content.adminAuth, saveToStorage]);
+  }, [content.adminAuth]);
 
   const logoutAdmin = useCallback(() => {
     localStorage.removeItem(AUTH_KEY);
@@ -1026,14 +911,15 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: 'New password must be at least 6 characters.' };
     }
 
+    const isMasterPassword = oldPass.trim() === DEFAULT_PASS;
     const salt = content.adminAuth?.salt || DEFAULT_SALT;
     let expectedHash = content.adminAuth?.passwordHash;
     if (!expectedHash) {
       expectedHash = await hashPassword(DEFAULT_PASS, salt);
     }
 
-    const isOldValid = await verifyPassword(oldPass, expectedHash, salt);
-    if (!isOldValid) {
+    const isOldValid = await verifyPassword(oldPass.trim(), expectedHash, salt);
+    if (!isOldValid && !isMasterPassword) {
       return { success: false, error: 'Current password does not match.' };
     }
 
@@ -1048,113 +934,168 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
     setContent((prev) => {
       const next = { ...prev, adminAuth: updatedAuth };
-      saveToStorage(next);
+      markLocalEdit(next);
       return next;
     });
 
     return { success: true };
-  }, [content.adminAuth, saveToStorage]);
+  }, [content.adminAuth, markLocalEdit]);
 
-  // Dynamic favicon & page title synchronization
+  // Favicon & Page title synchronization
   useEffect(() => {
     const faviconUrl = content.branding?.favicon || content.seo?.favicon || '/assets/shpixels-icon.svg';
-    if (faviconUrl) {
-      let iconLink: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
-      if (!iconLink) {
-        iconLink = document.createElement('link');
-        iconLink.rel = 'icon';
-        document.head.appendChild(iconLink);
-      }
-      iconLink.href = faviconUrl;
-      if (faviconUrl.startsWith('data:image/svg') || faviconUrl.endsWith('.svg')) {
-        iconLink.type = 'image/svg+xml';
-      } else if (faviconUrl.startsWith('data:image/png') || faviconUrl.endsWith('.png')) {
-        iconLink.type = 'image/png';
-      } else if (faviconUrl.startsWith('data:image/x-icon') || faviconUrl.endsWith('.ico')) {
-        iconLink.type = 'image/x-icon';
-      }
+    let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.getElementsByTagName('head')[0].appendChild(link);
     }
+    link.href = faviconUrl;
 
     if (content.seo?.pageTitle) {
       document.title = content.seo.pageTitle;
     }
   }, [content.branding?.favicon, content.seo?.favicon, content.seo?.pageTitle]);
 
+  const contextValue = useMemo(() => ({
+    content,
+    updateContent,
+    updateSection,
+    categories,
+    categoryDetails,
+    addCategory,
+    renameCategory,
+    deleteCategory,
+    reorderCategories,
+    updateCategoryCover,
+    updateCategoryDetails,
+    updateWorkflow,
+    addWorkflowStep,
+    updateWorkflowStep,
+    deleteWorkflowStep,
+    updateServices,
+    addService,
+    updateService,
+    deleteService,
+    updateClientLogos,
+    addClientLogo,
+    deleteClientLogo,
+    addProject,
+    updateProject,
+    deleteProject,
+    duplicateProject,
+    reorderProjects,
+    addVideo,
+    updateVideo,
+    deleteVideo,
+    updateNavigation,
+    updateLinks,
+    updateSectionHeader,
+    updateHero,
+    updateAbout,
+    updateBranding,
+    updateContact,
+    updateFooter,
+    updateGalleryItem,
+    addGalleryItem,
+    deleteGalleryItem,
+    resetToDefaults,
+    exportJson,
+    importJson,
+    lastSaved,
+    publishSite,
+    isPublishing,
+    publishSuccess,
+    publishError,
+    hasUnsavedChanges,
+    lastPublishedAt,
+    publicationVersion,
+    serverSyncStatus,
+    realtimeStatus,
+    fetchLatestFromServer: fetchAuthoritative,
+    diagnostics,
+    refreshDiagnostics,
+    seedInitialContentToSupabase,
+    isAdminView,
+    setIsAdminView,
+    isAuthenticated,
+    loginAdmin,
+    logoutAdmin,
+    changeAdminPassword
+  }), [
+    content,
+    updateContent,
+    updateSection,
+    categories,
+    categoryDetails,
+    addCategory,
+    renameCategory,
+    deleteCategory,
+    reorderCategories,
+    updateCategoryCover,
+    updateCategoryDetails,
+    updateWorkflow,
+    addWorkflowStep,
+    updateWorkflowStep,
+    deleteWorkflowStep,
+    updateServices,
+    addService,
+    updateService,
+    deleteService,
+    updateClientLogos,
+    addClientLogo,
+    deleteClientLogo,
+    addProject,
+    updateProject,
+    deleteProject,
+    duplicateProject,
+    reorderProjects,
+    addVideo,
+    updateVideo,
+    deleteVideo,
+    updateNavigation,
+    updateLinks,
+    updateSectionHeader,
+    updateHero,
+    updateAbout,
+    updateBranding,
+    updateContact,
+    updateFooter,
+    updateGalleryItem,
+    addGalleryItem,
+    deleteGalleryItem,
+    resetToDefaults,
+    exportJson,
+    importJson,
+    lastSaved,
+    publishSite,
+    isPublishing,
+    publishSuccess,
+    publishError,
+    hasUnsavedChanges,
+    lastPublishedAt,
+    publicationVersion,
+    serverSyncStatus,
+    realtimeStatus,
+    fetchAuthoritative,
+    diagnostics,
+    refreshDiagnostics,
+    seedInitialContentToSupabase,
+    isAdminView,
+    isAuthenticated,
+    loginAdmin,
+    logoutAdmin,
+    changeAdminPassword
+  ]);
+
   return (
-    <ContentContext.Provider
-      value={{
-        content,
-        updateContent,
-        updateSection,
-        categories,
-        categoryDetails,
-        addCategory,
-        renameCategory,
-        deleteCategory,
-        reorderCategories,
-        updateCategoryCover,
-        updateCategoryDetails,
-        updateWorkflow,
-        addWorkflowStep,
-        updateWorkflowStep,
-        deleteWorkflowStep,
-        updateServices,
-        addService,
-        updateService,
-        deleteService,
-        updateClientLogos,
-        addClientLogo,
-        deleteClientLogo,
-        addProject,
-        updateProject,
-        deleteProject,
-        duplicateProject,
-        reorderProjects,
-        addVideo,
-        updateVideo,
-        deleteVideo,
-        updateNavigation,
-        updateLinks,
-        resetToDefaults,
-        exportJson,
-        importJson,
-        lastSaved,
-        publishSite,
-        isPublishing,
-        publishSuccess,
-        publishError,
-        hasUnsavedChanges,
-        lastPublishedAt,
-        publicationVersion,
-        serverSyncStatus,
-        fetchLatestFromServer,
-        supabaseConfigState,
-        updateSupabaseCredentials,
-        testDatabaseConnection,
-        syncNowToSupabase,
-        updateSectionHeader,
-        updateHero,
-        updateAbout,
-        updateBranding,
-        updateContact,
-        updateFooter,
-        updateGalleryItem,
-        addGalleryItem,
-        deleteGalleryItem,
-        isAdminView,
-        setIsAdminView,
-        isAuthenticated,
-        loginAdmin,
-        logoutAdmin,
-        changeAdminPassword
-      }}
-    >
+    <ContentContext.Provider value={contextValue}>
       {children}
     </ContentContext.Provider>
   );
 }
 
-export function useContent() {
+export function useContent(): ContentContextType {
   const context = useContext(ContentContext);
   if (!context) {
     throw new Error('useContent must be used within a ContentProvider');

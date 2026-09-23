@@ -944,7 +944,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             </div>
           </div>
 
-          {/* Card 3: Codebase Sync & Persistence Center */}
+          {/* Card 3: Supabase Authoritative Persistence Center */}
           <div className="p-4 sm:p-5 rounded-2xl bg-[#171717] border border-[#2b2b2b] shadow-xl space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
@@ -953,10 +953,10 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-[#f1f2ed] font-quicksand uppercase">
-                    {isAr ? 'المزامنة وحفظ البيانات' : 'Codebase Persistence & Sync'}
+                    {isAr ? 'قاعدة بيانات Supabase المرجعية' : 'Supabase Production Database'}
                   </h2>
                   <p className="text-[11px] text-emerald-400 font-mono">
-                    {isAr ? 'متصل بالخادم /api/save-content' : 'Connected: /api/save-content'}
+                    {isAr ? 'المصدر المرجعي الوحيد • Realtime Stream' : 'Single Source of Truth • Realtime Active'}
                   </p>
                 </div>
               </div>
@@ -966,8 +966,8 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <div className="p-3 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#a8a6a1] leading-relaxed">
               {isAr
-                ? 'كافة التعديلات تحفظ فورياً في ملف content.json وتظل مستمرة بعد إعادة التشغيل والتصدير.'
-                : 'All changes are instantly persisted to content.json, durable across server restarts, GitHub exports, and live deployments.'}
+                ? 'جميع التعديلات تحفظ وتُنشر مباشرة في جدول site_content وتُبث فورياً لجميع المتصفحات والزوار حول العالم.'
+                : 'All CMS edits publish directly to public.site_content in Supabase and broadcast live to all visitors in real-time.'}
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -980,11 +980,11 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
               </button>
 
               <button
-                onClick={() => onNavigate('seo')}
+                onClick={() => onNavigate('settings')}
                 className="w-full py-2.5 px-3 rounded-xl bg-[#1f1f1f] hover:bg-[#2b2b2b] border border-[#2b2b2b] text-xs font-semibold text-[#f1f2ed] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{isAr ? 'أرشفة Google' : 'Google Sitemap'}</span>
+                <span>{isAr ? 'إعدادات القاعدة' : 'DB Diagnostics'}</span>
               </button>
             </div>
           </div>

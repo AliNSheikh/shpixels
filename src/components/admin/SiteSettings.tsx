@@ -24,25 +24,37 @@ const DEFAULT_LOGO = '/assets/shpixels-logo.svg';
 const DEFAULT_FAVICON = '/assets/shpixels-icon.svg';
 
 const SUPABASE_SETUP_SQL = `-- SHPIXELS CMS Database Schema for Supabase
-CREATE TABLE IF NOT EXISTS site_content (
+-- Single Authoritative Source of Truth
+CREATE TABLE IF NOT EXISTS public.site_content (
   id TEXT PRIMARY KEY DEFAULT 'current',
   data JSONB NOT NULL,
-  version INTEGER DEFAULT 1,
+  version BIGINT NOT NULL DEFAULT 1,
   published_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by TEXT DEFAULT 'Admin'
 );
 
--- Enable RLS and permissions for instant synchronization
-ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Public can read site_content" ON site_content;
-CREATE POLICY "Public can read site_content" ON site_content FOR SELECT USING (true);
+-- Allow public read access to site_content
+DROP POLICY IF EXISTS "Allow public read access" ON public.site_content;
+CREATE POLICY "Allow public read access"
+  ON public.site_content
+  FOR SELECT
+  USING (true);
 
-DROP POLICY IF EXISTS "Allow anon inserts" ON site_content;
-CREATE POLICY "Allow anon inserts" ON site_content FOR INSERT WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Allow anon updates" ON site_content;
-CREATE POLICY "Allow anon updates" ON site_content FOR UPDATE USING (true);
+-- Enable Supabase Realtime for instant synchronization across visitors
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' 
+    AND tablename = 'site_content'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.site_content;
+  END IF;
+END $$;
 `;
 
 export function SiteSettings() {
@@ -56,10 +68,9 @@ export function SiteSettings() {
     hasUnsavedChanges,
     lastPublishedAt,
     publicationVersion,
-    supabaseConfigState,
-    updateSupabaseCredentials,
-    testDatabaseConnection,
-    syncNowToSupabase
+    diagnostics,
+    refreshDiagnostics,
+    seedInitialContentToSupabase
   } = useContent();
   const { language } = useLanguage();
   const isAr = language === 'ar';
@@ -67,8 +78,6 @@ export function SiteSettings() {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Database / Supabase states
-  const [dbUrl, setDbUrl] = useState(supabaseConfigState.url);
-  const [dbAnonKey, setDbAnonKey] = useState(supabaseConfigState.anonKey);
   const [dbStatusMsg, setDbStatusMsg] = useState<{ text: string; isError?: boolean } | null>(null);
   const [isTestingDb, setIsTestingDb] = useState(false);
   const [isSyncingDb, setIsSyncingDb] = useState(false);
@@ -105,30 +114,17 @@ export function SiteSettings() {
   const [footer, setFooter] = useState({ ...content.footer });
 
   // Handlers for Database & Password
-  const handleSaveDbCredentials = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!dbUrl.trim() || !dbAnonKey.trim()) {
-      setDbStatusMsg({ text: isAr ? 'يرجى إدخال الرابط والمفتاح' : 'Please enter URL and Anon Key', isError: true });
-      return;
-    }
-    setIsTestingDb(true);
-    setDbStatusMsg(null);
-    try {
-      const res = await updateSupabaseCredentials(dbUrl.trim(), dbAnonKey.trim());
-      setDbStatusMsg({ text: res.message, isError: !res.success });
-    } catch (err: any) {
-      setDbStatusMsg({ text: err.message, isError: true });
-    } finally {
-      setIsTestingDb(false);
-    }
-  };
-
   const handleTestDatabase = async () => {
     setIsTestingDb(true);
     setDbStatusMsg(null);
     try {
-      const res = await testDatabaseConnection(dbUrl.trim(), dbAnonKey.trim());
-      setDbStatusMsg({ text: res.message, isError: !res.success });
+      await refreshDiagnostics();
+      setDbStatusMsg({
+        text: diagnostics.reachable 
+          ? (isAr ? '✓ الاتصال بقاعدة بيانات Supabase سليم ومباشر!' : '✓ Connection to Supabase database verified successfully!')
+          : (diagnostics.error || (isAr ? 'تعذر الاتصال بـ Supabase' : 'Unable to connect to Supabase')),
+        isError: !diagnostics.reachable
+      });
     } catch (err: any) {
       setDbStatusMsg({ text: err.message, isError: true });
     } finally {
@@ -140,7 +136,32 @@ export function SiteSettings() {
     setIsSyncingDb(true);
     setDbStatusMsg(null);
     try {
-      const res = await syncNowToSupabase();
+      const res = await publishSite(isAr ? 'مزامنة يدوية من إعدادات الموقع' : 'Manual sync from Site Settings');
+      if (res) {
+        setDbStatusMsg({
+          text: isAr ? '✓ تم حفظ ونشر محتوى الموقع بالكامل لقاعدة Supabase بنجاح!' : '✓ All site content published to Supabase database successfully!',
+          isError: false
+        });
+      } else {
+        setDbStatusMsg({
+          text: isAr ? 'فشل الحفظ في قاعدة البيانات' : 'Failed to save to database',
+          isError: true
+        });
+      }
+    } catch (err: any) {
+      setDbStatusMsg({ text: err.message, isError: true });
+    } finally {
+      setIsSyncingDb(false);
+    }
+  };
+
+  const handleSeedDefaults = async () => {
+    if (!confirm(isAr ? 'هل أنت متأكد من رغبتك في تهيئة قاعدة البيانات ببيانات النموذج الافتراضية؟' : 'Are you sure you want to seed default template data into Supabase?')) {
+      return;
+    }
+    setIsSyncingDb(true);
+    try {
+      const res = await seedInitialContentToSupabase();
       setDbStatusMsg({ text: res.message, isError: !res.success });
     } catch (err: any) {
       setDbStatusMsg({ text: err.message, isError: true });
@@ -806,21 +827,21 @@ export function SiteSettings() {
             </div>
             <div>
               <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand flex items-center gap-2">
-                <span>{isAr ? 'قاعدة البيانات والنشر السحابي (Supabase & Vercel)' : 'Cloud Database & Vercel Persistence'}</span>
-                {supabaseConfigState.isConfigured ? (
+                <span>{isAr ? 'قاعدة بيانات Supabase (المصدر المرجعي الوحيد)' : 'Supabase Production Database (Single Source of Truth)'}</span>
+                {diagnostics.reachable ? (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
-                    ✓ {isAr ? 'قاعدة البيانات متصلة' : 'Database Active'}
+                    ✓ {isAr ? 'متصل ومفعل' : 'Connected & Active'}
                   </span>
                 ) : (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-400 border border-amber-500/40">
-                    • {isAr ? 'وضع التخزين المحلي (Local)' : 'Local Storage Mode'}
+                    • {isAr ? 'جارِ التحقق...' : 'Checking...'}
                   </span>
                 )}
               </h3>
               <p className="text-[11px] text-[#a8a6a1]">
                 {isAr 
-                  ? 'ربط قاعدة بيانات Supabase يضمن حفظ ونشر كافة التعديلات بشكل دائم عند استضافة الموقع على Vercel أو GitHub.' 
-                  : 'Connecting Supabase ensures all site changes, images, and content persist permanently on serverless Vercel deployments.'}
+                  ? 'قاعدة بيانات Supabase هي المرجع النهائي الوحيد لمحتوى الموقع. أي تعديل يتم نشره يُحفظ هنا فوراً وينعكس لجميع الزوار عبر Realtime.' 
+                  : 'Supabase is the single authoritative source of truth. All CMS publishes write directly to public.site_content and stream live to visitors.'}
               </p>
             </div>
           </div>
@@ -853,75 +874,67 @@ export function SiteSettings() {
           </div>
         )}
 
-        <form onSubmit={handleSaveDbCredentials} className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
-                {isAr ? 'رابط مشروع Supabase (Project URL)' : 'Supabase Project URL'}
-              </label>
-              <input
-                type="url"
-                placeholder="https://your-project-id.supabase.co"
-                value={dbUrl}
-                onChange={(e) => setDbUrl(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:border-[#2563eb] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
-                {isAr ? 'المفتاح العام (anon / public key)' : 'Supabase Anon Public Key'}
-              </label>
-              <input
-                type="text"
-                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                value={dbAnonKey}
-                onChange={(e) => setDbAnonKey(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] font-mono focus:border-[#2563eb] focus:outline-none"
-              />
-            </div>
+        {/* Database Diagnostic Metrics Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-[#171717] border border-[#2b2b2b]">
+          <div className="p-2.5 rounded-lg bg-[#212121]">
+            <span className="block text-[10px] font-mono text-[#706e6a] uppercase">{isAr ? 'إصدار القاعدة' : 'DB Version'}</span>
+            <span className="text-sm font-mono font-bold text-white">v{diagnostics.version || publicationVersion}</span>
           </div>
+          <div className="p-2.5 rounded-lg bg-[#212121]">
+            <span className="block text-[10px] font-mono text-[#706e6a] uppercase">{isAr ? 'حالة البث المباشر' : 'Realtime Stream'}</span>
+            <span className="text-xs font-mono font-bold text-emerald-400 capitalize">{diagnostics.realtimeStatus}</span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-[#212121]">
+            <span className="block text-[10px] font-mono text-[#706e6a] uppercase">{isAr ? 'جدول البيانات' : 'Table Status'}</span>
+            <span className="text-xs font-mono font-bold text-[#38bdf8]">{diagnostics.tableExists ? 'site_content (OK)' : 'Pending Setup'}</span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-[#212121]">
+            <span className="block text-[10px] font-mono text-[#706e6a] uppercase">{isAr ? 'آخر مزامنة' : 'Last Sync'}</span>
+            <span className="text-[11px] font-mono text-[#a8a6a1] truncate">{diagnostics.lastSyncTime ? new Date(diagnostics.lastSyncTime).toLocaleTimeString() : 'Active'}</span>
+          </div>
+        </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleTestDatabase}
-                disabled={isTestingDb || !dbUrl}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2c2c2c] border border-[#2b2b2b] text-xs font-semibold text-[#f1f2ed] disabled:opacity-50 transition-colors cursor-pointer"
-              >
-                {isTestingDb ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#38bdf8]" />
-                ) : (
-                  <Server className="w-3.5 h-3.5 text-[#38bdf8]" />
-                )}
-                <span>{isAr ? 'فحص الاتصال (Ping)' : 'Test Connection'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSyncToSupabase}
-                disabled={isSyncingDb || !supabaseConfigState.isConfigured}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-600/40 text-xs font-semibold text-emerald-300 disabled:opacity-40 transition-colors cursor-pointer"
-              >
-                {isSyncingDb ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-                ) : (
-                  <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
-                )}
-                <span>{isAr ? 'مزامنة المحتوى الحالي للقاعدة الآن' : 'Push Content to Supabase'}</span>
-              </button>
-            </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleTestDatabase}
+              disabled={isTestingDb}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#232323] hover:bg-[#2c2c2c] border border-[#2b2b2b] text-xs font-semibold text-[#f1f2ed] disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {isTestingDb ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#38bdf8]" />
+              ) : (
+                <Server className="w-3.5 h-3.5 text-[#38bdf8]" />
+              )}
+              <span>{isAr ? 'فحص الاتصال (Ping)' : 'Test Connection'}</span>
+            </button>
 
             <button
-              type="submit"
-              disabled={isTestingDb}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-bold text-white shadow-md shadow-[#2563eb]/20 cursor-pointer"
+              type="button"
+              onClick={handleSyncToSupabase}
+              disabled={isSyncingDb}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-600/40 text-xs font-semibold text-emerald-300 disabled:opacity-40 transition-colors cursor-pointer"
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>{isAr ? 'حفظ إعدادات قاعدة البيانات' : 'Save Database Credentials'}</span>
+              {isSyncingDb ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+              ) : (
+                <UploadCloud className="w-3.5 h-3.5 text-emerald-400" />
+              )}
+              <span>{isAr ? 'مزامنة وحفظ المحتوى الآن' : 'Publish Content to Supabase'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSeedDefaults}
+              disabled={isSyncingDb}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#232323] hover:bg-[#2c2c2c] border border-[#2b2b2b] text-xs font-medium text-[#a8a6a1] hover:text-white transition-colors cursor-pointer"
+              title={isAr ? 'تهيئة قاعدة البيانات ببيانات الموقع الافتراضية' : 'Seed default site content into Supabase table'}
+            >
+              <span>{isAr ? 'تهيئة بيانات أولية' : 'Seed Initial Data'}</span>
             </button>
           </div>
-        </form>
+        </div>
       </div>
 
       {/* ============================================================ */}

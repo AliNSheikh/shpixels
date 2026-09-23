@@ -20,8 +20,12 @@
       "destination": "/api/publish-site"
     },
     {
-      "source": "/api/save-content",
+      "source": "/api/publish",
       "destination": "/api/publish-site"
+    },
+    {
+      "source": "/api/save-content",
+      "destination": "/api/save-content"
     },
     {
       "source": "/(.*)",
