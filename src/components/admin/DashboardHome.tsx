@@ -27,7 +27,9 @@ import {
   Copy,
   ChevronRight,
   ArrowUpRight,
-  Clock
+  Clock,
+  AlertCircle,
+  Database
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -58,7 +60,9 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     hasUnsavedChanges,
     lastPublishedAt,
     publicationVersion,
-    serverSyncStatus
+    serverSyncStatus,
+    publishError,
+    diagnostics
   } = useContent();
   const { language } = useLanguage();
   const isAr = language === 'ar';
@@ -358,22 +362,51 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             </div>
 
             {/* Last Publication Record with Exact Time/Date */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#141414] border border-[#262626] text-xs font-mono text-[#a8a6a1]">
-              <Clock className="w-3.5 h-3.5 text-[#38bdf8] flex-shrink-0" />
-              <span>{isAr ? 'آخر توقيت وتاريخ نشر:' : 'Last Publication Record:'}</span>
-              <strong className="text-[#f1f2ed]">
-                {lastPublishedAt 
-                  ? new Date(lastPublishedAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit'
-                    })
-                  : (isAr ? 'لم ينشر بعد' : 'Not recorded yet')}
-              </strong>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#141414] border border-[#262626] text-xs font-mono text-[#a8a6a1]">
+                <Clock className="w-3.5 h-3.5 text-[#38bdf8] flex-shrink-0" />
+                <span>{isAr ? 'آخر توقيت وتاريخ نشر:' : 'Last Publication Record:'}</span>
+                <strong className="text-[#f1f2ed]">
+                  {lastPublishedAt 
+                    ? new Date(lastPublishedAt).toLocaleString(isAr ? 'ar-EG' : 'en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })
+                    : (isAr ? 'لم ينشر بعد' : 'Not recorded yet')}
+                </strong>
+              </div>
+
+              {diagnostics && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#141414] border border-[#262626] text-xs font-mono text-[#a8a6a1]">
+                  <Database className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                  <span>Supabase:</span>
+                  <span className={diagnostics.reachable ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                    {diagnostics.reachable ? (isAr ? 'متصل' : 'Connected') : (isAr ? 'غير متصل' : 'Offline')}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Error banner if publishing encountered an error */}
+            {publishError && (
+              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800/60 text-rose-300 text-xs font-mono flex items-center justify-between gap-2 animate-in fade-in duration-200">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                  <span>{publishError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('settings')}
+                  className="underline text-rose-200 hover:text-white text-[11px] whitespace-nowrap cursor-pointer"
+                >
+                  {isAr ? 'فحص إعدادات Supabase' : 'Check Supabase Settings'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Action CTAs */}

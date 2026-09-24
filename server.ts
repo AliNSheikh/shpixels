@@ -40,6 +40,76 @@ async function startServer() {
     res.json({ status: "ok", uptime: process.uptime(), platform: "node-dev" });
   });
 
+  // GET /api/diagnostics
+  app.get("/api/diagnostics", async (_req, res) => {
+    setNoCacheHeaders(res);
+    const sb = getSupabase();
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bzfxervcwhvoxpvfsnec.supabase.co';
+    const checks = {
+      supabaseUrlConfigured: Boolean(supabaseUrl),
+      serviceRoleKeyConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      anonKeyConfigured: Boolean(process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY),
+      databaseConnected: false,
+      tableExists: false,
+      rowCurrentExists: false,
+      dataJsonbValid: false,
+      currentVersion: 0,
+      publishedAt: null as string | null,
+      updatedAt: null as string | null,
+      serverWritable: false,
+      error: null as string | null
+    };
+
+    if (!sb) {
+      checks.error = 'Supabase client could not be initialized.';
+      return res.status(503).json({ success: false, checks });
+    }
+
+    try {
+      const { data: rows, error: selectErr } = await sb
+        .from('site_content')
+        .select('id, data, version, published_at, updated_at')
+        .eq('id', 'current')
+        .limit(1);
+
+      if (selectErr) {
+        checks.databaseConnected = true;
+        if (selectErr.code === '42P01') {
+          checks.tableExists = false;
+          checks.error = 'Table public.site_content does not exist. Run supabase-migration.sql';
+        } else {
+          checks.tableExists = true;
+          checks.error = selectErr.message;
+        }
+        return res.json({ success: false, checks });
+      }
+
+      checks.databaseConnected = true;
+      checks.tableExists = true;
+
+      if (rows && rows.length > 0) {
+        const row = rows[0];
+        checks.rowCurrentExists = true;
+        checks.currentVersion = Number(row.version || 1);
+        checks.publishedAt = row.published_at;
+        checks.updatedAt = row.updated_at;
+        if (row.data && typeof row.data === 'object' && row.data.projects) {
+          checks.dataJsonbValid = true;
+        } else {
+          checks.error = 'Row exists but data JSONB is empty or missing expected schema.';
+        }
+      } else {
+        checks.rowCurrentExists = false;
+        checks.error = 'Table site_content exists, but row id=current is missing.';
+      }
+
+      return res.json({ success: !checks.error, checks });
+    } catch (err: any) {
+      checks.error = err.message;
+      return res.status(500).json({ success: false, checks });
+    }
+  });
+
   // GET /api/content-version - Directly from Supabase
   app.get("/api/content-version", async (_req, res) => {
     setNoCacheHeaders(res);

@@ -23,28 +23,129 @@ const ACCENT_COLOR_PRESETS = [
 const DEFAULT_LOGO = '/assets/shpixels-logo.svg';
 const DEFAULT_FAVICON = '/assets/shpixels-icon.svg';
 
-const SUPABASE_SETUP_SQL = `-- SHPIXELS CMS Database Schema for Supabase
--- Single Authoritative Source of Truth
+const SUPABASE_SETUP_SQL = `-- ==============================================================================
+-- SHPIXELS CMS - Production Supabase Migration
+-- Canonical Authoritative Single Source of Truth
+-- ==============================================================================
+
+-- STEP 1: Create canonical table if it doesn't already exist
 CREATE TABLE IF NOT EXISTS public.site_content (
   id TEXT PRIMARY KEY DEFAULT 'current',
-  data JSONB NOT NULL,
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
   version BIGINT NOT NULL DEFAULT 1,
   published_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_by TEXT DEFAULT 'Admin'
 );
 
--- Enable Row Level Security (RLS)
+-- STEP 2: Ensure all canonical columns exist (handling legacy tables)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'data'
+  ) THEN
+    ALTER TABLE public.site_content ADD COLUMN data JSONB;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'version'
+  ) THEN
+    ALTER TABLE public.site_content ADD COLUMN version BIGINT NOT NULL DEFAULT 1;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'published_at'
+  ) THEN
+    ALTER TABLE public.site_content ADD COLUMN published_at TIMESTAMPTZ DEFAULT NOW();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_at'
+  ) THEN
+    ALTER TABLE public.site_content ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_by'
+  ) THEN
+    ALTER TABLE public.site_content ADD COLUMN updated_by TEXT DEFAULT 'Admin';
+  END IF;
+END $$;
+
+-- STEP 3: Migrate existing data from legacy columns ('content' -> 'data', 'last_published' -> 'published_at')
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
+  ) THEN
+    UPDATE public.site_content
+    SET data = content
+    WHERE (data IS NULL OR data = '{}'::jsonb) AND content IS NOT NULL;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
+  ) THEN
+    UPDATE public.site_content
+    SET published_at = last_published
+    WHERE published_at IS NULL AND last_published IS NOT NULL;
+  END IF;
+END $$;
+
+-- STEP 4: Remove obsolete columns now that all data is safely preserved in 'data'
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
+  ) THEN
+    ALTER TABLE public.site_content DROP COLUMN content;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
+  ) THEN
+    ALTER TABLE public.site_content DROP COLUMN last_published;
+  END IF;
+END $$;
+
+-- STEP 5: Enforce NOT NULL on data column
+ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
+
+-- STEP 6: Configure Row Level Security (RLS)
 ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
 
--- Allow public read access to site_content
+DROP POLICY IF EXISTS "Public can read site_content" ON public.site_content;
+DROP POLICY IF EXISTS "Allow anon inserts" ON public.site_content;
+DROP POLICY IF EXISTS "Allow anon updates" ON public.site_content;
+DROP POLICY IF EXISTS "Allow anon insert" ON public.site_content;
+DROP POLICY IF EXISTS "Allow anon update" ON public.site_content;
+DROP POLICY IF EXISTS "Public read site_content" ON public.site_content;
 DROP POLICY IF EXISTS "Allow public read access" ON public.site_content;
+DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.site_content;
+
 CREATE POLICY "Allow public read access"
   ON public.site_content
   FOR SELECT
+  TO anon, authenticated
   USING (true);
 
--- Enable Supabase Realtime for instant synchronization across visitors
+CREATE POLICY "Allow authenticated users to write"
+  ON public.site_content
+  FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- STEP 7: Add public.site_content to Supabase Realtime publication
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -118,12 +219,12 @@ export function SiteSettings() {
     setIsTestingDb(true);
     setDbStatusMsg(null);
     try {
-      await refreshDiagnostics();
+      const freshHealth = await refreshDiagnostics();
       setDbStatusMsg({
-        text: diagnostics.reachable 
+        text: freshHealth.connected 
           ? (isAr ? '✓ الاتصال بقاعدة بيانات Supabase سليم ومباشر!' : '✓ Connection to Supabase database verified successfully!')
-          : (diagnostics.error || (isAr ? 'تعذر الاتصال بـ Supabase' : 'Unable to connect to Supabase')),
-        isError: !diagnostics.reachable
+          : (freshHealth.error || (isAr ? 'تعذر الاتصال بـ Supabase' : 'Unable to connect to Supabase')),
+        isError: !freshHealth.connected
       });
     } catch (err: any) {
       setDbStatusMsg({ text: err.message, isError: true });

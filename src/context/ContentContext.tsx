@@ -115,7 +115,14 @@ interface ContentContextType {
 
   // Supabase & Diagnostics
   diagnostics: DatabaseDiagnostics;
-  refreshDiagnostics: () => Promise<void>;
+  refreshDiagnostics: () => Promise<{
+    connected: boolean;
+    tableExists: boolean;
+    version: number;
+    publishedAt: string | null;
+    updatedAt: string | null;
+    error?: string;
+  }>;
   seedInitialContentToSupabase: () => Promise<{ success: boolean; message: string }>;
 
   // Admin routing & secure auth
@@ -213,6 +220,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       lastSyncTime: new Date().toISOString(),
       error: health.error
     }));
+    return health;
   }, []);
 
   // Fetch authoritative content from Supabase

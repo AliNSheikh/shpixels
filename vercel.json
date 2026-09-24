@@ -8,6 +8,10 @@
       "destination": "/api/health"
     },
     {
+      "source": "/api/diagnostics",
+      "destination": "/api/diagnostics"
+    },
+    {
       "source": "/api/content-version",
       "destination": "/api/content-version"
     },
@@ -25,7 +29,7 @@
     },
     {
       "source": "/api/save-content",
-      "destination": "/api/save-content"
+      "destination": "/api/publish-site"
     },
     {
       "source": "/(.*)",
