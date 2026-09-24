@@ -571,9 +571,9 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
                   {isAr ? 'لا توجد مشاريع مطابقة للبحث' : 'No projects match your filter'}
                 </div>
               ) : (
-                recentProjects.map((project) => (
+                recentProjects.map((project, idx) => (
                   <div
-                    key={project.id}
+                    key={`${project.id || 'p'}-${idx}`}
                     className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-[#1f1f1f] transition-colors"
                   >
                     {/* Project Info & Thumbnail */}

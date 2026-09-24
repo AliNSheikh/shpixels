@@ -20,11 +20,23 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { data: rows, error: queryError } = await client
+    let { data: rows, error: queryError } = await client
       .from('site_content')
       .select('id, data, version, updated_at, published_at')
       .eq('id', 'current')
       .limit(1);
+
+    if (queryError && queryError.message && queryError.message.includes("Could not find the '")) {
+      const retry = await client
+        .from('site_content')
+        .select('id, data, version')
+        .eq('id', 'current')
+        .limit(1);
+      if (!retry.error) {
+        rows = retry.data as any;
+        queryError = null;
+      }
+    }
 
     if (queryError) {
       console.error('[API/content] Supabase query error:', queryError);

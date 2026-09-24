@@ -7,6 +7,7 @@ import { initialContent } from '../data/initialContent';
 import { 
   verifyPassword, hashPassword, generateSalt, DEFAULT_SALT 
 } from '../utils/cryptoAuth';
+import { sanitizeGlobalContent } from '../utils/sanitizeContent';
 import { 
   fetchAuthoritativeContent, 
   subscribeToContentChanges, 
@@ -232,7 +233,8 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       if (res.data) {
         const ver = res.version || 1;
         // Supabase ALWAYS wins over default/initialContent
-        setContent(res.data);
+        const safeData = sanitizeGlobalContent(res.data);
+        setContent(safeData);
         setPublicationVersion(ver);
         currentVersionRef.current = ver;
         setLastPublishedAt(res.publishedAt);
@@ -250,7 +252,8 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         const json = await apiRes.json();
         if (json.data && json.data.projects) {
           const ver = Number(json.version || 1);
-          setContent(json.data);
+          const safeData = sanitizeGlobalContent(json.data);
+          setContent(safeData);
           setPublicationVersion(ver);
           currentVersionRef.current = ver;
           setLastPublishedAt(json.published_at || json.data.lastPublished);
@@ -285,7 +288,8 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         // Ignore stale or older versions
         if (incomingVersion > currentVersionRef.current) {
           console.log(`[Supabase Realtime] Received authoritative version v${incomingVersion}. Updating site.`);
-          setContent(update.data);
+          const safeData = sanitizeGlobalContent(update.data);
+          setContent(safeData);
           setPublicationVersion(incomingVersion);
           currentVersionRef.current = incomingVersion;
           if (update.publishedAt) setLastPublishedAt(update.publishedAt);
@@ -383,7 +387,8 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       const updatedVersion = Number(result.version || publicationVersion + 1);
       const updatedTime = result.published_at || new Date().toISOString();
 
-      setContent(result.data);
+      const safeData = sanitizeGlobalContent(result.data);
+      setContent(safeData);
       setPublicationVersion(updatedVersion);
       currentVersionRef.current = updatedVersion;
       setLastPublishedAt(updatedTime);
@@ -638,7 +643,16 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   // Project CRUD
   const addProject = useCallback((project: ProjectItem) => {
     setContent((prev) => {
-      const next = { ...prev, projects: [project, ...(prev.projects || [])] };
+      // Ensure the newly added project has a guaranteed unique ID not present in existing projects
+      const existingIds = new Set((prev.projects || []).map(p => p.id));
+      let safeProject = project;
+      if (!project.id || existingIds.has(project.id)) {
+        safeProject = {
+          ...project,
+          id: `proj-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+        };
+      }
+      const next = { ...prev, projects: [safeProject, ...(prev.projects || [])] };
       markLocalEdit(next);
       return next;
     });
@@ -672,7 +686,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       if (!target) return prev;
       const copy: ProjectItem = {
         ...target,
-        id: `proj-${Date.now()}`,
+        id: `proj-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         title: `${target.title} (Copy)`,
         order: (target.order || 0) + 1
       };

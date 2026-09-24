@@ -213,19 +213,28 @@ async function startServer() {
         }
       };
 
-      const { error: upsertErr } = await sb
+      const upsertPayload: Record<string, any> = {
+        id: 'current',
+        data: finalContent,
+        version: nextVersion,
+        published_at: now,
+        updated_at: now
+      };
+
+      let { error: upsertErr } = await sb
         .from('site_content')
-        .upsert(
-          {
-            id: 'current',
-            data: finalContent,
-            version: nextVersion,
-            published_at: now,
-            updated_at: now,
-            updated_by: 'Admin'
-          },
-          { onConflict: 'id' }
-        );
+        .upsert(upsertPayload, { onConflict: 'id' });
+
+      if (upsertErr && upsertErr.message && upsertErr.message.includes("Could not find the '")) {
+        const match = upsertErr.message.match(/Could not find the '([^']+)' column/);
+        if (match && match[1] && match[1] in upsertPayload && match[1] !== 'id' && match[1] !== 'data') {
+          delete upsertPayload[match[1]];
+          const retryRes = await sb
+            .from('site_content')
+            .upsert(upsertPayload, { onConflict: 'id' });
+          upsertErr = retryRes.error;
+        }
+      }
 
       if (upsertErr) {
         return res.status(500).json({ success: false, error: upsertErr.message });

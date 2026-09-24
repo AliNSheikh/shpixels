@@ -54,20 +54,32 @@ export default async function handler(req: any, res: any) {
     };
 
     // Canonical UPSERT
-    const { data: upsertData, error: upsertError } = await client
+    const upsertPayload: Record<string, any> = {
+      id: 'current',
+      data: finalContent,
+      version: nextVersion,
+      updated_at: now
+    };
+
+    let { data: upsertData, error: upsertError } = await client
       .from('site_content')
-      .upsert(
-        {
-          id: 'current',
-          data: finalContent,
-          version: nextVersion,
-          updated_at: now,
-          updated_by: 'Admin'
-        },
-        { onConflict: 'id' }
-      )
+      .upsert(upsertPayload, { onConflict: 'id' })
       .select('id, version, published_at, updated_at')
-      .single();
+      .maybeSingle();
+
+    if (upsertError && upsertError.message && upsertError.message.includes("Could not find the '")) {
+      const match = upsertError.message.match(/Could not find the '([^']+)' column/);
+      if (match && match[1] && match[1] in upsertPayload && match[1] !== 'id' && match[1] !== 'data') {
+        delete upsertPayload[match[1]];
+        const retryResult = await client
+          .from('site_content')
+          .upsert(upsertPayload, { onConflict: 'id' })
+          .select('id, version')
+          .maybeSingle();
+        upsertData = retryResult.data as any;
+        upsertError = retryResult.error;
+      }
+    }
 
     if (upsertError) {
       console.error('[API/save-content] Supabase error:', upsertError);

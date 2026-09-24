@@ -58,11 +58,23 @@ export interface SupabaseContentResult {
 export async function fetchAuthoritativeContent(): Promise<SupabaseContentResult> {
   const client = getSupabaseClient();
   try {
-    const { data: rows, error } = await client
+    let { data: rows, error } = await client
       .from('site_content')
       .select('id, data, version, published_at, updated_at')
       .eq('id', 'current')
       .limit(1);
+
+    if (error && error.message && error.message.includes("Could not find the '")) {
+      const retry = await client
+        .from('site_content')
+        .select('id, data, version')
+        .eq('id', 'current')
+        .limit(1);
+      if (!retry.error) {
+        rows = retry.data as any;
+        error = null;
+      }
+    }
 
     if (error) {
       return { data: null, version: 0, publishedAt: null, updatedAt: null, error: error.message };
@@ -142,11 +154,23 @@ export async function checkDatabaseHealth(): Promise<{
 }> {
   const client = getSupabaseClient();
   try {
-    const { data, error } = await client
+    let { data, error } = await client
       .from('site_content')
       .select('version, published_at, updated_at')
       .eq('id', 'current')
       .limit(1);
+
+    if (error && error.message && error.message.includes("Could not find the '")) {
+      const retry = await client
+        .from('site_content')
+        .select('version')
+        .eq('id', 'current')
+        .limit(1);
+      if (!retry.error) {
+        data = retry.data as any;
+        error = null;
+      }
+    }
 
     if (error) {
       return {

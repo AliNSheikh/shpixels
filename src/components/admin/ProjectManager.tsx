@@ -300,7 +300,7 @@ export function ProjectManager() {
 
               return (
                 <div
-                  key={project.id}
+                  key={`${project.id || 'p'}-${index}`}
                   draggable
                   onDragStart={(e) => handleDragStart(e, index)}
                   onDragOver={(e) => handleDragOver(e, index)}

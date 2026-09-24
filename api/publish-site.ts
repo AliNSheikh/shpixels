@@ -69,21 +69,37 @@ export default async function handler(req: any, res: any) {
     };
 
     // 5. Canonical UPSERT on conflict (id)
-    const { data: upsertData, error: upsertError } = await client
+    // Only standard columns (id, data, version, published_at, updated_at) - updated_by is recorded inside data JSONB
+    const upsertPayload: Record<string, any> = {
+      id: 'current',
+      data: finalContent,
+      version: nextVersion,
+      published_at: now,
+      updated_at: now
+    };
+
+    let { data: upsertData, error: upsertError } = await client
       .from('site_content')
-      .upsert(
-        {
-          id: 'current',
-          data: finalContent,
-          version: nextVersion,
-          published_at: now,
-          updated_at: now,
-          updated_by: 'Admin'
-        },
-        { onConflict: 'id' }
-      )
+      .upsert(upsertPayload, { onConflict: 'id' })
       .select('id, version, published_at, updated_at')
-      .single();
+      .maybeSingle();
+
+    // If PostgREST fails due to schema cache missing column (e.g. published_at, updated_by, updated_at)
+    if (upsertError && upsertError.message && upsertError.message.includes("Could not find the '")) {
+      const match = upsertError.message.match(/Could not find the '([^']+)' column/);
+      if (match && match[1] && match[1] in upsertPayload && match[1] !== 'id' && match[1] !== 'data') {
+        const missingCol = match[1];
+        console.warn(`[API/publish] Retrying upsert without missing column '${missingCol}'`);
+        delete upsertPayload[missingCol];
+        const retryResult = await client
+          .from('site_content')
+          .upsert(upsertPayload, { onConflict: 'id' })
+          .select('id, version')
+          .maybeSingle();
+        upsertData = retryResult.data as any;
+        upsertError = retryResult.error;
+      }
+    }
 
     if (upsertError) {
       console.error('[API/publish] Supabase upsert failed:', upsertError);

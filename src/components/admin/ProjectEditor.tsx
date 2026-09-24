@@ -34,8 +34,8 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
   const availableCategories = (contextCategories && contextCategories.length > 0) ? contextCategories : FALLBACK_CATEGORIES;
   const isAr = language === 'ar';
 
-  const [formData, setFormData] = useState<ProjectItem>({
-    id: `proj-${Date.now()}`,
+  const [formData, setFormData] = useState<ProjectItem>(() => ({
+    id: `proj-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     title: '',
     description: '',
     category: 'Commercial & Brand Ads',
@@ -48,7 +48,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
     featured: false,
     published: true,
     order: 1
-  });
+  }));
 
   // YouTube video form state
   const [newVideoUrl, setNewVideoUrl] = useState('');
@@ -68,7 +68,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
       setFormData(project);
     } else {
       setFormData({
-        id: `proj-${Date.now()}`,
+        id: `proj-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         title: '',
         description: '',
         category: 'Commercial & Brand Ads',

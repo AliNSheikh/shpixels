@@ -36,11 +36,23 @@ export default async function handler(req: any, res: any) {
 
   try {
     // 1. Check if site_content table and id='current' exist
-    const { data: rows, error: selectErr } = await client
+    let { data: rows, error: selectErr } = await client
       .from('site_content')
       .select('id, data, version, published_at, updated_at')
       .eq('id', 'current')
       .limit(1);
+
+    if (selectErr && selectErr.message && selectErr.message.includes("Could not find the '")) {
+      const retry = await client
+        .from('site_content')
+        .select('id, data, version')
+        .eq('id', 'current')
+        .limit(1);
+      if (!retry.error) {
+        rows = retry.data as any;
+        selectErr = null;
+      }
+    }
 
     if (selectErr) {
       checks.databaseConnected = true;

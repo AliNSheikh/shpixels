@@ -141,9 +141,9 @@ export function Portfolio() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-            {filteredProjects.map((project) => (
+            {filteredProjects.map((project, idx) => (
               <div
-                key={project.id}
+                key={`${project.id || 'p'}-${idx}`}
                 id={`project-card-${project.id}`}
                 onClick={() => setActiveProject(project)}
                 className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb]/60 transition-all duration-300 cursor-pointer shadow-md hover:shadow-2xl hover:shadow-[#2563eb]/20 flex flex-col justify-between"
