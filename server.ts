@@ -1,6 +1,6 @@
 import express from "express";
-import adminLoginHandler from "./api/admin-login";
-import publishHandler from "./api/publish-site";
+import adminLoginHandler from "./api/admin-login.js";
+import publishHandler from "./api/publish-site.js";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
