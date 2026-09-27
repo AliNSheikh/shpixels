@@ -11,9 +11,12 @@ import { ProjectItem } from '../../types/content';
 import { ProjectEditorModal } from './ProjectEditorModal';
 import { CategoryManager } from './CategoryManager';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { ConfirmModal } from '../common/ConfirmModal';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 export function ProjectManager() {
   const { 
@@ -35,9 +38,12 @@ export function ProjectManager() {
   const [filterCategory, setFilterCategory] = useState('All');
   const [justSavedNotification, setJustSavedNotification] = useState<string | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [projectToDelete, setProjectToDelete] = useState<ProjectItem | null>(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   // Drag and Drop state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -488,15 +494,21 @@ export function ProjectManager() {
 
                     <button
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                       onClick={() => {
                         if (confirm(isAr ? `هل أنت متأكد من حذف "${project.title}"؟` : `Are you sure you want to delete "${project.title}"?`)) {
                           deleteProject(project.id);
                           showSaveNotice(isAr ? 'تم حذف المشروع' : 'Project deleted');
                         }
                       }}
+<<<<<<< HEAD
 =======
                       onClick={() => setProjectToDelete(project)}
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                       className="p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-colors cursor-pointer"
                       title={isAr ? 'حذف المشروع' : 'Delete Project'}
                     >
@@ -534,6 +546,7 @@ export function ProjectManager() {
         </div>
       )}
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
       {/* Delete Confirmation Modal */}
@@ -556,6 +569,8 @@ export function ProjectManager() {
         onCancel={() => setProjectToDelete(null)}
       />
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     </div>
   );
 }

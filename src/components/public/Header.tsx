@@ -106,10 +106,14 @@ export function Header() {
                 <img 
                   src={content.branding.logoImage} 
 <<<<<<< HEAD
+<<<<<<< HEAD
                   alt={content.branding.logoText || 'SHPIXELS'} 
 =======
                   alt={content.branding.logoText || content.branding.siteName} 
 >>>>>>> 85bd45e (claude commit)
+=======
+                  alt={content.branding.logoText || 'SHPIXELS'} 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                   className="h-9 w-auto max-w-[170px] sm:max-w-[210px] object-contain rounded-md" 
                   onError={() => setLogoError(true)}
                 />
@@ -124,10 +128,14 @@ export function Header() {
               <div className="flex flex-col">
                 <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand flex items-center">
 <<<<<<< HEAD
+<<<<<<< HEAD
                   <span>{content.branding.logoText || 'SHPIXELS'}</span>
 =======
                   <span>{content.branding.logoText || content.branding.siteName}</span>
 >>>>>>> 85bd45e (claude commit)
+=======
+                  <span>{content.branding.logoText || 'SHPIXELS'}</span>
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2563eb] ml-1" />
                 </span>
                 <span className="text-[9px] tracking-[0.2em] uppercase text-[#a8a6a1] font-mono -mt-1 font-medium">

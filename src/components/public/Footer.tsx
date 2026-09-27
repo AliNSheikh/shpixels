@@ -52,10 +52,14 @@ export function Footer() {
                 <img 
                   src={branding.logoImage} 
 <<<<<<< HEAD
+<<<<<<< HEAD
                   alt={branding.logoText || 'SHPIXELS'} 
 =======
                   alt={branding.logoText || branding.siteName} 
 >>>>>>> 85bd45e (claude commit)
+=======
+                  alt={branding.logoText || 'SHPIXELS'} 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                   className="h-9 w-auto max-w-[170px] sm:max-w-[200px] object-contain rounded-md" 
                   onError={() => setLogoError(true)}
                 />
@@ -67,10 +71,14 @@ export function Footer() {
               {(!branding.logoImage || logoError) && (
                 <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand">
 <<<<<<< HEAD
+<<<<<<< HEAD
                   {branding.logoText || 'SHPIXELS'}
 =======
                   {branding.logoText || branding.siteName}
 >>>>>>> 85bd45e (claude commit)
+=======
+                  {branding.logoText || 'SHPIXELS'}
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                 </span>
               )}
             </div>
@@ -176,10 +184,14 @@ export function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-mono text-[#706e6a]">
           <p>
 <<<<<<< HEAD
+<<<<<<< HEAD
             {footer.copyrightText || `© ${new Date().getFullYear()} SHPIXELS. All Rights Reserved.`}
 =======
             {footer.copyrightText || `© ${new Date().getFullYear()} ${branding.siteName}. All Rights Reserved.`}
 >>>>>>> 85bd45e (claude commit)
+=======
+            {footer.copyrightText || `© ${new Date().getFullYear()} SHPIXELS. All Rights Reserved.`}
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
           </p>
 
           <div className="flex items-center gap-4">

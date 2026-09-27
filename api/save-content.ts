@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 import { getServerSupabase, validateContentPayload, verifyAdminAuthorization } from './_supabase';
 
 export default async function handler(req: any, res: any) {
@@ -102,6 +105,7 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ success: false, error: err.message || 'Internal server error' });
   }
 }
+<<<<<<< HEAD
 =======
 /**
  * This route is kept only for backwards compatibility with older client
@@ -115,3 +119,5 @@ export default async function handler(req: any, res: any) {
  */
 export { default } from './publish-site';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673

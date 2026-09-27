@@ -5,9 +5,12 @@ import { YouTubeVideoItem } from '../../types/content';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '../../utils/youtube';
 import { YouTubeEmbed } from '../common/YouTubeEmbed';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { ConfirmModal } from '../common/ConfirmModal';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 export function VideoManager() {
   const { content, updateContent, addVideo, updateVideo, deleteVideo } = useContent();
@@ -20,9 +23,12 @@ export function VideoManager() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingVideo, setEditingVideo] = useState<YouTubeVideoItem | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [videoToDelete, setVideoToDelete] = useState<YouTubeVideoItem | null>(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   const [formState, setFormState] = useState<YouTubeVideoItem>({
     id: `fvid-${Date.now()}`,
@@ -204,16 +210,22 @@ export function VideoManager() {
                     </button>
                     <button
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                       onClick={() => {
                         if (confirm(`Remove "${vid.title}"?`)) {
                           deleteVideo(vid.id);
                         }
                       }}
                       className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-[#1d1d1d]"
+<<<<<<< HEAD
 =======
                       onClick={() => setVideoToDelete(vid)}
                       className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-[#1d1d1d] cursor-pointer"
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                       title="Delete Video"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -367,6 +379,7 @@ export function VideoManager() {
         </div>
       )}
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
       {/* Delete Confirmation Modal */}
@@ -386,6 +399,8 @@ export function VideoManager() {
         onCancel={() => setVideoToDelete(null)}
       />
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     </div>
   );
 }

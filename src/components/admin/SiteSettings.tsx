@@ -9,9 +9,12 @@ import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { ImageUploadDropzone } from '../common/ImageUploadDropzone';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { ConfirmModal } from '../common/ConfirmModal';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 const ACCENT_COLOR_PRESETS = [
   { name: 'SHPIXELS Electric Blue', hex: '#2563eb' },
@@ -28,12 +31,16 @@ const DEFAULT_LOGO = '/assets/shpixels-logo.svg';
 const DEFAULT_FAVICON = '/assets/shpixels-icon.svg';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 const SUPABASE_SETUP_SQL = `-- ==============================================================================
 -- SHPIXELS CMS - Production Supabase Migration
 -- Canonical Authoritative Single Source of Truth
 -- ==============================================================================
 
 -- STEP 1: Create canonical table if it doesn't already exist
+<<<<<<< HEAD
 =======
 const SUPABASE_SETUP_SQL = `
 -- ==============================================================================
@@ -69,6 +76,8 @@ const SUPABASE_SETUP_SQL = `
 
 -- STEP 1: Create the table if it doesn't already exist
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 CREATE TABLE IF NOT EXISTS public.site_content (
   id TEXT PRIMARY KEY DEFAULT 'current',
   data JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -79,11 +88,15 @@ CREATE TABLE IF NOT EXISTS public.site_content (
 );
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 -- STEP 2: Ensure all canonical columns exist (handling legacy tables)
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
+<<<<<<< HEAD
 =======
 -- STEP 2: Ensure every canonical column exists (handles older/partial tables)
 DO $$
@@ -91,6 +104,8 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'data'
   ) THEN
     ALTER TABLE public.site_content ADD COLUMN data JSONB;
@@ -98,10 +113,14 @@ BEGIN
 
   IF NOT EXISTS (
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT 1 FROM information_schema.columns 
 =======
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+    SELECT 1 FROM information_schema.columns 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'version'
   ) THEN
     ALTER TABLE public.site_content ADD COLUMN version BIGINT NOT NULL DEFAULT 1;
@@ -109,10 +128,14 @@ BEGIN
 
   IF NOT EXISTS (
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT 1 FROM information_schema.columns 
 =======
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+    SELECT 1 FROM information_schema.columns 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'published_at'
   ) THEN
     ALTER TABLE public.site_content ADD COLUMN published_at TIMESTAMPTZ DEFAULT NOW();
@@ -120,10 +143,14 @@ BEGIN
 
   IF NOT EXISTS (
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT 1 FROM information_schema.columns 
 =======
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+    SELECT 1 FROM information_schema.columns 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_at'
   ) THEN
     ALTER TABLE public.site_content ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
@@ -131,10 +158,14 @@ BEGIN
 
   IF NOT EXISTS (
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT 1 FROM information_schema.columns 
 =======
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+    SELECT 1 FROM information_schema.columns 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_by'
   ) THEN
     ALTER TABLE public.site_content ADD COLUMN updated_by TEXT DEFAULT 'Admin';
@@ -142,11 +173,15 @@ BEGIN
 END $$;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 -- STEP 3: Migrate existing data from legacy columns ('content' -> 'data', 'last_published' -> 'published_at')
 DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns 
+<<<<<<< HEAD
 =======
 -- STEP 3: Migrate data from a legacy "content" / "last_published" column if
 -- this database was set up with an older version of this project.
@@ -155,6 +190,8 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
   ) THEN
     UPDATE public.site_content
@@ -164,10 +201,14 @@ BEGIN
 
   IF EXISTS (
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT 1 FROM information_schema.columns 
 =======
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+    SELECT 1 FROM information_schema.columns 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
   ) THEN
     UPDATE public.site_content
@@ -177,11 +218,15 @@ BEGIN
 END $$;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 -- STEP 4: Remove obsolete columns now that all data is safely preserved in 'data'
 DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns 
+<<<<<<< HEAD
 =======
 -- STEP 4: Drop the legacy columns now that their data is safely preserved
 DO $$
@@ -189,6 +234,8 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
   ) THEN
     ALTER TABLE public.site_content DROP COLUMN content;
@@ -196,10 +243,14 @@ BEGIN
 
   IF EXISTS (
 <<<<<<< HEAD
+<<<<<<< HEAD
     SELECT 1 FROM information_schema.columns 
 =======
     SELECT 1 FROM information_schema.columns
 >>>>>>> 85bd45e (claude commit)
+=======
+    SELECT 1 FROM information_schema.columns 
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
   ) THEN
     ALTER TABLE public.site_content DROP COLUMN last_published;
@@ -207,10 +258,14 @@ BEGIN
 END $$;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 -- STEP 5: Enforce NOT NULL on data column
 ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
 
 -- STEP 6: Configure Row Level Security (RLS)
+<<<<<<< HEAD
 =======
 -- STEP 5: Drop the old, unused "category_metadata" table if it exists.
 -- It was never read or written by any application code, and its CREATE TABLE
@@ -237,6 +292,8 @@ ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
 -- prefix it with VITE_) and then tighten the write policy below to
 -- \`TO service_role\` only.
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public can read site_content" ON public.site_content;
@@ -248,11 +305,14 @@ DROP POLICY IF EXISTS "Public read site_content" ON public.site_content;
 DROP POLICY IF EXISTS "Allow public read access" ON public.site_content;
 DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.site_content;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 DROP POLICY IF EXISTS "Allow authenticated users to write" ON public.site_content;
 DROP POLICY IF EXISTS "Public read access for site_content" ON public.site_content;
 DROP POLICY IF EXISTS "Allow write access for site_content" ON public.site_content;
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 CREATE POLICY "Allow public read access"
   ON public.site_content
@@ -261,6 +321,9 @@ CREATE POLICY "Allow public read access"
   USING (true);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 CREATE POLICY "Allow authenticated users to write"
   ON public.site_content
   FOR ALL
@@ -274,6 +337,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_publication_tables 
     WHERE pubname = 'supabase_realtime' 
+<<<<<<< HEAD
 =======
 CREATE POLICY "Allow app-level writes"
   ON public.site_content
@@ -290,11 +354,14 @@ BEGIN
     SELECT 1 FROM pg_publication_tables
     WHERE pubname = 'supabase_realtime'
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     AND tablename = 'site_content'
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.site_content;
   END IF;
 END $$;
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 
@@ -303,6 +370,8 @@ END $$;
 -- SELECT id, version, published_at, updated_at FROM public.site_content;
 -- ==============================================================================
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 `;
 
 export function SiteSettings() {
@@ -342,9 +411,12 @@ export function SiteSettings() {
   // Form states
   const [branding, setBranding] = useState({
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     siteName: content.branding.siteName || content.branding.logoText || 'SHPIXELS',
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     logoText: content.branding.logoText || 'SHPIXELS',
     logoSubtext: content.branding.logoSubtext || 'SHARIF ABS • CINEMATOGRAPHY',
     logoImage: content.branding.logoImage || DEFAULT_LOGO,
@@ -365,9 +437,12 @@ export function SiteSettings() {
 
   const [footer, setFooter] = useState({ ...content.footer });
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [seedConfirmOpen, setSeedConfirmOpen] = useState(false);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   // Handlers for Database & Password
   const handleTestDatabase = async () => {
@@ -413,11 +488,17 @@ export function SiteSettings() {
 
   const handleSeedDefaults = async () => {
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (!confirm(isAr ? 'هل أنت متأكد من رغبتك في تهيئة قاعدة البيانات ببيانات النموذج الافتراضية؟' : 'Are you sure you want to seed default template data into Supabase?')) {
       return;
     }
 =======
 >>>>>>> 85bd45e (claude commit)
+=======
+    if (!confirm(isAr ? 'هل أنت متأكد من رغبتك في تهيئة قاعدة البيانات ببيانات النموذج الافتراضية؟' : 'Are you sure you want to seed default template data into Supabase?')) {
+      return;
+    }
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     setIsSyncingDb(true);
     try {
       const res = await seedInitialContentToSupabase();
@@ -427,9 +508,12 @@ export function SiteSettings() {
     } finally {
       setIsSyncingDb(false);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
       setSeedConfirmOpen(false);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     }
   };
 
@@ -494,11 +578,15 @@ export function SiteSettings() {
       branding: {
         ...content.branding,
 <<<<<<< HEAD
+<<<<<<< HEAD
         ...branding
 =======
         ...branding,
         siteName: branding.siteName.trim() || content.branding.siteName
 >>>>>>> 85bd45e (claude commit)
+=======
+        ...branding
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
       },
       seo: {
         ...content.seo,
@@ -813,10 +901,14 @@ export function SiteSettings() {
           {/* Text & Accent Color Customization */}
           <div className="pt-4 border-t border-[#232323] space-y-4 relative z-10">
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
                   {isAr ? 'اسم العلامة / النص (Brand Name)' : 'Brand / Logo Text'}
+<<<<<<< HEAD
 =======
             <div className="p-4 rounded-xl bg-[#171717] border border-[#2b2b2b]">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#f1f2ed] font-quicksand mb-1.5">
@@ -841,6 +933,8 @@ export function SiteSettings() {
                 <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
                   {isAr ? 'نص الشعار في شريط التنقل (Logo Text)' : 'Navbar Logo Text (optional override)'}
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                 </label>
                 <input
                   type="text"
@@ -1126,12 +1220,15 @@ export function SiteSettings() {
                     ✓ {isAr ? 'متصل ومفعل' : 'Connected & Active'}
                   </span>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                 ) : !diagnostics.urlConfigured ? (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-950/80 text-red-400 border border-red-500/40">
                     ✕ {isAr ? 'غير مُهيأ (Not Configured)' : 'Not Configured'}
                   </span>
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                 ) : (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-400 border border-amber-500/40">
                     • {isAr ? 'جارِ التحقق...' : 'Checking...'}
@@ -1144,6 +1241,7 @@ export function SiteSettings() {
                   : 'Supabase is the single authoritative source of truth. All CMS publishes write directly to public.site_content and stream live to visitors.'}
               </p>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
               {!diagnostics.urlConfigured && (
                 <p className="text-[11px] text-amber-400 mt-1.5 font-mono">
@@ -1153,6 +1251,8 @@ export function SiteSettings() {
                 </p>
               )}
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
             </div>
           </div>
 
@@ -1237,10 +1337,14 @@ export function SiteSettings() {
             <button
               type="button"
 <<<<<<< HEAD
+<<<<<<< HEAD
               onClick={handleSeedDefaults}
 =======
               onClick={() => setSeedConfirmOpen(true)}
 >>>>>>> 85bd45e (claude commit)
+=======
+              onClick={handleSeedDefaults}
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
               disabled={isSyncingDb}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#232323] hover:bg-[#2c2c2c] border border-[#2b2b2b] text-xs font-medium text-[#a8a6a1] hover:text-white transition-colors cursor-pointer"
               title={isAr ? 'تهيئة قاعدة البيانات ببيانات الموقع الافتراضية' : 'Seed default site content into Supabase table'}
@@ -1356,6 +1460,7 @@ export function SiteSettings() {
         </form>
       </div>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
       {/* Database Seed Confirmation Modal */}
@@ -1372,6 +1477,8 @@ export function SiteSettings() {
         onCancel={() => setSeedConfirmOpen(false)}
       />
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     </div>
   );
 }

@@ -8,9 +8,12 @@ import { extractYouTubeId } from '../../utils/youtube';
 import { YouTubeEmbed } from '../common/YouTubeEmbed';
 import { ImageUploadDropzone } from '../common/ImageUploadDropzone';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { ConfirmModal } from '../common/ConfirmModal';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 import { useLanguage } from '../../context/LanguageContext';
 import { useContent } from '../../context/ContentContext';
 
@@ -60,11 +63,14 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
   const [newVideoCaption, setNewVideoCaption] = useState('');
   const [previewVideoId, setPreviewVideoId] = useState<string | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [videoError, setVideoError] = useState<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   // Still / gallery upload state
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
@@ -109,6 +115,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
       const extracted = extractYouTubeId(newVideoUrl);
       setPreviewVideoId(extracted || null);
 <<<<<<< HEAD
+<<<<<<< HEAD
     } else {
       setPreviewVideoId(null);
 =======
@@ -117,6 +124,10 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
       setPreviewVideoId(null);
       setVideoError(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+    } else {
+      setPreviewVideoId(null);
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     }
   }, [newVideoUrl]);
 
@@ -124,6 +135,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
     if (!newVideoUrl.trim()) return;
     const extractedId = extractYouTubeId(newVideoUrl);
     if (!extractedId) {
+<<<<<<< HEAD
 <<<<<<< HEAD
       alert(isAr ? 'يرجى إدخال رابط يوتيوب صحيح أو معرف من 11 حرفاً' : 'Please provide a valid YouTube URL or 11-char Video ID');
       return;
@@ -134,6 +146,11 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
     }
     setVideoError(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+      alert(isAr ? 'يرجى إدخال رابط يوتيوب صحيح أو معرف من 11 حرفاً' : 'Please provide a valid YouTube URL or 11-char Video ID');
+      return;
+    }
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
     const newVideo: ProjectVideo = {
       id: `vid-${Date.now()}`,
@@ -181,6 +198,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
     e.preventDefault();
     if (!formData.title.trim()) {
 <<<<<<< HEAD
+<<<<<<< HEAD
       alert(isAr ? 'يرجى كتابة عنوان المشروع' : 'Please provide a project title');
       return;
     }
@@ -190,6 +208,11 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
     }
     setTitleError(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+      alert(isAr ? 'يرجى كتابة عنوان المشروع' : 'Please provide a project title');
+      return;
+    }
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     onSave(formData);
   };
 
@@ -218,16 +241,22 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
             <button
               type="button"
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
               onClick={() => {
                 if (confirm(isAr ? 'هل أنت متأكد من حذف هذا المشروع؟' : `Delete project "${formData.title}"?`)) {
                   onDelete(formData.id);
                 }
               }}
               className="p-2 rounded-xl text-red-400 hover:text-white hover:bg-red-950/40 border border-red-900/30 transition-colors"
+<<<<<<< HEAD
 =======
               onClick={() => setDeleteConfirmOpen(true)}
               className="p-2 rounded-xl text-red-400 hover:text-white hover:bg-red-950/40 border border-red-900/30 transition-colors cursor-pointer"
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
               title={isAr ? 'حذف المشروع' : 'Delete Project'}
             >
               <Trash2 className="w-4 h-4" />
@@ -238,10 +267,14 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
             type="button"
             onClick={onCancel}
 <<<<<<< HEAD
+<<<<<<< HEAD
             className="p-2 rounded-xl text-[#a8a6a1] hover:text-white hover:bg-[#232323] transition-colors"
 =======
             className="p-2 rounded-xl text-[#a8a6a1] hover:text-white hover:bg-[#232323] transition-colors cursor-pointer"
 >>>>>>> 85bd45e (claude commit)
+=======
+            className="p-2 rounded-xl text-[#a8a6a1] hover:text-white hover:bg-[#232323] transition-colors"
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
           >
             <X className="w-5 h-5" />
           </button>
@@ -260,10 +293,14 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               required
               value={formData.title}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={isAr ? 'مثال: VORTEX: إعلان رياضي سينمائي' : 'e.g. VORTEX: Athletic Commercial'}
               className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed]"
             />
+<<<<<<< HEAD
 =======
               onChange={(e) => {
                 setFormData({ ...formData, title: e.target.value });
@@ -278,6 +315,8 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               <p className="text-xs text-red-400 mt-1">{titleError}</p>
             )}
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
           </div>
 
           <div>
@@ -479,12 +518,15 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
             </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             {videoError && (
               <p className="text-xs text-red-400">{videoError}</p>
             )}
 
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
             {/* Instant Live Preview of typed YouTube URL */}
             {previewVideoId && (
               <div className="p-3 rounded-xl bg-[#232323] border border-emerald-900/40 space-y-2">
@@ -606,6 +648,7 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
         </div>
       </form>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
       {/* Delete Confirmation Modal */}
@@ -627,6 +670,8 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
         />
       )}
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     </div>
   );
 }

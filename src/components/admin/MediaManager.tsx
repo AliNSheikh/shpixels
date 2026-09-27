@@ -4,9 +4,12 @@ import { useContent } from '../../context/ContentContext';
 import { GalleryItem } from '../../types/content';
 import { ImageUploadDropzone } from '../common/ImageUploadDropzone';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { ConfirmModal } from '../common/ConfirmModal';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 import { useLanguage } from '../../context/LanguageContext';
 
 export function MediaManager() {
@@ -20,9 +23,12 @@ export function MediaManager() {
   const [faviconInput, setFaviconInput] = useState(content.branding.favicon || content.seo.favicon || '/assets/shpixels-icon.svg');
   const [savedKey, setSavedKey] = useState<string | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [itemToDelete, setItemToDelete] = useState<GalleryItem | null>(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   const handleSaveLogo = (url: string) => {
     setLogoInput(url);
@@ -91,6 +97,9 @@ export function MediaManager() {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   const handleDeleteGallery = (id: string) => {
     if (confirm(isAr ? 'هل أنت متأكد من حذف هذه اللقطة؟' : 'Delete this cinematography still?')) {
       const updated = content.gallery.filter((g) => g.id !== id);
@@ -98,8 +107,11 @@ export function MediaManager() {
     }
   };
 
+<<<<<<< HEAD
 =======
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   const handleSaveGalleryItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formItem.image || !formItem.title) return;
@@ -270,12 +282,17 @@ export function MediaManager() {
                   </button>
                   <button
 <<<<<<< HEAD
+<<<<<<< HEAD
                     onClick={() => handleDeleteGallery(item.id)}
                     className="p-1 rounded bg-black/70 text-red-400 hover:bg-red-600 hover:text-white transition-colors"
 =======
                     onClick={() => setItemToDelete(item)}
                     className="p-1 rounded bg-black/70 text-red-400 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
 >>>>>>> 85bd45e (claude commit)
+=======
+                    onClick={() => handleDeleteGallery(item.id)}
+                    className="p-1 rounded bg-black/70 text-red-400 hover:bg-red-600 hover:text-white transition-colors"
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
                     title={isAr ? 'حذف' : 'Delete'}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -377,6 +394,7 @@ export function MediaManager() {
         </div>
       )}
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
       {/* Delete Confirmation Modal */}
@@ -399,6 +417,8 @@ export function MediaManager() {
         onCancel={() => setItemToDelete(null)}
       />
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     </div>
   );
 }

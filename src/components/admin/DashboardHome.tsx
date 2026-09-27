@@ -37,9 +37,12 @@ import { ProjectItem } from '../../types/content';
 import { ProjectEditorModal } from './ProjectEditorModal';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '../../utils/youtube';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { compressImageFile } from '../../utils/imageCompressor';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void;
@@ -91,9 +94,12 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   // Quick Media upload state
   const [quickUploadPreview, setQuickUploadPreview] = useState<string | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [uploadError, setUploadError] = useState<string | null>(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   const [copiedDataUrl, setCopiedDataUrl] = useState(false);
   const [addedToGalleryNotice, setAddedToGalleryNotice] = useState(false);
 
@@ -204,6 +210,9 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
       alert(isAr ? 'يرجى اختيار ملف صورة صالح' : 'Please select a valid image file');
       return;
     }
@@ -213,6 +222,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       setQuickUploadPreview(dataUrl);
     };
     reader.readAsDataURL(file);
+<<<<<<< HEAD
 =======
       setUploadError(isAr ? 'يرجى اختيار ملف صورة صالح' : 'Please select a valid image file');
       setTimeout(() => setUploadError(null), 3000);
@@ -232,6 +242,8 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         reader.readAsDataURL(file);
       });
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   };
 
   const handleAddUploadedToGallery = () => {
@@ -316,10 +328,14 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2563eb]/20 border border-[#2563eb]/40 text-xs font-mono uppercase text-[#38bdf8]">
             <Sparkles className="w-3.5 h-3.5" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <span>{isAr ? 'محرك إدارة محتوى SHPIXELS' : 'SHPIXELS Content Engine'}</span>
 =======
             <span>{isAr ? `محرك إدارة محتوى ${content.branding.siteName}` : `${content.branding.siteName} Content Engine`}</span>
 >>>>>>> 85bd45e (claude commit)
+=======
+            <span>{isAr ? 'محرك إدارة محتوى SHPIXELS' : 'SHPIXELS Content Engine'}</span>
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#f1f2ed] font-quicksand uppercase tracking-wide">
             {isAr ? 'لوحة القيادة ونظرة عامة' : 'Content Management Overview'}
@@ -961,12 +977,15 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
             </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             {uploadError && (
               <p className="text-xs text-red-400 font-mono text-center">{uploadError}</p>
             )}
 
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
             {/* Preview & Instant Action if uploaded */}
             {quickUploadPreview && (
               <div className="p-3 rounded-xl bg-[#232323] border border-[#2b2b2b] flex items-center justify-between gap-3">

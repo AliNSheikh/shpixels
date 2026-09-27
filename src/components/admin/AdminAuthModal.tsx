@@ -8,10 +8,14 @@ import { useLanguage } from '../../context/LanguageContext';
 
 export function AdminAuthModal() {
 <<<<<<< HEAD
+<<<<<<< HEAD
   const { loginAdmin, setIsAdminView } = useContent();
 =======
   const { loginAdmin, setIsAdminView, content } = useContent();
 >>>>>>> 85bd45e (claude commit)
+=======
+  const { loginAdmin, setIsAdminView } = useContent();
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   const { language } = useLanguage();
   const isAr = language === 'ar';
 
@@ -83,10 +87,14 @@ export function AdminAuthModal() {
           </div>
           <h2 className="text-2xl font-black text-[#f1f2ed] tracking-wider uppercase font-quicksand">
 <<<<<<< HEAD
+<<<<<<< HEAD
             {isAr ? 'لوحة تحكم SHPIXELS' : 'SHPIXELS CMS'}
 =======
             {isAr ? `لوحة تحكم ${content.branding.siteName}` : `${content.branding.siteName} CMS`}
 >>>>>>> 85bd45e (claude commit)
+=======
+            {isAr ? 'لوحة تحكم SHPIXELS' : 'SHPIXELS CMS'}
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
           </h2>
           <p className="text-xs text-[#a8a6a1] font-mono">
             {isAr ? 'تسجيل دخول آمن ومشفّر (SHA-256)' : 'Encrypted Administrator Authentication'}
@@ -189,10 +197,14 @@ export function AdminAuthModal() {
           <div className="flex items-center gap-1.5">
             <Film className="w-3.5 h-3.5 text-[#2563eb]" />
 <<<<<<< HEAD
+<<<<<<< HEAD
             <span>SHPIXELS Studio</span>
 =======
             <span>{content.branding.siteName} Studio</span>
 >>>>>>> 85bd45e (claude commit)
+=======
+            <span>SHPIXELS Studio</span>
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
           </div>
           <button
             onClick={() => setIsAdminView(false)}

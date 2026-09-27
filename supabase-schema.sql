@@ -1,5 +1,8 @@
 -- ==============================================================================
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 -- SHPIXELS • Supabase Database Schema & Setup Script
 -- ==============================================================================
 -- This script provisions all necessary tables, row-level security (RLS) policies,
@@ -119,6 +122,7 @@ ON CONFLICT (name) DO UPDATE SET
 -- Confirmation Query
 -- Run this to verify that the table is ready:
 -- SELECT id, version, updated_at FROM public.site_content;
+<<<<<<< HEAD
 =======
 -- MOGRAFIX CMS — Supabase Database Setup (single source of truth)
 -- ==============================================================================
@@ -308,4 +312,6 @@ END $$;
 -- Confirmation query — run this after the script to verify the table is ready:
 -- SELECT id, version, published_at, updated_at FROM public.site_content;
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 -- ==============================================================================

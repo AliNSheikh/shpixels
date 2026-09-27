@@ -5,6 +5,7 @@ A high-performance cinematic portfolio and dynamic content management portal bui
 ---
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 ## 🗄️ Database Setup (Required — do this first)
 
@@ -35,6 +36,8 @@ edits reflect instantly without a page refresh.
 ---
 
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 ## 🚀 Quick Deployment Guide
 
 ### Option 1: Deploy to Vercel (Recommended)
@@ -160,9 +163,12 @@ The application runs on `http://localhost:3000`.
   - Add, edit, reorder, and delete 4K video projects.
   - Upload custom media and camera stills directly.
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   - Rename the site in one place under **Settings → Site Name** — it updates the header, footer, and copyright line everywhere those aren't individually overridden.
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   - Customize all section texts, pipeline steps, and client logos.
   - Toggle between English and Arabic.
   - Configure Google Analytics (GA4) and Google Search Console verification.

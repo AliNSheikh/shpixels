@@ -8,9 +8,12 @@ import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { CategoryDetail } from '../../types/content';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { compressImageFile } from '../../utils/imageCompressor';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 interface CategoryManagerProps {
   onClose?: () => void;
@@ -65,12 +68,16 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
 
   const handleFileUpload = (file: File, callback: (url: string) => void) => {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     const reader = new FileReader();
     reader.onload = (e) => {
       const res = e.target?.result as string;
       if (res) callback(res);
     };
     reader.readAsDataURL(file);
+<<<<<<< HEAD
 =======
     compressImageFile(file)
       .then((res) => {
@@ -85,6 +92,8 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
         reader.readAsDataURL(file);
       });
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   };
 
   const handleAddCategory = (e: React.FormEvent) => {

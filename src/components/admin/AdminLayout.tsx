@@ -159,10 +159,14 @@ export function AdminLayout() {
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-sm sm:text-base tracking-wider uppercase font-quicksand text-white truncate">
 <<<<<<< HEAD
+<<<<<<< HEAD
                 SHPIXELS
 =======
                 {content.branding.siteName}
 >>>>>>> 85bd45e (claude commit)
+=======
+                SHPIXELS
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
               </span>
               <span className="hidden xs:inline-block px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#232323] text-[#38bdf8] border border-[#2563eb]/40">
                 {isAr ? 'لوحة CMS' : 'ADMIN CMS'}
@@ -326,10 +330,14 @@ export function AdminLayout() {
 
             <div className="pt-3 border-t border-[#2b2b2b] flex items-center justify-between text-xs text-[#706e6a] font-mono">
 <<<<<<< HEAD
+<<<<<<< HEAD
               <span>SHPIXELS v2.0</span>
 =======
               <span>{content.branding.siteName} v2.0</span>
 >>>>>>> 85bd45e (claude commit)
+=======
+              <span>SHPIXELS v2.0</span>
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
               <button
                 onClick={() => {
                   setMobileDrawerOpen(false);

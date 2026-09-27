@@ -3,10 +3,14 @@ import { GlobalContent, ProjectItem } from '../types/content';
 /**
  * Deduplicates and ensures uniqueness of IDs across projects and other content collections.
 <<<<<<< HEAD
+<<<<<<< HEAD
  * If two projects have the exact same ID, subsequent projects receive a deterministic unique ID.
 =======
  * Preserves categories, categoryDetails, and cleans duplicate categories without dropping user-created categories.
 >>>>>>> 85bd45e (claude commit)
+=======
+ * If two projects have the exact same ID, subsequent projects receive a deterministic unique ID.
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
  */
 export function sanitizeGlobalContent(rawContent: GlobalContent): GlobalContent {
   if (!rawContent) return rawContent;
@@ -27,6 +31,7 @@ export function sanitizeGlobalContent(rawContent: GlobalContent): GlobalContent 
     sanitizedProjects.push(uniqueId === proj.id ? proj : { ...proj, id: uniqueId });
   }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   return {
     ...rawContent,
@@ -55,6 +60,10 @@ export function sanitizeGlobalContent(rawContent: GlobalContent): GlobalContent 
     branding,
     categories: cleanCategories.length > 0 ? cleanCategories : rawContent.categories,
 >>>>>>> 85bd45e (claude commit)
+=======
+  return {
+    ...rawContent,
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     projects: sanitizedProjects
   };
 }

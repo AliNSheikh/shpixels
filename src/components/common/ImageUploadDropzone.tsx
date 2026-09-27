@@ -2,9 +2,12 @@ import React, { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, X, Link, Check, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { compressImageFile } from '../../utils/imageCompressor';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 interface ImageUploadDropzoneProps {
   value?: string;
@@ -58,6 +61,9 @@ export function ImageUploadDropzone({
 
     setError(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
@@ -69,6 +75,7 @@ export function ImageUploadDropzone({
       setError(language === 'ar' ? 'حدث خطأ أثناء قراءة الملف' : 'Failed to read image file');
     };
     reader.readAsDataURL(file);
+<<<<<<< HEAD
 =======
     compressImageFile(file)
       .then((compressedUrl) => {
@@ -78,6 +85,8 @@ export function ImageUploadDropzone({
         setError(language === 'ar' ? 'حدث خطأ أثناء قراءة الملف' : 'Failed to read image file');
       });
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   };
 
   const handleDragOver = (e: React.DragEvent) => {

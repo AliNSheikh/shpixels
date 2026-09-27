@@ -1,11 +1,15 @@
 /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
  * Supabase Data Client & Persistent Database Integration for SHPIXELS
  * 
  * Production architecture:
  * - Public reads: Direct Supabase client using Anon Key OR serverless /api/content
  * - Realtime subscriptions: Directly on table 'site_content' with filter id=eq.current
  * - Admin writes: Through secure serverless endpoint /api/publish or /api/publish-site
+<<<<<<< HEAD
 =======
  * Supabase Data Client & Persistent Database Integration
  *
@@ -20,26 +24,35 @@
  * other project. Configure these in a local .env file (see .env.example) and in
  * your Vercel Project Settings → Environment Variables.
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
  */
 
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { GlobalContent } from '../types/content';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 // Environment variable retrieval with production defaults
 export function getSupabaseUrl(): string {
   const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
   if (envUrl && envUrl.trim()) return envUrl.trim().replace(/\/$/, '');
   return 'https://bzfxervcwhvoxpvfsnec.supabase.co';
+<<<<<<< HEAD
 =======
 export function getSupabaseUrl(): string {
   const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
   return envUrl && envUrl.trim() ? envUrl.trim().replace(/\/$/, '') : '';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 }
 
 export function getSupabaseAnonKey(): string {
   const envKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+<<<<<<< HEAD
 <<<<<<< HEAD
   if (envKey && envKey.trim()) return envKey.trim();
   return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6ZnhlcnZjd2h2b3hwdmZzbmVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTYwOTQsImV4cCI6MjEwNTczMjA5NH0.FcnwXNlffUopnN4UsjhcPnzGitsNjFhRt8tAxvRgYaQ';
@@ -50,16 +63,24 @@ export function getSupabaseAnonKey(): string {
 export function isSupabaseConfigured(): boolean {
   return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
 >>>>>>> 85bd45e (claude commit)
+=======
+  if (envKey && envKey.trim()) return envKey.trim();
+  return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6ZnhlcnZjd2h2b3hwdmZzbmVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxNTYwOTQsImV4cCI6MjEwNTczMjA5NH0.FcnwXNlffUopnN4UsjhcPnzGitsNjFhRt8tAxvRgYaQ';
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 }
 
 let supabaseInstance: SupabaseClient | null = null;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 export function getSupabaseClient(): SupabaseClient {
   if (!supabaseInstance) {
     const url = getSupabaseUrl();
     const key = getSupabaseAnonKey();
     supabaseInstance = createClient(url, key, {
+<<<<<<< HEAD
 =======
 /**
  * Returns a configured Supabase client, or null when VITE_SUPABASE_URL /
@@ -70,6 +91,8 @@ export function getSupabaseClient(): SupabaseClient | null {
   if (!supabaseInstance) {
     supabaseInstance = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
       auth: {
         persistSession: false,
         autoRefreshToken: false
@@ -93,16 +116,20 @@ export interface SupabaseContentResult {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 const NOT_CONFIGURED_ERROR =
   'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.';
 
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 /**
  * Reads the authoritative content row from Supabase
  */
 export async function fetchAuthoritativeContent(): Promise<SupabaseContentResult> {
   const client = getSupabaseClient();
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
   if (!client) {
@@ -110,6 +137,8 @@ export async function fetchAuthoritativeContent(): Promise<SupabaseContentResult
   }
 
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   try {
     let { data: rows, error } = await client
       .from('site_content')
@@ -138,10 +167,14 @@ export async function fetchAuthoritativeContent(): Promise<SupabaseContentResult
       const content = row.data as GlobalContent;
       const ver = Number(row.version || 1);
 <<<<<<< HEAD
+<<<<<<< HEAD
       
 =======
 
 >>>>>>> 85bd45e (claude commit)
+=======
+      
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
       if (!content.publicationInfo) content.publicationInfo = { publishedAt: row.published_at || new Date().toISOString(), version: ver };
       content.publicationInfo.version = ver;
       if (row.published_at) content.lastPublished = row.published_at;
@@ -162,15 +195,20 @@ export async function fetchAuthoritativeContent(): Promise<SupabaseContentResult
 
 /**
 <<<<<<< HEAD
+<<<<<<< HEAD
  * Subscribes to Supabase Realtime changes on site_content for id=current
 =======
  * Subscribes to Supabase Realtime changes on site_content for id=current.
  * Returns null when Supabase isn't configured - callers must check before calling unsubscribe().
 >>>>>>> 85bd45e (claude commit)
+=======
+ * Subscribes to Supabase Realtime changes on site_content for id=current
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
  */
 export function subscribeToContentChanges(
   onUpdate: (payload: { data: GlobalContent; version: number; publishedAt: string | null }) => void,
   onStatusChange?: (status: 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR') => void
+<<<<<<< HEAD
 <<<<<<< HEAD
 ): RealtimeChannel {
   const client = getSupabaseClient();
@@ -182,6 +220,10 @@ export function subscribeToContentChanges(
     return null;
   }
 >>>>>>> 85bd45e (claude commit)
+=======
+): RealtimeChannel {
+  const client = getSupabaseClient();
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   const channel = client
     .channel('site_content_changes')
@@ -225,6 +267,7 @@ export async function checkDatabaseHealth(): Promise<{
 }> {
   const client = getSupabaseClient();
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   if (!client) {
     return {
@@ -238,6 +281,8 @@ export async function checkDatabaseHealth(): Promise<{
   }
 
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   try {
     let { data, error } = await client
       .from('site_content')

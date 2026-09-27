@@ -3,18 +3,24 @@ import { Menu, Plus, Trash2, Edit3, ArrowUp, ArrowDown, Eye, EyeOff, Save, Check
 import { useContent } from '../../context/ContentContext';
 import { NavigationItem } from '../../types/content';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { ConfirmModal } from '../common/ConfirmModal';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 export function NavigationManager() {
   const { content, updateSection } = useContent();
   const [navItems, setNavItems] = useState<NavigationItem[]>([...content.navigation].sort((a, b) => a.order - b.order));
   const [isSaved, setIsSaved] = useState(false);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   // New item modal
   const [isAdding, setIsAdding] = useState(false);
@@ -49,14 +55,20 @@ export function NavigationManager() {
 
   const handleDelete = (id: string) => {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     if (confirm('Delete this navigation link?')) {
       const updated = navItems.filter((i) => i.id !== id);
       setNavItems(updated);
       updateSection('navigation', updated);
     }
+<<<<<<< HEAD
 =======
     setItemToDelete(id);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   };
 
   const handleSaveItemChanges = (index: number, field: keyof NavigationItem, value: any) => {
@@ -239,6 +251,7 @@ export function NavigationManager() {
         </div>
       )}
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
       {/* Delete Confirmation Modal */}
@@ -260,6 +273,8 @@ export function NavigationManager() {
         onCancel={() => setItemToDelete(null)}
       />
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     </div>
   );
 }

@@ -15,9 +15,12 @@ export const initialContent: GlobalContent = {
   },
   branding: {
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     siteName: "SHPIXELS",
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     logoText: "SHPIXELS",
     logoSubtext: "SHARIF ABS • CINEMATOGRAPHY",
     logoImage: "/assets/shpixels-logo.svg",

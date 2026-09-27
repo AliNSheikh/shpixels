@@ -16,9 +16,13 @@
   },
   "dependencies": {
 <<<<<<< HEAD
+<<<<<<< HEAD
     "@google/genai": "^2.4.0",
 =======
 >>>>>>> 85bd45e (claude commit)
+=======
+    "@google/genai": "^2.4.0",
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     "@supabase/supabase-js": "^2.117.1",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.1",

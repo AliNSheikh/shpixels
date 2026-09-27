@@ -5,9 +5,12 @@ import { createServer as createViteServer } from "vite";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { verifyAdminAuthorization, validateContentPayload } from "./api/_supabase";
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 dotenv.config();
 
@@ -21,10 +24,14 @@ async function startServer() {
   // Helper to get Supabase client
   const getSupabase = (): SupabaseClient | null => {
 <<<<<<< HEAD
+<<<<<<< HEAD
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bzfxervcwhvoxpvfsnec.supabase.co';
 =======
     const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 >>>>>>> 85bd45e (claude commit)
+=======
+    const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bzfxervcwhvoxpvfsnec.supabase.co';
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
     if (!url || !key) return null;
     try {
@@ -53,10 +60,14 @@ async function startServer() {
     setNoCacheHeaders(res);
     const sb = getSupabase();
 <<<<<<< HEAD
+<<<<<<< HEAD
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bzfxervcwhvoxpvfsnec.supabase.co';
 =======
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 >>>>>>> 85bd45e (claude commit)
+=======
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bzfxervcwhvoxpvfsnec.supabase.co';
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     const checks = {
       supabaseUrlConfigured: Boolean(supabaseUrl),
       serviceRoleKeyConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
@@ -89,10 +100,14 @@ async function startServer() {
         if (selectErr.code === '42P01') {
           checks.tableExists = false;
 <<<<<<< HEAD
+<<<<<<< HEAD
           checks.error = 'Table public.site_content does not exist. Run supabase-migration.sql';
 =======
           checks.error = 'Table public.site_content does not exist. Run supabase-schema.sql in the Supabase SQL Editor.';
 >>>>>>> 85bd45e (claude commit)
+=======
+          checks.error = 'Table public.site_content does not exist. Run supabase-migration.sql';
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
         } else {
           checks.tableExists = true;
           checks.error = selectErr.message;
@@ -200,6 +215,7 @@ async function startServer() {
   const handlePublish = async (req: express.Request, res: express.Response) => {
     setNoCacheHeaders(res);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
     // Require the same admin authorization as the Vercel serverless routes -
@@ -210,12 +226,15 @@ async function startServer() {
     }
 
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     const sb = getSupabase();
     if (!sb) {
       return res.status(503).json({ success: false, error: "Supabase not configured" });
     }
 
     const rawPayload = req.body?.data || req.body;
+<<<<<<< HEAD
 <<<<<<< HEAD
     if (!rawPayload || typeof rawPayload !== 'object') {
       return res.status(400).json({ success: false, error: "Invalid payload" });
@@ -224,6 +243,10 @@ async function startServer() {
     if (!validation.isValid) {
       return res.status(400).json({ success: false, error: validation.error });
 >>>>>>> 85bd45e (claude commit)
+=======
+    if (!rawPayload || typeof rawPayload !== 'object') {
+      return res.status(400).json({ success: false, error: "Invalid payload" });
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     }
 
     try {

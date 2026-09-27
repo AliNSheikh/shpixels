@@ -10,11 +10,15 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export function getServerSupabase(): { client: SupabaseClient | null; error?: string } {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://bzfxervcwhvoxpvfsnec.supabase.co';
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     return { client: null, error: 'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) must be defined' };
+<<<<<<< HEAD
 =======
   // NOTE: no hardcoded fallback URL/key here on purpose. If these env vars are
   // missing, every API route must fail loudly with a clear "not configured"
@@ -25,6 +29,8 @@ export function getServerSupabase(): { client: SupabaseClient | null; error?: st
   if (!url || !key) {
     return { client: null, error: 'Server is missing SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) environment variables. Set them in your Vercel Project Settings → Environment Variables, then redeploy.' };
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   }
 
   try {
@@ -74,6 +80,9 @@ export function validateContentPayload(payload: any): { isValid: boolean; error?
 
 /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
  * Admin authorization check for server-side mutations
  */
 export function verifyAdminAuthorization(req: any): boolean {
@@ -82,6 +91,7 @@ export function verifyAdminAuthorization(req: any): boolean {
   if (authHeader) {
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
     if (token && (token.startsWith('shpix_') || token.length >= 16)) {
+<<<<<<< HEAD
 =======
  * Admin authorization check for server-side mutations.
  *
@@ -112,10 +122,13 @@ export function verifyAdminAuthorization(req: any): boolean {
     const token = String(authHeader).replace(/^Bearer\s+/i, '').trim();
     if (isValidSessionToken(token)) {
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
       return true;
     }
   }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   // Check admin session cookie or header
   const sessionHeader = req.headers?.['x-admin-session'] || req.headers?.['x-admin-token'];
@@ -125,6 +138,11 @@ export function verifyAdminAuthorization(req: any): boolean {
   const sessionHeader = req.headers?.['x-admin-session'] || req.headers?.['x-admin-token'];
   if (isValidSessionToken(sessionHeader ? String(sessionHeader) : null)) {
 >>>>>>> 85bd45e (claude commit)
+=======
+  // Check admin session cookie or header
+  const sessionHeader = req.headers?.['x-admin-session'] || req.headers?.['x-admin-token'];
+  if (sessionHeader && String(sessionHeader).startsWith('shpix_')) {
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     return true;
   }
 

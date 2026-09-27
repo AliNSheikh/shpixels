@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Download, Upload, Copy, Check, RotateCcw, AlertTriangle, FileJson, CheckCircle2 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import { ConfirmModal } from '../common/ConfirmModal';
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
 export function ExportManager() {
   const { content, exportJson, importJson, resetToDefaults } = useContent();
@@ -13,9 +16,12 @@ export function ExportManager() {
   const [pasteJsonText, setPasteJsonText] = useState('');
   const [importStatus, setImportStatus] = useState<string | null>(null);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
 
   const handleCopyClipboard = async () => {
     try {
@@ -24,6 +30,7 @@ export function ExportManager() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
 <<<<<<< HEAD
+<<<<<<< HEAD
     } catch (e) {
       alert('Failed to copy to clipboard.');
 =======
@@ -31,6 +38,10 @@ export function ExportManager() {
       setImportStatus('Failed to copy to clipboard.');
       setTimeout(() => setImportStatus(null), 3000);
 >>>>>>> 85bd45e (claude commit)
+=======
+    } catch (e) {
+      alert('Failed to copy to clipboard.');
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     }
   };
 
@@ -187,21 +198,28 @@ export function ExportManager() {
 
         <button
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
           onClick={() => {
             if (confirm('Are you sure you want to reset all content back to factory initial state? All custom edits will be reverted.')) {
               resetToDefaults();
             }
           }}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-xs font-semibold text-red-300 border border-red-800/40 transition-colors"
+<<<<<<< HEAD
 =======
           onClick={() => setResetConfirmOpen(true)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-xs font-semibold text-red-300 border border-red-800/40 transition-colors cursor-pointer"
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
         >
           <RotateCcw className="w-4 h-4" />
           <span>Reset All Content to Seed Defaults</span>
         </button>
       </div>
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 
@@ -220,6 +238,8 @@ export function ExportManager() {
         onCancel={() => setResetConfirmOpen(false)}
       />
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
     </div>
   );
 }

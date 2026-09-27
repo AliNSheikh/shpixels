@@ -13,6 +13,7 @@ export interface SEOData {
 
 export interface BrandingData {
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   /** The canonical name of the site/studio. Used as the fallback for the navbar
    * wordmark, footer wordmark, footer copyright line, and SEO/meta defaults
@@ -21,6 +22,8 @@ export interface BrandingData {
    * everywhere it isn't explicitly overridden. */
   siteName: string;
 >>>>>>> 85bd45e (claude commit)
+=======
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
   logoText: string;
   logoSubtext: string;
   logoImage?: string;

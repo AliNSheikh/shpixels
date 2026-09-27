@@ -321,10 +321,14 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       document.removeEventListener('visibilitychange', handleVisibility);
       try {
 <<<<<<< HEAD
+<<<<<<< HEAD
         channel.unsubscribe();
 =======
         channel?.unsubscribe();
 >>>>>>> 85bd45e (claude commit)
+=======
+        channel.unsubscribe();
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
       } catch {}
     };
   }, [fetchAuthoritative, refreshDiagnostics]);

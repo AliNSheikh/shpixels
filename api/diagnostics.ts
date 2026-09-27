@@ -59,10 +59,14 @@ export default async function handler(req: any, res: any) {
       if (selectErr.code === '42P01') {
         checks.tableExists = false;
 <<<<<<< HEAD
+<<<<<<< HEAD
         checks.error = 'Supabase table public.site_content does not exist. Please run migration SQL.';
 =======
         checks.error = 'Supabase table public.site_content does not exist. Run supabase-schema.sql in the Supabase SQL Editor.';
 >>>>>>> 85bd45e (claude commit)
+=======
+        checks.error = 'Supabase table public.site_content does not exist. Please run migration SQL.';
+>>>>>>> 6a8ac5bbb249fa1ebdce82d7677f56ff3780b673
       } else {
         checks.tableExists = true;
         checks.error = `Supabase query error: ${selectErr.message}`;
