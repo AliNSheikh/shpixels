@@ -152,7 +152,9 @@ export function SectionManager() {
     description: '',
     category: categories[0] || 'Commercial',
     icon: 'Film',
-    features: []
+    features: [],
+    order: (content.services?.length || 0) + 1,
+    visible: true
   });
   const [newFeatureText, setNewFeatureText] = useState('');
 
@@ -175,14 +177,17 @@ export function SectionManager() {
       description: '',
       category: categories[0] || 'Commercial',
       icon: 'Film',
-      features: ['High-end production', 'Multi-platform master delivery']
+      features: ['High-end production', 'Multi-platform master delivery'],
+      order: (content.services?.length || 0) + 1,
+      visible: true
     });
     setIsAddingService(true);
     setEditingServiceId(null);
   };
 
   const handleStartEditService = (service: ServiceItem) => {
-    setServiceFormData({ ...service, features: service.features ? [...service.features] : [] });
+    const deliverables = service.deliverables?.length ? service.deliverables : (service.features || []);
+    setServiceFormData({ ...service, features: [...deliverables], deliverables: [...deliverables] });
     setEditingServiceId(service.id);
     setIsAddingService(false);
   };
@@ -191,12 +196,17 @@ export function SectionManager() {
     e.preventDefault();
     if (!serviceFormData.title.trim()) return;
 
+    const normalizedService = {
+      ...serviceFormData,
+      deliverables: [...(serviceFormData.features || [])]
+    };
+
     if (isAddingService) {
-      addService(serviceFormData);
+      addService(normalizedService);
       setIsAddingService(false);
       notifySave(isAr ? '✓ تمت إضافة الخدمة بنجاح!' : '✓ New service added!');
     } else {
-      updateService(serviceFormData);
+      updateService(normalizedService);
       setEditingServiceId(null);
       notifySave(isAr ? '✓ تم تحديث تفاصيل الخدمة!' : '✓ Service updated!');
     }
@@ -206,7 +216,8 @@ export function SectionManager() {
     if (!newFeatureText.trim()) return;
     setServiceFormData({
       ...serviceFormData,
-      features: [...(serviceFormData.features || []), newFeatureText.trim()]
+      features: [...(serviceFormData.features || []), newFeatureText.trim()],
+      deliverables: [...(serviceFormData.features || []), newFeatureText.trim()]
     });
     setNewFeatureText('');
   };
@@ -214,7 +225,8 @@ export function SectionManager() {
   const handleRemoveFeatureFromService = (idx: number) => {
     setServiceFormData({
       ...serviceFormData,
-      features: serviceFormData.features.filter((_, i) => i !== idx)
+      features: serviceFormData.features.filter((_, i) => i !== idx),
+      deliverables: serviceFormData.features.filter((_, i) => i !== idx)
     });
   };
 
@@ -935,6 +947,27 @@ export function SectionManager() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1">Display Order</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={serviceFormData.order || 1}
+                      onChange={(e) => setServiceFormData({ ...serviceFormData, order: Number(e.target.value) })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed]"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-[#a8a6a1]">
+                    <input
+                      type="checkbox"
+                      checked={serviceFormData.visible !== false}
+                      onChange={(e) => setServiceFormData({ ...serviceFormData, visible: e.target.checked })}
+                    />
+                    Visible on public site
+                  </label>
+                </div>
+
                 <div>
                   <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1">
                     {isAr ? 'الوصف الكامل للخدمة' : 'Description'}
@@ -950,7 +983,7 @@ export function SectionManager() {
                 {/* Features bullet points */}
                 <div className="space-y-2">
                   <label className="block text-xs font-mono uppercase text-[#a8a6a1]">
-                    {isAr ? 'مزايا ونقاط الخدمة (Features)' : 'Features / Bullet Points'}
+                    {isAr ? 'مخرجات وتفاصيل الخدمة' : 'Deliverables / Detailed Bullet Points'}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -1008,7 +1041,7 @@ export function SectionManager() {
 
             {/* List of services */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {(content.services || []).map((service) => (
+              {[...(content.services || [])].sort((a, b) => (a.order || 0) - (b.order || 0)).map((service) => (
                 <div
                   key={service.id}
                   className="p-4 rounded-xl bg-[#232323] border border-[#2b2b2b] flex flex-col justify-between"

@@ -11,6 +11,8 @@ export const initialContent: GlobalContent = {
     favicon: "/assets/shpixels-icon.svg",
     googleSiteVerification: "",
     googleAnalyticsId: "",
+    googleTagManagerId: "",
+    metaPixelId: "",
     sitemapEnabled: true
   },
   branding: {
@@ -18,6 +20,8 @@ export const initialContent: GlobalContent = {
     logoText: "SHPIXELS",
     logoSubtext: "SHARIF ABS • CINEMATOGRAPHY",
     logoImage: "/assets/shpixels-logo.svg",
+    logoLight: "/assets/shpixels-logo.svg",
+    logoDark: "/assets/shpixels-logo.svg",
     favicon: "/assets/shpixels-icon.svg",
     accentColor: "#2563eb"
   },
@@ -41,6 +45,13 @@ export const initialContent: GlobalContent = {
     secondaryCtaLink: "#showreel",
     featuredVideoId: "ScMzIvxBSi4", // Replaced/configurable cinematic showreel
     bgImageUrl: "https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1920&q=85",
+    backgroundType: "image",
+    backgroundVideoUrl: "",
+    typingStrings: [
+      "Commercial Films",
+      "Cinematic Storytelling",
+      "YouTube Showreels"
+    ],
     marqueeItems: [
       "COMMERCIAL & BRAND ADS",
       "AI & MOTION GRAPHICS",
@@ -88,7 +99,16 @@ export const initialContent: GlobalContent = {
       "Midjourney & Runway Gen-3",
       "Aputure & Nanlite Lighting"
     ],
-    experienceYears: 7
+    experienceYears: 7,
+    specialties: [
+      "Commercial Direction",
+      "Cinematography",
+      "Color Grading",
+      "Creative Production"
+    ],
+    resumeUrl: "",
+    resumeLabel: "Download Resume",
+    location: "Available globally"
   },
   services: [
     {
@@ -430,6 +450,8 @@ export const initialContent: GlobalContent = {
     phone: "+971 50 123 4567",
     whatsapp: "https://wa.me/971501234567",
     location: "Sharif Abs Studio • Available Globally for Remote & On-Location Projects",
+    address: "",
+    workingHours: "Sunday–Thursday • 09:00–18:00",
     instagram: "https://instagram.com/shpixels",
     youtube: "https://youtube.com/@shpixels",
     tiktok: "https://tiktok.com/@shpixels",
@@ -442,8 +464,17 @@ export const initialContent: GlobalContent = {
   footer: {
     copyrightText: "© 2026 SHPIXELS. All rights reserved. Directed by Sharif Abs.",
     quote: "Every frame carries purpose. Every story deserves cinematic depth.",
-    disclaimer: "SHPIXELS — Professional videographer portfolio & creative production studio by Sharif Abs."
+    disclaimer: "SHPIXELS — Professional videographer portfolio & creative production studio by Sharif Abs.",
+    legalNotice: ""
   },
+  headerCtas: [
+    { id: "cta-1", label: "Get in Touch", url: "#contact", target: "_self", variant: "primary", order: 1, visible: true }
+  ],
+  experience: [],
+  education: [],
+  skills: [],
+  testimonials: [],
+  footerLinks: [],
   sectionVisibility: {},
   showreel: {
     caption: "",

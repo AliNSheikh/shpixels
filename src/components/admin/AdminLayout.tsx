@@ -23,7 +23,9 @@ import {
   Check,
   RefreshCw,
   Clock,
-  Radio
+  Radio,
+  Database,
+  Inbox
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -38,6 +40,8 @@ import { NavigationManager } from './NavigationManager';
 import { LinkManager } from './LinkManager';
 import { SEOManager } from './SEOManager';
 import { ExportManager } from './ExportManager';
+import { SiteDataManager } from './SiteDataManager';
+import { InquiryManager } from './InquiryManager';
 
 type AdminTab = 
   | 'home' 
@@ -49,7 +53,9 @@ type AdminTab =
   | 'settings' 
   | 'navigation' 
   | 'links' 
-  | 'seo' 
+  | 'seo'
+  | 'data'
+  | 'inquiries'
   | 'export';
 
 export function AdminLayout() {
@@ -128,6 +134,8 @@ export function AdminLayout() {
     { id: 'navigation', label: isAr ? 'قائمة التنقل' : 'Navigation Menu', icon: Menu },
     { id: 'links', label: isAr ? 'الروابط والتواصل' : 'Links & Social', icon: Globe },
     { id: 'seo', label: isAr ? 'أرشفة Google & Sitemap' : 'SEO & Google Indexing', icon: Search },
+    { id: 'data', label: isAr ? 'إدارة كل بيانات الموقع' : 'Full Site Data', icon: Database },
+    { id: 'inquiries', label: isAr ? 'طلبات التواصل' : 'Inquiries', icon: Inbox },
     { id: 'export', label: isAr ? 'تصدير الكود والبيانات' : 'Codebase Export', icon: Download },
   ];
 
@@ -450,6 +458,8 @@ export function AdminLayout() {
           {activeTab === 'navigation' && <NavigationManager />}
           {activeTab === 'links' && <LinkManager />}
           {activeTab === 'seo' && <SEOManager />}
+          {activeTab === 'data' && <SiteDataManager />}
+          {activeTab === 'inquiries' && <InquiryManager />}
           {activeTab === 'export' && <ExportManager />}
         </main>
       </div>

@@ -122,6 +122,21 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
           </div>
         </div>
 
+        {(project.techStack?.length || project.completionDate) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {project.completionDate && (
+              <span className="px-2.5 py-1 rounded-full bg-[#232323] border border-[#2b2b2b] text-[11px] text-[#a8a6a1] font-mono">
+                Completed {project.completionDate}
+              </span>
+            )}
+            {(project.techStack || []).map((tag) => (
+              <span key={tag} className="px-2.5 py-1 rounded-full bg-[var(--site-accent)]/10 border border-[var(--site-accent)]/30 text-[11px] text-[#38bdf8]">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Description */}
         <div className="space-y-2">
           <h4 className="text-xs font-mono uppercase tracking-widest text-[#706e6a]">
@@ -154,9 +169,31 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
         )}
 
         {/* External Links */}
-        {project.externalLinks && project.externalLinks.length > 0 && (
+        {(project.liveUrl || project.githubUrl || (project.externalLinks && project.externalLinks.length > 0)) && (
           <div className="pt-2 flex flex-wrap gap-3">
-            {project.externalLinks.map((link, i) => (
+            {project.liveUrl && (
+              <a
+                href={project.liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--site-accent)] text-xs font-medium text-white transition-colors"
+              >
+                <span>Live Project</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+            {project.githubUrl && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#232323] hover:bg-[#2b2b2b] text-xs font-medium text-[#f1f2ed] border border-[#2b2b2b] transition-colors"
+              >
+                <span>GitHub</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[var(--site-accent)]" />
+              </a>
+            )}
+            {(project.externalLinks || []).map((link, i) => (
               <a
                 key={i}
                 href={link.url}

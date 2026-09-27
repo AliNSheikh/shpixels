@@ -7,7 +7,9 @@ export function Services() {
   const { content } = useContent();
   const { language, t } = useLanguage();
   const isAr = language === 'ar';
-  const services = content.services || [];
+  const services = [...(content.services || [])]
+    .filter((service) => service.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   const sectionBadge = content.sectionHeaders?.services?.badge || t('services.badge', 'CREATIVE CAPABILITIES');
   const sectionTitle = content.sectionHeaders?.services?.title || t('services.title', 'SPECIALIZED SERVICES');
@@ -63,9 +65,9 @@ export function Services() {
                   </div>
                 </div>
 
-                {service.features && service.features.length > 0 && (
+                {(service.deliverables || service.features || []).length > 0 && (
                   <div className="pt-2 sm:pt-4 border-t border-[#232323] space-y-1 sm:space-y-1.5">
-                    {service.features.map((f, i) => (
+                    {(service.deliverables || service.features || []).map((f, i) => (
                       <div key={i} className="flex items-center gap-1.5 text-[10px] sm:text-xs text-[#706e6a]">
                         <span className="w-1.5 h-1.5 rounded-full bg-[var(--site-accent)] shrink-0" />
                         <span>{f}</span>

@@ -1,6 +1,6 @@
-# MOGRAFIX — Cinematography Portfolio & CMS
+# SHPIXELS — Portfolio & Full-Site CMS
 
-A high-performance cinematic portfolio and dynamic content management portal built for filmmaker & director **Mohammad Abdallah**. Built with React 19, TypeScript, Vite, Tailwind CSS, and optimized for instant 4K media playback.
+A high-performance portfolio and full-site content management system built with React 19, TypeScript, Vite, Tailwind CSS, Supabase, and Vercel. The CMS controls the public website, normalized database projections, Supabase Storage assets, YouTube embeds, and inbound inquiry records.
 
 ---
 
@@ -29,13 +29,20 @@ The dashboard supports website content CRUD, component visibility, advanced JSON
 
 ## Database persistence architecture
 
-The CMS now automatically persists every editor change to Supabase after a short debounce. The database uses three coordinated tables:
+Every CMS edit automatically persists to Supabase after a short debounce. `public.site_content` remains the atomic source of truth, and a PostgreSQL trigger projects the same version into normalized tables so every part of the site can be inspected/queryed independently.
 
-- `public.site_content`: canonical single-row JSONB document containing the entire website.
-- `public.site_sections`: one row for every top-level CMS section such as `branding`, `contact`, `hero`, `projects`, `gallery`, `seo`, `sectionHeaders`, and `sectionVisibility`.
-- `public.site_settings`: explicit global columns for site name, logo, favicon, email, phone, WhatsApp, location and social links, plus JSONB copies of branding/contact/SEO/footer settings.
+The schema includes global settings and sections plus dedicated tables for navigation, header CTAs, hero data, about/profile data, services, project categories, projects, project YouTube videos, project galleries, project links, project tech tags, featured videos, gallery items, client logos, workflow, experience/education, skills, testimonials, footer links, section headers, visibility settings, and the private contact inquiry log. CMS image/PDF uploads are stored in the public `site-media` Supabase Storage bucket; only authenticated CMS server routes can upload.
 
-The projection tables are synchronized by a PostgreSQL trigger whenever `site_content` is published. After deploying this version, run the latest `supabase-schema.sql` once in **Supabase → SQL Editor**, then publish/save the site once from the CMS. Use **Site Settings → Test Database** or `/api/diagnostics` to verify that all sections and global settings match the canonical content.
+### Required database migration
+
+After deploying a version that changes the schema:
+
+1. Open **Supabase → SQL Editor → New query**.
+2. Run the complete latest `supabase-schema.sql` from this repository.
+3. Open the CMS and make one save/publish action. This backfills all normalized projection tables from `site_content`.
+4. Use **Site Settings → Test Database** or `/api/diagnostics` to verify the schema and projections.
+
+Do not manually edit projection tables as the normal CMS workflow. The canonical `site_content` publication is intentionally the single mutation path so all tables stay on the same version.
 
 ## 🚀 Quick Deployment Guide
 
@@ -123,6 +130,8 @@ The application runs on `http://localhost:3000`.
 │   │   │   ├── NavigationManager.tsx
 │   │   │   ├── LinkManager.tsx
 │   │   │   ├── SEOManager.tsx
+│   │   │   ├── SiteDataManager.tsx
+│   │   │   ├── InquiryManager.tsx
 │   │   │   └── ExportManager.tsx
 │   │   ├── common/         # OptimizedImage, YouTubeEmbed, IconPicker
 │   │   └── public/         # Production-grade public portfolio components
@@ -136,6 +145,9 @@ The application runs on `http://localhost:3000`.
 │   │       ├── ProjectModal.tsx
 │   │       ├── Process.tsx
 │   │       ├── Gallery.tsx
+│   │       ├── Experience.tsx
+│   │       ├── Skills.tsx
+│   │       ├── Testimonials.tsx
 │   │       ├── Contact.tsx
 │   │       └── Footer.tsx
 │   ├── context/
@@ -159,8 +171,10 @@ The application runs on `http://localhost:3000`.
 
 - Access the administrative CMS at `/#admin` or click **"Director Portal"** in the website footer.
 - The CMS allows you to:
-  - Add, edit, reorder, and delete 4K video projects.
-  - Upload custom media and camera stills directly.
+  - Add, edit, reorder, categorize, feature, publish, and delete projects with YouTube embeds, galleries, slugs, live/GitHub URLs and tech tags.
+  - Upload site images, logos, testimonial avatars, category covers and resume assets into Supabase Storage.
+  - Manage experience, education, skills, testimonials, navigation/CTA targets, footer/legal links and contact details.
+  - Review inbound contact inquiries and maintain their status/internal notes.
   - Rename the site in one place under **Settings → Site Name** — it updates the header, footer, and copyright line everywhere those aren't individually overridden.
   - Customize all section texts, pipeline steps, and client logos.
   - Toggle between English and Arabic.

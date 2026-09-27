@@ -12,19 +12,43 @@ export function Contact() {
   const [formState, setFormState] = useState({
     name: '',
     email: '',
+    phone: '',
     service: 'Commercial & Brand Ads',
     budget: '$3k - $5k',
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formState.name || !formState.email) return;
-    const subject = encodeURIComponent(`Production inquiry: ${formState.service}`);
-    const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nService: ${formState.service}\nBudget: ${formState.budget}\n\n${formState.message}`);
-    window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}`;
-    setSubmitted(true);
+    if (!formState.name || !formState.email || !formState.message) return;
+
+    setSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formState,
+          sourcePage: window.location.href
+        })
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Unable to send inquiry.');
+      }
+
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Unable to send inquiry.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const servicesList = content.services.map(service => service.title);
@@ -152,6 +176,13 @@ export function Contact() {
               </div>
             </div>
 
+            {(contact.address || contact.workingHours) && (
+              <div className="rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] p-3 text-xs text-[#a8a6a1] space-y-1">
+                {contact.address && <div>{contact.address}</div>}
+                {contact.workingHours && <div>{contact.workingHours}</div>}
+              </div>
+            )}
+
             {contact.responseTimeNote && (
               <div className="flex items-center gap-2 text-xs text-[#a8a6a1] font-mono">
                 <Clock className="w-3.5 h-3.5 text-[var(--site-accent)]" />
@@ -169,12 +200,12 @@ export function Contact() {
                     <CheckCircle2 className="w-7 sm:w-8 h-7 sm:h-8" />
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[#f1f2ed] font-quicksand">
-                    {isAr ? 'أكمل الإرسال في تطبيق البريد' : 'Continue in your email app'}
+                    {isAr ? 'تم إرسال استفسارك بنجاح' : 'Inquiry received successfully'}
                   </h3>
                   <p className="text-xs sm:text-sm text-[#a8a6a1] max-w-md mx-auto">
                     {isAr 
-                      ? 'مسودة الرسالة جاهزة. أرسلها من تطبيق البريد لإكمال الاستفسار.'
-                      : 'Your email draft is ready. Send it in your email app to complete your inquiry.'}
+                      ? 'تم حفظ رسالتك بأمان في قاعدة البيانات وسنراجعها في أقرب وقت.'
+                      : 'Your message was securely saved to our inquiry database and will be reviewed shortly.'}
                   </p>
                   <button
                     onClick={() => {
@@ -182,6 +213,7 @@ export function Contact() {
                       setFormState({
                         name: '',
                         email: '',
+                        phone: '',
                         service: 'Commercial & Brand Ads',
                         budget: '$3k - $5k',
                         message: ''
@@ -194,6 +226,11 @@ export function Contact() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                  {submitError && (
+                    <div className="rounded-xl border border-red-900/60 bg-red-950/30 px-4 py-3 text-xs text-red-300">
+                      {submitError}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
@@ -221,6 +258,19 @@ export function Contact() {
                         className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[var(--site-accent)] focus:outline-none text-xs sm:text-sm text-[#f1f2ed]"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
+                        {isAr ? 'رقم الهاتف' : 'Phone Number'}
+                      </label>
+                      <input
+                        type="tel"
+                        value={formState.phone}
+                        onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
+                        placeholder="+971..."
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[var(--site-accent)] focus:outline-none text-xs sm:text-sm text-[#f1f2ed]"
+                      />
+                    </div>
+
                   </div>
 
                   <div>
@@ -273,6 +323,7 @@ export function Contact() {
                     </label>
                     <textarea
                       rows={4}
+                      required
                       value={formState.message}
                       onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                       placeholder={isAr ? 'صف أهداف الحملة، المدة المقترحة، المواعيد النهائية، أو شارك مراجع بصرية...' : 'Describe timeline, shoot locations, target audience, visual references...'}
@@ -283,10 +334,11 @@ export function Contact() {
                   <button
                     id="contact-submit-btn"
                     type="submit"
+                    disabled={submitting}
                     className="w-full py-3.5 sm:py-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-all duration-200 shadow-xl flex items-center justify-center gap-2 border border-[#3b82f6]/40 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
-                    <span>{isAr ? 'إرسال تفاصيل المشروع' : 'Submit Production Inquiry'}</span>
+                    <span>{submitting ? (isAr ? 'جارِ الإرسال...' : 'Sending...') : (isAr ? 'إرسال تفاصيل المشروع' : 'Submit Production Inquiry')}</span>
                   </button>
                 </form>
               )}

@@ -1,5 +1,32 @@
 import { getServerSupabase, verifyAdminAuthorization } from './_supabase.js';
 
+const NORMALIZED_PUBLIC_TABLES = [
+  'site_settings',
+  'site_sections',
+  'navigation_items',
+  'header_ctas',
+  'hero_settings',
+  'about_profile',
+  'services',
+  'project_categories',
+  'projects',
+  'project_videos',
+  'project_gallery',
+  'project_links',
+  'project_tags',
+  'featured_videos',
+  'gallery_items',
+  'client_logos',
+  'workflow_steps',
+  'timeline_items',
+  'skills',
+  'testimonials',
+  'footer_links',
+  'section_headers',
+  'section_visibility',
+  'contact_inquiries'
+] as const;
+
 const EXPECTED_CMS_SECTIONS = [
   'seo',
   'branding',
@@ -13,6 +40,12 @@ const EXPECTED_CMS_SECTIONS = [
   'workflow',
   'contact',
   'footer',
+  'headerCtas',
+  'experience',
+  'education',
+  'skills',
+  'testimonials',
+  'footerLinks',
   'sectionVisibility',
   'showreel',
   'categories',
@@ -68,6 +101,8 @@ export default async function handler(req: any, res: any) {
     contactPhoneStored: false,
     contactLinksStored: false,
     settingsProjectionMatchesCanonical: false,
+    normalizedTablesReady: false,
+    missingNormalizedTables: [] as string[],
 
     currentVersion: 0,
     publishedAt: null as string | null,
@@ -174,6 +209,16 @@ export default async function handler(req: any, res: any) {
       checks.error = checks.error || `site_settings audit failed: ${settingsErr.message}`;
     }
 
+    for (const table of NORMALIZED_PUBLIC_TABLES) {
+      const { error: tableError } = await client.from(table).select('*').limit(1);
+      if (tableError?.code === '42P01' || /does not exist|schema cache/i.test(tableError?.message || '')) {
+        checks.missingNormalizedTables.push(table);
+      } else if (tableError) {
+        checks.error = checks.error || `${table} audit failed: ${tableError.message}`;
+      }
+    }
+    checks.normalizedTablesReady = checks.missingNormalizedTables.length === 0;
+
     const isAdmin = await verifyAdminAuthorization(req);
     checks.serverWritable = Boolean(isAdmin && serviceRoleKey);
 
@@ -185,11 +230,14 @@ export default async function handler(req: any, res: any) {
       checks.error = checks.error || `Some CMS sections are not projected yet: ${checks.missingSectionKeys.join(', ')}. Publish the site once after running the latest schema.`;
     } else if (!checks.settingsProjectionMatchesCanonical) {
       checks.error = checks.error || 'Branding/contact projection does not match the canonical site content. Publish the site again to resync.';
+    } else if (!checks.normalizedTablesReady) {
+      checks.error = checks.error || `Normalized CMS tables are missing: ${checks.missingNormalizedTables.join(', ')}. Run the latest supabase-schema.sql.`;
     }
 
     return res.status(200).json({
       success: !checks.error,
       expectedSections: EXPECTED_CMS_SECTIONS,
+      expectedNormalizedTables: NORMALIZED_PUBLIC_TABLES,
       checks
     });
   } catch (err: any) {

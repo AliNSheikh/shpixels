@@ -30,6 +30,7 @@ export function ImageUploadDropzone({
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUpdate = (url: string) => {
@@ -54,13 +55,35 @@ export function ImageUploadDropzone({
     }
 
     setError(null);
+    setIsUploading(true);
     compressImageFile(file)
-      .then((compressedUrl) => {
-        handleUpdate(compressedUrl);
+      .then(async (compressedUrl) => {
+        const response = await fetch('/api/upload-asset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            dataUrl: compressedUrl,
+            fileName: file.name,
+            folder: 'images'
+          })
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result.url) {
+          throw new Error(result.error || 'Upload failed');
+        }
+
+        handleUpdate(result.url);
       })
-      .catch(() => {
-        setError(language === 'ar' ? 'حدث خطأ أثناء قراءة الملف' : 'Failed to read image file');
-      });
+      .catch((err) => {
+        setError(
+          err instanceof Error
+            ? err.message
+            : (language === 'ar' ? 'حدث خطأ أثناء رفع الملف' : 'Failed to upload image file')
+        );
+      })
+      .finally(() => setIsUploading(false));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -128,7 +151,7 @@ export function ImageUploadDropzone({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => { if (!isUploading) fileInputRef.current?.click(); }}
           className={`relative cursor-pointer rounded-xl border-2 border-dashed transition-all p-4 text-center ${
             isDragging
               ? 'border-[#2563eb] bg-[#2563eb]/10 scale-[1.01]'
@@ -145,7 +168,14 @@ export function ImageUploadDropzone({
             className="hidden"
           />
 
-          {value ? (
+          {isUploading ? (
+            <div className={`${compact ? 'py-4' : 'py-8'} space-y-2`}>
+              <div className="w-8 h-8 rounded-full border-2 border-[#2563eb] border-t-transparent animate-spin mx-auto" />
+              <p className="text-xs text-[#a8a6a1] font-mono">
+                {language === 'ar' ? 'جارِ الرفع إلى Supabase Storage...' : 'Uploading to Supabase Storage...'}
+              </p>
+            </div>
+          ) : value ? (
             <div className="space-y-3">
               <div className={`relative ${aspectRatio} ${compact ? 'max-h-28' : 'max-h-48'} mx-auto rounded-lg overflow-hidden border border-[#2b2b2b] bg-[#111111] flex items-center justify-center p-2`}>
                 <img 

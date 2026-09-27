@@ -12,7 +12,7 @@ export function Footer() {
 
   useEffect(() => {
     setLogoError(false);
-  }, [branding.logoImage]);
+  }, [branding.logoImage, branding.logoLight]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -21,6 +21,10 @@ export function Footer() {
   const navItems = [...navigation]
     .filter((i) => i.visible)
     .sort((a, b) => a.order - b.order);
+  const footerLinks = [...(content.footerLinks || [])]
+    .filter((item) => item.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const activeLogo = branding.logoLight || branding.logoImage || '';
 
   const getNavLabel = (label: string) => {
     if (!isAr) return label;
@@ -48,9 +52,9 @@ export function Footer() {
           {/* Brand Col */}
           <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
-              {branding.logoImage && !logoError ? (
+              {activeLogo && !logoError ? (
                 <img 
-                  src={branding.logoImage} 
+                  src={activeLogo} 
                   alt={branding.logoText || branding.siteName} 
                   className="h-9 w-auto max-w-[170px] sm:max-w-[200px] object-contain rounded-md" 
                   onError={() => setLogoError(true)}
@@ -60,7 +64,7 @@ export function Footer() {
                   <Film className="w-5 h-5 text-white" />
                 </div>
               )}
-              {(!branding.logoImage || logoError) && (
+              {(!activeLogo || logoError) && (
                 <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand">
                   {branding.logoText || branding.siteName}
                 </span>
@@ -166,8 +170,19 @@ export function Footer() {
             {footer.copyrightText || `© ${new Date().getFullYear()} ${branding.siteName}. All Rights Reserved.`}
           </p>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4">
             <span>{branding.logoSubtext}</span>
+            {footerLinks.map((item) => (
+              <a
+                key={item.id}
+                href={item.url}
+                target={item.target || '_self'}
+                rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
+                className="hover:text-[#f1f2ed] transition-colors"
+              >
+                {item.label}
+              </a>
+            ))}
             <span className="text-[#333]">|</span>
             {/* Discreet admin portal access */}
             <button
@@ -179,6 +194,11 @@ export function Footer() {
             </button>
           </div>
         </div>
+        {footer.legalNotice && (
+          <p className="pt-4 text-center text-[10px] leading-relaxed text-[#555]">
+            {footer.legalNotice}
+          </p>
+        )}
       </div>
     </footer>
   );

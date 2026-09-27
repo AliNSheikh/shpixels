@@ -212,6 +212,7 @@ export function SiteSettings() {
       branding: {
         ...content.branding,
         ...branding,
+        logoLight: branding.logoImage || content.branding.logoLight,
         siteName: branding.siteName.trim() || content.branding.siteName
       },
       seo: {

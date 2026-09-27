@@ -13,7 +13,7 @@ export function Header() {
 
   useEffect(() => {
     setLogoError(false);
-  }, [content.branding.logoImage]);
+  }, [content.branding.logoImage, content.branding.logoLight]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,6 +38,10 @@ export function Header() {
   const navItems = [...content.navigation]
     .filter((item) => item.visible)
     .sort((a, b) => a.order - b.order);
+  const headerCtas = [...(content.headerCtas || [])]
+    .filter((item) => item.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const activeLogo = content.branding.logoLight || content.branding.logoImage || '';
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     setMobileMenuOpen(false);
@@ -102,9 +106,9 @@ export function Header() {
               }}
               className="group flex items-center focus:outline-none cursor-pointer"
             >
-              {content.branding.logoImage && !logoError ? (
+              {activeLogo && !logoError ? (
                 <img 
-                  src={content.branding.logoImage} 
+                  src={activeLogo} 
                   alt={content.branding.logoText || content.branding.siteName} 
                   className="h-9 w-auto max-w-[170px] sm:max-w-[210px] object-contain rounded-md" 
                   onError={() => setLogoError(true)}
@@ -116,7 +120,7 @@ export function Header() {
               )}
             </a>
 
-            {(!content.branding.logoImage || logoError) && (
+            {(!activeLogo || logoError) && (
               <div className="flex flex-col">
                 <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand flex items-center">
                   <span>{content.branding.logoText || content.branding.siteName}</span>
@@ -136,7 +140,9 @@ export function Header() {
                 key={item.id}
                 id={`nav-link-${item.id}`}
                 href={item.href}
-                onClick={(e) => handleNavClick(e, item.href)}
+                target={item.target || '_self'}
+                rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
+                onClick={(e) => item.target === '_blank' ? setMobileMenuOpen(false) : handleNavClick(e, item.href)}
                 className="px-3.5 py-1.5 text-xs lg:text-sm font-medium text-[#a8a6a1] hover:text-[#f1f2ed] hover:bg-[#232323] rounded-full transition-all duration-200"
               >
                 {getNavLabel(item.label)}
@@ -159,16 +165,25 @@ export function Header() {
               <span className={language === 'ar' ? 'font-bold text-[#f1f2ed]' : 'text-[#706e6a]'}>عربي</span>
             </button>
 
-            {/* Direct Contact CTA */}
-            <a
-              id="header-contact-btn"
-              href="#contact"
-              onClick={(e) => handleNavClick(e, '#contact')}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-[var(--site-accent)]/20 border border-[#3b82f6]/40 group cursor-pointer"
-            >
-              <span>{t('nav.getInTouch', 'Get in Touch')}</span>
-              <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'} transition-transform`} />
-            </a>
+            {/* Managed Header CTAs */}
+            {(headerCtas.length > 0 ? headerCtas : [{ id: 'fallback-contact', label: t('nav.getInTouch', 'Get in Touch'), url: '#contact', target: '_self', variant: 'primary' }]).slice(0, 2).map((cta) => (
+              <a
+                key={cta.id}
+                id={`header-cta-${cta.id}`}
+                href={cta.url}
+                target={cta.target || '_self'}
+                rel={cta.target === '_blank' ? 'noopener noreferrer' : undefined}
+                onClick={(e) => cta.target === '_blank' ? undefined : handleNavClick(e, cta.url)}
+                className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase transition-all duration-200 border group cursor-pointer ${
+                  cta.variant === 'secondary'
+                    ? 'text-[#f1f2ed] bg-[#232323] hover:bg-[#2b2b2b] border-[#333]'
+                    : 'text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] shadow-md hover:shadow-lg hover:shadow-[var(--site-accent)]/20 border-[#3b82f6]/40'
+                }`}
+              >
+                <span>{cta.label}</span>
+                <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'} transition-transform`} />
+              </a>
+            ))}
           </div>
 
           {/* Mobile Actions: Language toggle + Menu Button */}
@@ -201,7 +216,9 @@ export function Header() {
                 key={item.id}
                 id={`mobile-nav-link-${item.id}`}
                 href={item.href}
-                onClick={(e) => handleNavClick(e, item.href)}
+                target={item.target || '_self'}
+                rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
+                onClick={(e) => item.target === '_blank' ? setMobileMenuOpen(false) : handleNavClick(e, item.href)}
                 className="px-4 py-2.5 rounded-lg text-sm font-medium text-[#f1f2ed] hover:bg-[#232323] hover:text-[#3b82f6] transition-colors"
               >
                 {getNavLabel(item.label)}
@@ -210,14 +227,20 @@ export function Header() {
           </div>
 
           <div className="pt-4 border-t border-[#2b2b2b] flex flex-col gap-2.5">
-            <a
-              id="mobile-contact-cta"
-              href="#contact"
-              onClick={(e) => handleNavClick(e, '#contact')}
-              className="w-full py-3 rounded-lg text-center font-semibold text-sm tracking-wider uppercase text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-colors shadow-md"
-            >
-              {t('nav.getInTouch', 'Get in Touch')}
-            </a>
+            {(headerCtas.length > 0 ? headerCtas : [{ id: 'mobile-contact', label: t('nav.getInTouch', 'Get in Touch'), url: '#contact', target: '_self', variant: 'primary' }]).slice(0, 2).map((cta) => (
+              <a
+                key={cta.id}
+                href={cta.url}
+                target={cta.target || '_self'}
+                rel={cta.target === '_blank' ? 'noopener noreferrer' : undefined}
+                onClick={(e) => cta.target === '_blank' ? setMobileMenuOpen(false) : handleNavClick(e, cta.url)}
+                className={`w-full py-3 rounded-lg text-center font-semibold text-sm tracking-wider uppercase transition-colors shadow-md ${
+                  cta.variant === 'secondary' ? 'text-[#f1f2ed] bg-[#232323]' : 'text-white bg-[var(--site-accent)] hover:bg-[#3b82f6]'
+                }`}
+              >
+                {cta.label}
+              </a>
+            ))}
           </div>
         </div>
       )}

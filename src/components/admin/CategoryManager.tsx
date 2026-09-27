@@ -60,19 +60,34 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
     return { projCount, servCount, galCount, total: projCount + servCount + galCount };
   };
 
-  const handleFileUpload = (file: File, callback: (url: string) => void) => {
-    compressImageFile(file)
-      .then((res) => {
-        if (res) callback(res);
-      })
-      .catch(() => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const res = e.target?.result as string;
-          if (res) callback(res);
-        };
-        reader.readAsDataURL(file);
+  const handleFileUpload = async (file: File, callback: (url: string) => void) => {
+    try {
+      const compressed = await compressImageFile(file);
+      const response = await fetch('/api/upload-asset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          dataUrl: compressed,
+          fileName: file.name,
+          folder: 'category-covers'
+        })
       });
+
+      const result = await response.json();
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      callback(result.url);
+    } catch (error) {
+      setStatusMessage(
+        isAr
+          ? 'تعذر رفع الصورة إلى Supabase Storage.'
+          : (error instanceof Error ? error.message : 'Unable to upload image to Supabase Storage.')
+      );
+      setTimeout(() => setStatusMessage(null), 4000);
+    }
   };
 
   const handleAddCategory = (e: React.FormEvent) => {
