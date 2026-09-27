@@ -8,10 +8,10 @@ A high-performance cinematic portfolio and dynamic content management portal bui
 
 The login at `/admin` asks only for the fixed password. Its salted scrypt hash is in the server-only `api/_admin-auth.ts`; the readable password is never bundled into the browser. Email login, email recovery and dashboard password changes are disabled. A successful login sets an eight-hour signed HttpOnly, SameSite=Strict cookie (Secure on HTTPS).
 
-Set the following environment variables locally and on your hosting platform:
-- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`: public reads and realtime.
-- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: server-only database publishing.
-- `ADMIN_SESSION_SECRET`: private random string with at least 32 characters. Rotating it invalidates existing sessions.
+Environment setup:
+- On Vercel with the Supabase Marketplace integration, the app now supports the integration-provided `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` automatically.
+- For local/manual configuration, `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` and the legacy `SUPABASE_SERVICE_ROLE_KEY` are still supported.
+- `ADMIN_SESSION_SECRET` is application-specific and must still be created manually in Vercel. Use a private random string with at least 32 characters. Rotating it invalidates existing CMS sessions.
 
 Run `supabase-schema.sql` in Supabase SQL Editor to remove legacy anonymous write policies and public password hashes. Only the server service-role client writes; every publishing endpoint first verifies the signed admin cookie. Do not expose either server secret with a VITE_ prefix. Deploy over HTTPS. The built-in attempt limit is per server instance; use a shared rate limiter or hosting firewall for multi-instance deployments.
 
