@@ -23,7 +23,8 @@ const NORMALIZED_PUBLIC_TABLES = [
   'testimonials',
   'footer_links',
   'section_headers',
-  'section_visibility'
+  'section_visibility',
+  'contact_inquiries'
 ] as const;
 
 const EXPECTED_CMS_SECTIONS = [
