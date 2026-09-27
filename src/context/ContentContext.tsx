@@ -128,7 +128,7 @@ interface ContentContextType {
   isAdminView: boolean;
   setIsAdminView: (isOpen: boolean) => void;
   isAuthenticated: boolean;
-  loginAdmin: (password: string) => Promise<{ success: boolean; error?: string }>;
+  loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logoutAdmin: () => void;
   changeAdminPassword: (oldPass: string, newPass: string) => Promise<{ success: boolean; error?: string }>;
 }
@@ -895,13 +895,13 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   }, [markLocalEdit]);
 
   // Supabase administrator authentication
-  const loginAdmin = useCallback(async (password: string) => {
+  const loginAdmin = useCallback(async (email: string, password: string) => {
     try {
       const response = await fetch('/api/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ password })
+        body: JSON.stringify({ email, password })
       });
 
       const raw = await response.text();
@@ -937,7 +937,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     void fetch('/api/admin-login', { method: 'DELETE' });
   }, []);
 
-  const changeAdminPassword = useCallback(async () => ({ success: false, error: 'This site uses a fixed server-managed password.' }), []);
+  const changeAdminPassword = useCallback(async () => ({ success: false, error: 'Manage the administrator password in Supabase Authentication.' }), []);
 
   // Favicon & Page title synchronization
   useEffect(() => {
