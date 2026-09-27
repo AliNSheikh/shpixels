@@ -257,6 +257,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         if (json.data && json.data.projects) {
           const ver = Number(json.version || 1);
           const safeData = sanitizeGlobalContent(json.data);
+          latestContentRef.current = safeData;
           setContent(safeData);
           setPublicationVersion(ver);
           currentVersionRef.current = ver;
