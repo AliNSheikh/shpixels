@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Play, ArrowRight, Sparkles, X } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { YouTubeEmbed } from '../common/YouTubeEmbed';
@@ -9,19 +9,41 @@ export function Hero() {
   const { language, t, isRTL } = useLanguage();
   const isAr = language === 'ar';
   const [showreelModalOpen, setShowreelModalOpen] = useState(false);
+  const [typingIndex, setTypingIndex] = useState(0);
 
   const hero = content.hero;
   const marqueeList = hero.marqueeItems || [];
+  const typingStrings = hero.typingStrings || [];
+
+  useEffect(() => {
+    if (typingStrings.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setTypingIndex((index) => (index + 1) % typingStrings.length);
+    }, 2400);
+    return () => window.clearInterval(timer);
+  }, [typingStrings.length]);
 
   return (
     <section id="hero" className="relative min-h-[90vh] lg:min-h-screen flex flex-col justify-between pt-24 sm:pt-28 pb-10 overflow-hidden bg-[#171717]">
       {/* Background Ambient Imagery & Gradients */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <img
-          src={hero.bgImageUrl}
-          alt="Cinematography backdrop"
-          className="w-full h-full object-cover object-center opacity-20 scale-105 filter blur-[1px]"
-        />
+        {hero.backgroundType === 'video' && hero.backgroundVideoUrl ? (
+          <video
+            src={hero.backgroundVideoUrl}
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster={hero.bgImageUrl}
+            className="w-full h-full object-cover object-center opacity-20 scale-105"
+          />
+        ) : (
+          <img
+            src={hero.bgImageUrl}
+            alt="Cinematography backdrop"
+            className="w-full h-full object-cover object-center opacity-20 scale-105 filter blur-[1px]"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-[#171717]/80 via-[#171717]/85 to-[#171717]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.18)_0%,transparent_70%)]" />
         {/* Subtle grid pattern */}
@@ -51,6 +73,14 @@ export function Hero() {
               ? 'شريف عبس — إخراج وتصوير الإعلانات التجارية الفاخرة، الأفلام الوثائقية، والأعمال السينمائية بدقة 4K.' 
               : 'Sharif Abs crafting high-impact commercial ads, emotionally resonant wedding films, luxury visuals, and cutting-edge cinematography.')}
           </p>
+
+          {typingStrings.length > 0 && (
+            <div className="h-7 flex items-center justify-center">
+              <span className="text-xs sm:text-sm font-mono uppercase tracking-[0.18em] text-[#38bdf8] transition-all">
+                {typingStrings[Math.min(typingIndex, typingStrings.length - 1)]}
+              </span>
+            </div>
+          )}
 
           {/* Call to Actions */}
           <div className="flex flex-row items-center justify-center gap-3 sm:gap-4 pt-2 sm:pt-4">
