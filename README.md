@@ -4,31 +4,20 @@ A high-performance cinematic portfolio and dynamic content management portal bui
 
 ---
 
-## 🗄️ Database Setup (Required — do this first)
+## Fixed-password administrator setup
 
-The CMS stores the *entire* site in a single Supabase table (`public.site_content`,
-one row, `id = 'current'`, a `data` JSONB column holding everything: hero,
-about, projects, videos, gallery, branding/site name, SEO, contact info, nav,
-footer, etc). Every admin "Save & Publish" writes the whole object here, and
-every visitor's browser reads it back — plus a live Realtime subscription so
-edits reflect instantly without a page refresh.
+The login at `/admin` asks only for the fixed password. Its salted scrypt hash is in the server-only `api/_admin-auth.ts`; the readable password is never bundled into the browser. Email login, email recovery and dashboard password changes are disabled. A successful login sets an eight-hour signed HttpOnly, SameSite=Strict cookie (Secure on HTTPS).
 
-1. Create a project at [supabase.com](https://supabase.com) (or use an existing one).
-2. Open **SQL Editor → New Query**, paste the entire contents of
-   [`supabase-schema.sql`](./supabase-schema.sql) from this repo, and click **Run**.
-   This is the only SQL file the project needs — it's safe to re-run at any time.
-3. Go to **Project Settings → API** and copy your **Project URL** and **anon public key**.
-4. Copy `.env.example` to `.env` and fill in:
-   - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` — used by the browser (public reads + Realtime).
-   - `SUPABASE_URL` / `SUPABASE_ANON_KEY` — used by the serverless `/api/*` routes.
-   - `SUPABASE_SERVICE_ROLE_KEY` *(recommended)* — lets the server write even if you later tighten Row Level Security.
-5. Add the same variables in **Vercel → Project Settings → Environment Variables** before deploying, and redeploy after adding/changing them (Vercel only reads env vars at build/deploy time).
-6. Open the site, log in to `/#admin`, go to **Settings → Database**, and click **Test Connection** to confirm it's reachable, then **Publish Content to Supabase** once to seed the row.
+Set the following environment variables locally and on your hosting platform:
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`: public reads and realtime.
+- `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`: server-only database publishing.
+- `ADMIN_SESSION_SECRET`: private random string with at least 32 characters. Rotating it invalidates existing sessions.
 
-> ⚠️ Don't skip step 4/5. Without real credentials configured, the admin dashboard
-> will clearly show "Not Configured" instead of silently failing — earlier
-> versions of this project shipped with a hardcoded fallback project URL/key,
-> which has been removed.
+Run `supabase-schema.sql` in Supabase SQL Editor to remove legacy anonymous write policies and public password hashes. Only the server service-role client writes; every publishing endpoint first verifies the signed admin cookie. Do not expose either server secret with a VITE_ prefix. Deploy over HTTPS. The built-in attempt limit is per server instance; use a shared rate limiter or hosting firewall for multi-instance deployments.
+
+Run `npm install`, `npm run dev` (development), or `npm run build` then `npm start` with NODE_ENV=production. Checks: `npm run lint` and `npm test`.
+
+The dashboard supports website content CRUD, component visibility, and advanced JSON editing. Publishing uses revision checks to avoid overwriting a newer revision.
 
 ---
 

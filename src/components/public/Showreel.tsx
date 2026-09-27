@@ -8,7 +8,7 @@ export function Showreel() {
   const { language } = useLanguage();
   const isAr = language === 'ar';
   
-  const videoId = content.hero.featuredVideoId || 'ScMzIvxBSi4';
+  const videoId = content.hero.featuredVideoId;
   const headerInfo = content.sectionHeaders?.showreel || {
     badge: isAr ? 'عرض إخراجي حصري' : 'DIRECTOR SHOWCASE',
     title: isAr ? 'الشوريل السينمائي 2026' : 'THE 2026 VISUAL REEL',
@@ -23,7 +23,7 @@ export function Showreel() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1d1d1d] border border-[#2b2b2b] text-[11px] font-mono tracking-widest text-[#a8a6a1] uppercase mb-3">
-              <Video className="w-3.5 h-3.5 text-[#2563eb]" />
+              <Video className="w-3.5 h-3.5 text-[var(--site-accent)]" />
               <span>{headerInfo.badge}</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-[#f1f2ed] tracking-tight uppercase font-quicksand">
@@ -39,42 +39,20 @@ export function Showreel() {
         <div className="relative rounded-2xl p-1 bg-gradient-to-b from-[#2b2b2b] via-[#232323] to-[#171717] shadow-2xl">
           <YouTubeEmbed
             videoId={videoId}
-            title="SHPIXELS Official 2026 Cinematography Showreel"
+            title={headerInfo.title || content.branding.siteName}
             lazyLoad={false}
-            caption="Sony FX6 & FX3 Cinema Line • DJI Mavic 3 Cine • DaVinci Resolve Studio Color"
+            caption={content.showreel?.caption || ''}
           />
         </div>
 
-        {/* Technical specs strip */}
         <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-[#2563eb]" />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#706e6a] font-mono">Format</p>
-              <p className="text-xs sm:text-sm font-semibold text-[#f1f2ed]">4K UHD 60FPS ProRes</p>
-            </div>
-          </div>
-          <div className="p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-[#2563eb]" />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#706e6a] font-mono">Color Space</p>
-              <p className="text-xs sm:text-sm font-semibold text-[#f1f2ed]">DaVinci Wide Gamut</p>
-            </div>
-          </div>
-          <div className="p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-[#2563eb]" />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#706e6a] font-mono">Aerial System</p>
-              <p className="text-xs sm:text-sm font-semibold text-[#f1f2ed]">DJI Mavic 3 Cine D-Log</p>
-            </div>
-          </div>
-          <div className="p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] flex items-center gap-3">
-            <Sparkles className="w-4 h-4 text-[#38bdf8]" />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#706e6a] font-mono">Motion VFX</p>
-              <p className="text-xs sm:text-sm font-semibold text-[#f1f2ed]">Hybrid AI Synthesis</p>
-            </div>
-          </div>
+          {(content.showreel?.specs || []).map((spec, index) => <div key={index} className="p-4 rounded-xl bg-[#1d1d1d]">
+            <p className="text-xs text-gray-400">{spec.label}</p><p>{spec.value}</p>
+          </div>)}
+        </div>
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          {content.featuredVideos.filter(video => video.visible).sort((a, b) => a.order - b.order).map(video =>
+            <YouTubeEmbed key={video.id} videoId={video.videoId} title={video.title} caption={video.caption || video.description} />)}
         </div>
       </div>
     </section>

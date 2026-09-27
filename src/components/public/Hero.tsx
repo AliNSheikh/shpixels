@@ -11,11 +11,7 @@ export function Hero() {
   const [showreelModalOpen, setShowreelModalOpen] = useState(false);
 
   const hero = content.hero;
-  const marqueeList = isAr
-    ? ['إعلانات تجارية', 'ذكاء اصطناعي وموشن', 'أعراس وفعاليات فاخرة', 'تصوير جوي 4K درون', 'تلوين سينمائي']
-    : (hero.marqueeItems && hero.marqueeItems.length > 0
-        ? hero.marqueeItems
-        : ['COMMERCIAL ADS', 'AI MOTION GRAPHICS', 'WEDDINGS & EVENTS', 'DRONE 4K', 'COLOR GRADING']);
+  const marqueeList = hero.marqueeItems || [];
 
   return (
     <section id="hero" className="relative min-h-[90vh] lg:min-h-screen flex flex-col justify-between pt-24 sm:pt-28 pb-10 overflow-hidden bg-[#171717]">
@@ -37,7 +33,7 @@ export function Hero() {
         <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[#1d1d1d]/90 border border-[#2b2b2b] shadow-sm backdrop-blur-sm">
-            <span className="w-2 h-2 rounded-full bg-[#2563eb] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[var(--site-accent)] animate-pulse" />
             <span className="text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#a8a6a1] font-mono">
               {hero.badgeText || (isAr ? 'شريف عبس • مخرج سينمائي ومصور محترف' : 'SHARIF ABS • CINEMATOGRAPHER & DIRECTOR')}
             </span>
@@ -61,7 +57,7 @@ export function Hero() {
             <a
               id="hero-primary-cta"
               href={hero.primaryCtaLink || '#portfolio'}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-white bg-[#2563eb] hover:bg-[#3b82f6] transition-all duration-300 shadow-xl hover:shadow-[#2563eb]/30 border border-[#3b82f6]/50 group cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-8 py-3 sm:py-4 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-all duration-300 shadow-xl hover:shadow-[var(--site-accent)]/30 border border-[#3b82f6]/50 group cursor-pointer"
             >
               <span>{hero.primaryCtaText || t('hero.explore', 'Explore Portfolio')}</span>
               <ArrowRight className={`w-3.5 sm:w-4 h-3.5 sm:h-4 ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'} transition-transform`} />
@@ -69,10 +65,10 @@ export function Hero() {
 
             <button
               id="hero-watch-showreel-btn"
-              onClick={() => setShowreelModalOpen(true)}
+              onClick={() => { if (hero.secondaryCtaLink && hero.secondaryCtaLink !== '#showreel' && /^(https?:\/\/|#|\/(?!\/))/.test(hero.secondaryCtaLink)) window.location.assign(hero.secondaryCtaLink); else setShowreelModalOpen(true); }}
               className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-7 py-3 sm:py-4 rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-[#f1f2ed] hover:text-white bg-[#1d1d1d] hover:bg-[#232323] transition-all duration-200 border border-[#2b2b2b] shadow-md group cursor-pointer"
             >
-              <div className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-[#2563eb] flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+              <div className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-[var(--site-accent)] flex items-center justify-center text-white group-hover:scale-110 transition-transform">
                 <Play className="w-2.5 sm:w-3 h-2.5 sm:h-3 fill-current translate-x-0.5" />
               </div>
               <span>{hero.secondaryCtaText || t('hero.showreel', '2026 Showreel')}</span>
@@ -90,7 +86,7 @@ export function Hero() {
               className="mx-4 sm:mx-6 text-[10px] sm:text-xs font-mono font-bold tracking-[0.25em] text-[#706e6a] uppercase flex items-center gap-3"
             >
               <span>{item}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--site-accent)]" />
             </span>
           ))}
         </div>
@@ -105,7 +101,7 @@ export function Hero() {
                 <h3 className="text-lg font-bold text-[#f1f2ed] uppercase font-quicksand">
                   {isAr ? 'العرض السينمائي الترويجي المجمع' : 'Official Director Showreel'}
                 </h3>
-                <p className="text-xs text-[#a8a6a1] font-mono">SHPIXELS — Cinematography by Sharif Abs</p>
+                <p className="text-xs text-[#a8a6a1] font-mono">{content.branding.siteName}</p>
               </div>
               <button
                 onClick={() => setShowreelModalOpen(false)}
@@ -118,7 +114,7 @@ export function Hero() {
             <div className="relative aspect-video rounded-xl overflow-hidden bg-black border border-[#2b2b2b]">
               <YouTubeEmbed
                 videoId={hero.featuredVideoId || 'ScMzIvxBSi4'}
-                title="SHPIXELS Showreel"
+                title={`${content.branding.siteName} Showreel`}
                 autoplay
               />
             </div>

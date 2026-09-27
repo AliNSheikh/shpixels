@@ -32,7 +32,7 @@ export function ExportManager() {
       const result = event.target?.result as string;
       if (result) {
         const ok = importJson(result);
-        if (ok) {
+        if (ok.success) {
           setImportStatus('Successfully imported configuration file!');
         } else {
           setImportStatus('Invalid JSON file. Please check schema.');
@@ -46,7 +46,7 @@ export function ExportManager() {
   const handlePasteImport = () => {
     if (!pasteJsonText.trim()) return;
     const ok = importJson(pasteJsonText);
-    if (ok) {
+    if (ok.success) {
       setImportStatus('Successfully imported JSON from paste!');
       setPasteJsonText('');
     } else {

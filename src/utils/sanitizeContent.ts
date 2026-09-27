@@ -7,6 +7,8 @@ import { GlobalContent, ProjectItem } from '../types/content';
 export function sanitizeGlobalContent(rawContent: GlobalContent): GlobalContent {
   if (!rawContent) return rawContent;
 
+  const { adminAuth, supabaseConfig, ...publicContent } = rawContent;
+  rawContent = publicContent;
   const seenProjectIds = new Set<string>();
   const sanitizedProjects: ProjectItem[] = [];
 

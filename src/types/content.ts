@@ -214,6 +214,8 @@ export interface PublicationInfo {
 }
 
 export interface GlobalContent {
+  sectionVisibility?: Record<string, boolean>;
+  showreel?: { caption: string; specs: { label: string; value: string }[] };
   seo: SEOData;
   branding: BrandingData;
   navigation: NavigationItem[];

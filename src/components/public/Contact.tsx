@@ -21,12 +21,13 @@ export function Contact() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formState.name || !formState.email) return;
+    const subject = encodeURIComponent(`Production inquiry: ${formState.service}`);
+    const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nService: ${formState.service}\nBudget: ${formState.budget}\n\n${formState.message}`);
+    window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}`;
     setSubmitted(true);
   };
 
-  const servicesList = isAr
-    ? ['إعلانات تجارية', 'ذكاء اصطناعي وموشن', 'أعراس وفعاليات', 'تصوير رياضي', 'أفلام طبية']
-    : ['Commercial & Brand Ads', 'AI & Motion Graphics', 'Luxury Weddings & Events', 'Sports Cinematography', 'Medical Films'];
+  const servicesList = content.services.map(service => service.title);
 
   const budgetList = isAr
     ? ['أقل من 3 آلاف دولار', '3k$ - 5k$', '5k$ - 10k$', '10k$+ إنتاج سينمائي']
@@ -40,7 +41,7 @@ export function Contact() {
           <div className="lg:col-span-5 space-y-6 sm:space-y-8">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1d1d1d] border border-[#2b2b2b] text-[10px] sm:text-[11px] font-mono tracking-widest text-[#a8a6a1] uppercase">
-                <MessageSquare className="w-3.5 h-3.5 text-[#2563eb]" />
+                <MessageSquare className="w-3.5 h-3.5 text-[var(--site-accent)]" />
                 <span>{isAr ? 'بدء التعاون الإبداعي' : 'INITIATE COLLABORATION'}</span>
               </div>
               <h2 className="text-2xl sm:text-5xl font-black text-[#f1f2ed] tracking-tight uppercase font-quicksand leading-tight">
@@ -59,9 +60,9 @@ export function Contact() {
             <div className="space-y-3">
               <a
                 href={`mailto:${contact.email}`}
-                className="flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb]/60 transition-colors group"
+                className="flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)]/60 transition-colors group"
               >
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-[#232323] text-[#38bdf8] group-hover:bg-[#2563eb] group-hover:text-white flex items-center justify-center transition-colors flex-shrink-0">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-[#232323] text-[#38bdf8] group-hover:bg-[var(--site-accent)] group-hover:text-white flex items-center justify-center transition-colors flex-shrink-0">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -76,9 +77,9 @@ export function Contact() {
 
               <a
                 href={`tel:${contact.phone}`}
-                className="flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb]/60 transition-colors group"
+                className="flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)]/60 transition-colors group"
               >
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-[#232323] text-[#38bdf8] group-hover:bg-[#2563eb] group-hover:text-white flex items-center justify-center transition-colors flex-shrink-0">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-[#232323] text-[#38bdf8] group-hover:bg-[var(--site-accent)] group-hover:text-white flex items-center justify-center transition-colors flex-shrink-0">
                   <Phone className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -118,7 +119,7 @@ export function Contact() {
                     href={contact.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb] text-[#a8a6a1] hover:text-white hover:bg-[#2563eb] transition-all"
+                    className="p-3 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)] text-[#a8a6a1] hover:text-white hover:bg-[var(--site-accent)] transition-all"
                     title="Instagram @shpixels"
                   >
                     <Instagram className="w-5 h-5" />
@@ -130,7 +131,7 @@ export function Contact() {
                     href={contact.youtube}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb] text-[#a8a6a1] hover:text-white hover:bg-[#2563eb] transition-all"
+                    className="p-3 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)] text-[#a8a6a1] hover:text-white hover:bg-[var(--site-accent)] transition-all"
                     title="YouTube @shpixels"
                   >
                     <Youtube className="w-5 h-5" />
@@ -142,7 +143,7 @@ export function Contact() {
                     href={contact.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb] text-[#a8a6a1] hover:text-white hover:bg-[#2563eb] transition-all"
+                    className="p-3 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)] text-[#a8a6a1] hover:text-white hover:bg-[var(--site-accent)] transition-all"
                     title="LinkedIn"
                   >
                     <Linkedin className="w-5 h-5" />
@@ -153,7 +154,7 @@ export function Contact() {
 
             {contact.responseTimeNote && (
               <div className="flex items-center gap-2 text-xs text-[#a8a6a1] font-mono">
-                <Clock className="w-3.5 h-3.5 text-[#2563eb]" />
+                <Clock className="w-3.5 h-3.5 text-[var(--site-accent)]" />
                 <span>{isAr ? 'الرد النموذجي: خلال 24 ساعة عمل' : contact.responseTimeNote}</span>
               </div>
             )}
@@ -164,16 +165,16 @@ export function Contact() {
             <div className="p-5 sm:p-8 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] shadow-2xl relative">
               {submitted ? (
                 <div className="py-12 sm:py-16 text-center space-y-4 animate-in fade-in duration-300">
-                  <div className="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-[#2563eb]/20 border border-[#2563eb] text-[#38bdf8] flex items-center justify-center mx-auto">
+                  <div className="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-[var(--site-accent)]/20 border border-[var(--site-accent)] text-[#38bdf8] flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-7 sm:w-8 h-7 sm:h-8" />
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-[#f1f2ed] font-quicksand">
-                    {isAr ? 'تم إرسال رسالتك بنجاح' : 'Message Dispatched Successfully'}
+                    {isAr ? 'أكمل الإرسال في تطبيق البريد' : 'Continue in your email app'}
                   </h3>
                   <p className="text-xs sm:text-sm text-[#a8a6a1] max-w-md mx-auto">
                     {isAr 
-                      ? 'شكراً لتواصلك. سيقوم المخرج شريف عبس بمراجعة تفاصيل المشروع والتواصل معك خلال 24 ساعة.'
-                      : 'Thank you for reaching out. Sharif Abs will review your production request and respond within 24 business hours.'}
+                      ? 'مسودة الرسالة جاهزة. أرسلها من تطبيق البريد لإكمال الاستفسار.'
+                      : 'Your email draft is ready. Send it in your email app to complete your inquiry.'}
                   </p>
                   <button
                     onClick={() => {
@@ -204,7 +205,7 @@ export function Contact() {
                         value={formState.name}
                         onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                         placeholder={isAr ? 'مثال: أحمد المنصور' : 'e.g. Alexander Vance'}
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-xs sm:text-sm text-[#f1f2ed]"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[var(--site-accent)] focus:outline-none text-xs sm:text-sm text-[#f1f2ed]"
                       />
                     </div>
                     <div>
@@ -217,7 +218,7 @@ export function Contact() {
                         value={formState.email}
                         onChange={(e) => setFormState({ ...formState, email: e.target.value })}
                         placeholder="name@company.com"
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-xs sm:text-sm text-[#f1f2ed]"
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[var(--site-accent)] focus:outline-none text-xs sm:text-sm text-[#f1f2ed]"
                       />
                     </div>
                   </div>
@@ -234,7 +235,7 @@ export function Contact() {
                           onClick={() => setFormState({ ...formState, service: srv })}
                           className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors text-center cursor-pointer truncate ${
                             formState.service === srv
-                              ? 'bg-[#2563eb] text-white'
+                              ? 'bg-[var(--site-accent)] text-white'
                               : 'bg-[#232323] text-[#a8a6a1] hover:text-[#f1f2ed] border border-[#2b2b2b]'
                           }`}
                         >
@@ -256,7 +257,7 @@ export function Contact() {
                           onClick={() => setFormState({ ...formState, budget: b })}
                           className={`px-3 py-2 rounded-xl text-xs font-mono transition-colors text-center cursor-pointer truncate ${
                             formState.budget === b
-                              ? 'bg-[#2563eb] text-white'
+                              ? 'bg-[var(--site-accent)] text-white'
                               : 'bg-[#232323] text-[#a8a6a1] hover:text-[#f1f2ed] border border-[#2b2b2b]'
                           }`}
                         >
@@ -275,14 +276,14 @@ export function Contact() {
                       value={formState.message}
                       onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                       placeholder={isAr ? 'صف أهداف الحملة، المدة المقترحة، المواعيد النهائية، أو شارك مراجع بصرية...' : 'Describe timeline, shoot locations, target audience, visual references...'}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-xs sm:text-sm text-[#f1f2ed] resize-none"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[var(--site-accent)] focus:outline-none text-xs sm:text-sm text-[#f1f2ed] resize-none"
                     />
                   </div>
 
                   <button
                     id="contact-submit-btn"
                     type="submit"
-                    className="w-full py-3.5 sm:py-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-[#2563eb] hover:bg-[#3b82f6] transition-all duration-200 shadow-xl flex items-center justify-center gap-2 border border-[#3b82f6]/40 cursor-pointer"
+                    className="w-full py-3.5 sm:py-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-all duration-200 shadow-xl flex items-center justify-center gap-2 border border-[#3b82f6]/40 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
                     <span>{isAr ? 'إرسال تفاصيل المشروع' : 'Submit Production Inquiry'}</span>

@@ -41,7 +41,7 @@ export function Footer() {
   return (
     <footer id="main-footer" className="relative bg-[#111111] border-t border-[#2b2b2b] text-[#a8a6a1] overflow-hidden">
       {/* Decorative gradient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-[#2563eb]/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-[var(--site-accent)]/10 blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12 pb-12 border-b border-[#232323]">
@@ -56,7 +56,7 @@ export function Footer() {
                   onError={() => setLogoError(true)}
                 />
               ) : (
-                <div className="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black">
+                <div className="w-9 h-9 rounded-lg bg-[var(--site-accent)] flex items-center justify-center text-white font-black">
                   <Film className="w-5 h-5 text-white" />
                 </div>
               )}
@@ -79,7 +79,7 @@ export function Footer() {
                   href={contact.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#2563eb] hover:text-white transition-colors border border-[#2b2b2b]"
+                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[var(--site-accent)] hover:text-white transition-colors border border-[#2b2b2b]"
                   title="Instagram"
                 >
                   <Instagram className="w-4 h-4" />
@@ -90,7 +90,7 @@ export function Footer() {
                   href={contact.youtube}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#2563eb] hover:text-white transition-colors border border-[#2b2b2b]"
+                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[var(--site-accent)] hover:text-white transition-colors border border-[#2b2b2b]"
                   title="YouTube"
                 >
                   <Youtube className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function Footer() {
                   href={contact.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#2563eb] hover:text-white transition-colors border border-[#2b2b2b]"
+                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[var(--site-accent)] hover:text-white transition-colors border border-[#2b2b2b]"
                   title="LinkedIn"
                 >
                   <Linkedin className="w-4 h-4" />
@@ -135,11 +135,7 @@ export function Footer() {
               {isAr ? 'تخصصات الإنتاج' : 'Specialties'}
             </h4>
             <ul className="space-y-2 text-xs text-[#706e6a]">
-              <li>Commercial Advertising (4K DCI)</li>
-              <li>High-End Luxury Weddings & Private Galas</li>
-              <li>Licensed Aerial Drone Cinematography</li>
-              <li>DaVinci Resolve Studio Color Grading</li>
-              <li>Creative Direction & Visual Storytelling</li>
+              {content.services.map(service => <li key={service.id}>{service.title}</li>)}
             </ul>
           </div>
 
@@ -147,7 +143,7 @@ export function Footer() {
           <div className="lg:col-span-2 flex flex-col justify-between items-start md:items-end">
             <button
               onClick={scrollToTop}
-              className="p-3 rounded-full bg-[#1a1a1a] hover:bg-[#2563eb] text-[#f1f2ed] hover:text-white transition-all border border-[#2b2b2b] shadow-md cursor-pointer group"
+              className="p-3 rounded-full bg-[#1a1a1a] hover:bg-[var(--site-accent)] text-[#f1f2ed] hover:text-white transition-all border border-[#2b2b2b] shadow-md cursor-pointer group"
               title={isAr ? 'العودة للأعلى' : 'Scroll to top'}
             >
               <ArrowUp className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
@@ -155,7 +151,7 @@ export function Footer() {
 
             <div className="mt-6 md:mt-0 text-left md:text-right">
               <span className="text-[10px] font-mono text-[#706e6a] uppercase block">
-                Sharif Abs
+                {branding.siteName}
               </span>
               <p className="text-xs text-[#a8a6a1] italic max-w-[200px] mt-1">
                 "{footer.quote || 'Every single frame holds an indelible emotion.'}"
@@ -171,7 +167,7 @@ export function Footer() {
           </p>
 
           <div className="flex items-center gap-4">
-            <span>Sony FX Cinema • DJI Cine • DaVinci Wide Gamut</span>
+            <span>{branding.logoSubtext}</span>
             <span className="text-[#333]">|</span>
             {/* Discreet admin portal access */}
             <button

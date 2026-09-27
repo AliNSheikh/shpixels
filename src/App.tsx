@@ -20,7 +20,7 @@ import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminAuthModal } from './components/admin/AdminAuthModal';
 
 function AppContent() {
-  const { isAdminView, isAuthenticated } = useContent();
+  const { isAdminView, isAuthenticated, content } = useContent();
 
   if (isAdminView) {
     if (!isAuthenticated) {
@@ -31,19 +31,19 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
-      <Header />
+      {content.sectionVisibility?.header !== false && <Header />}
       <main>
-        <Hero />
-        <Showreel />
-        <ClientLogos />
-        <About />
-        <Services />
-        <Portfolio />
-        <Process />
-        <Gallery />
-        <Contact />
+        {content.sectionVisibility?.hero !== false && <Hero />}
+        {content.sectionVisibility?.showreel !== false && <Showreel />}
+        {content.sectionVisibility?.clientlogos !== false && <ClientLogos />}
+        {content.sectionVisibility?.about !== false && <About />}
+        {content.sectionVisibility?.services !== false && <Services />}
+        {content.sectionVisibility?.portfolio !== false && <Portfolio />}
+        {content.sectionVisibility?.process !== false && <Process />}
+        {content.sectionVisibility?.gallery !== false && <Gallery />}
+        {content.sectionVisibility?.contact !== false && <Contact />}
       </main>
-      <Footer />
+      {content.sectionVisibility?.footer !== false && <Footer />}
     </div>
   );
 }

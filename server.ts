@@ -1,10 +1,10 @@
 import express from "express";
+import adminLoginHandler from "./api/admin-login";
+import publishHandler from "./api/publish-site";
 import path from "path";
-import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import { verifyAdminAuthorization, validateContentPayload } from "./api/_supabase";
 
 dotenv.config();
 
@@ -35,6 +35,8 @@ async function startServer() {
     res.setHeader("Expires", "0");
     res.setHeader("Surrogate-Control", "no-store");
   };
+
+  app.all("/api/admin-login", adminLoginHandler);
 
   // Health endpoint
   app.get("/api/health", (_req, res) => {
@@ -181,90 +183,9 @@ async function startServer() {
     }
   });
 
-  // POST /api/publish-site & POST /api/publish - Upsert to Supabase
-  const handlePublish = async (req: express.Request, res: express.Response) => {
-    setNoCacheHeaders(res);
-
-    // Require the same admin authorization as the Vercel serverless routes -
-    // this endpoint is also used when self-hosting via `npm start`, not just
-    // in local dev, so it must not be left open.
-    if (!verifyAdminAuthorization(req)) {
-      return res.status(401).json({ success: false, error: "Unauthorized: Admin authentication token or session required." });
-    }
-
-    const sb = getSupabase();
-    if (!sb) {
-      return res.status(503).json({ success: false, error: "Supabase not configured" });
-    }
-
-    const rawPayload = req.body?.data || req.body;
-    const validation = validateContentPayload(rawPayload);
-    if (!validation.isValid) {
-      return res.status(400).json({ success: false, error: validation.error });
-    }
-
-    try {
-      const { data: curr } = await sb
-        .from('site_content')
-        .select('version')
-        .eq('id', 'current')
-        .limit(1);
-
-      const nextVersion = Number(curr?.[0]?.version || 0) + 1;
-      const now = new Date().toISOString();
-
-      const finalContent = {
-        ...rawPayload,
-        lastPublished: now,
-        publicationInfo: {
-          publishedAt: now,
-          version: nextVersion,
-          publishedBy: 'Admin'
-        }
-      };
-
-      const upsertPayload: Record<string, any> = {
-        id: 'current',
-        data: finalContent,
-        version: nextVersion,
-        published_at: now,
-        updated_at: now
-      };
-
-      let { error: upsertErr } = await sb
-        .from('site_content')
-        .upsert(upsertPayload, { onConflict: 'id' });
-
-      if (upsertErr && upsertErr.message && upsertErr.message.includes("Could not find the '")) {
-        const match = upsertErr.message.match(/Could not find the '([^']+)' column/);
-        if (match && match[1] && match[1] in upsertPayload && match[1] !== 'id' && match[1] !== 'data') {
-          delete upsertPayload[match[1]];
-          const retryRes = await sb
-            .from('site_content')
-            .upsert(upsertPayload, { onConflict: 'id' });
-          upsertErr = retryRes.error;
-        }
-      }
-
-      if (upsertErr) {
-        return res.status(500).json({ success: false, error: upsertErr.message });
-      }
-
-      console.log(`[Server] Published version ${nextVersion} to Supabase database`);
-      return res.json({
-        success: true,
-        version: nextVersion,
-        published_at: now,
-        data: finalContent
-      });
-    } catch (err: any) {
-      return res.status(500).json({ success: false, error: err.message });
-    }
-  };
-
-  app.post("/api/publish-site", handlePublish);
-  app.post("/api/publish", handlePublish);
-  app.post("/api/save-content", handlePublish);
+  app.post("/api/publish-site", publishHandler);
+  app.post("/api/publish", publishHandler);
+  app.post("/api/save-content", publishHandler);
 
   // Dynamic Sitemap XML
   app.get("/sitemap.xml", async (_req, res) => {

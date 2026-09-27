@@ -10,7 +10,7 @@ export default async function handler(req: any, res: any) {
   }
 
   // 1. Verify admin authorization
-  if (!verifyAdminAuthorization(req)) {
+  if (!(await verifyAdminAuthorization(req))) {
     return res.status(401).json({
       success: false,
       error: 'Unauthorized: Admin authentication token or session required for publishing.'
@@ -18,12 +18,17 @@ export default async function handler(req: any, res: any) {
   }
 
   // 2. Validate payload
-  const rawPayload = req.body?.data || req.body;
+  const rawPayload = { ...(req.body?.data || req.body) };
+  delete rawPayload.adminAuth;
+  delete rawPayload.supabaseConfig;
   const validation = validateContentPayload(rawPayload);
   if (!validation.isValid) {
     return res.status(400).json({ success: false, error: validation.error });
   }
 
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(503).json({ success: false, error: 'Set the server-only SUPABASE_SERVICE_ROLE_KEY to enable secure publishing.' });
+  }
   // 3. Connect to Supabase
   const { client, error: clientErr } = getServerSupabase();
   if (!client) {
@@ -35,13 +40,17 @@ export default async function handler(req: any, res: any) {
 
   try {
     // 4. Fetch current version to increment atomically
-    const { data: currentRows } = await client
+    const { data: currentRows, error: readError } = await client
       .from('site_content')
       .select('version')
       .eq('id', 'current')
       .limit(1);
 
+    if (readError) return res.status(503).json({ success: false, error: 'Unable to read the current revision.' });
     const currentVersion = Number(currentRows?.[0]?.version || 0);
+    if (currentRows?.length && req.body?.expectedVersion !== currentVersion) {
+      return res.status(409).json({ success: false, error: 'The website changed since this draft was loaded. Export your draft, reload the latest content, then apply your edits.' });
+    }
     const nextVersion = currentVersion + 1;
     const now = new Date().toISOString();
 
@@ -78,27 +87,12 @@ export default async function handler(req: any, res: any) {
       updated_at: now
     };
 
-    let { data: upsertData, error: upsertError } = await client
-      .from('site_content')
-      .upsert(upsertPayload, { onConflict: 'id' })
-      .select('id, version, published_at, updated_at')
-      .maybeSingle();
-
-    // If PostgREST fails due to schema cache missing column (e.g. published_at, updated_by, updated_at)
-    if (upsertError && upsertError.message && upsertError.message.includes("Could not find the '")) {
-      const match = upsertError.message.match(/Could not find the '([^']+)' column/);
-      if (match && match[1] && match[1] in upsertPayload && match[1] !== 'id' && match[1] !== 'data') {
-        const missingCol = match[1];
-        console.warn(`[API/publish] Retrying upsert without missing column '${missingCol}'`);
-        delete upsertPayload[missingCol];
-        const retryResult = await client
-          .from('site_content')
-          .upsert(upsertPayload, { onConflict: 'id' })
-          .select('id, version')
-          .maybeSingle();
-        upsertData = retryResult.data as any;
-        upsertError = retryResult.error;
-      }
+    const query = currentRows?.length
+      ? client.from('site_content').update(upsertPayload).eq('id', 'current').eq('version', currentVersion)
+      : client.from('site_content').insert(upsertPayload);
+    const { data: savedRow, error: upsertError } = await query.select('id, version').maybeSingle();
+    if (!upsertError && !savedRow) {
+      return res.status(409).json({ success: false, error: 'Another administrator published first. Reload before publishing again.' });
     }
 
     if (upsertError) {

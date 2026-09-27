@@ -68,7 +68,7 @@ export function Portfolio() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-12">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1d1d1d] border border-[#2b2b2b] text-[10px] sm:text-[11px] font-mono tracking-widest text-[#a8a6a1] uppercase mb-3">
-              <FolderKanban className="w-3.5 h-3.5 text-[#2563eb]" />
+              <FolderKanban className="w-3.5 h-3.5 text-[var(--site-accent)]" />
               <span>{sectionBadge}</span>
             </div>
             <h2 className="text-2xl sm:text-5xl font-black text-[#f1f2ed] tracking-tight uppercase font-quicksand">
@@ -88,7 +88,7 @@ export function Portfolio() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-semibold tracking-wider uppercase transition-all duration-200 whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
                 selectedCategory === cat
-                  ? 'bg-[#2563eb] text-white shadow-lg shadow-[#2563eb]/25 border border-[#3b82f6]/50'
+                  ? 'bg-[var(--site-accent)] text-white shadow-lg shadow-[var(--site-accent)]/25 border border-[#3b82f6]/50'
                   : 'bg-[#1d1d1d] text-[#a8a6a1] hover:text-[#f1f2ed] hover:bg-[#232323] border border-[#2b2b2b]'
               }`}
             >
@@ -146,7 +146,7 @@ export function Portfolio() {
                 key={`${project.id || 'p'}-${idx}`}
                 id={`project-card-${project.id}`}
                 onClick={() => setActiveProject(project)}
-                className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb]/60 transition-all duration-300 cursor-pointer shadow-md hover:shadow-2xl hover:shadow-[#2563eb]/20 flex flex-col justify-between"
+                className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)]/60 transition-all duration-300 cursor-pointer shadow-md hover:shadow-2xl hover:shadow-[var(--site-accent)]/20 flex flex-col justify-between"
               >
                 {/* Image Cover Container */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#171717]">
@@ -166,7 +166,7 @@ export function Portfolio() {
                       {project.category}
                     </span>
                     {project.featured && (
-                      <span className="p-1 rounded-full bg-[#2563eb] text-white" title="Featured Project">
+                      <span className="p-1 rounded-full bg-[var(--site-accent)] text-white" title="Featured Project">
                         <Sparkles className="w-2.5 h-2.5" />
                       </span>
                     )}
@@ -174,7 +174,7 @@ export function Portfolio() {
 
                   {/* Play Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#2563eb]/90 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[var(--site-accent)]/90 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
                       <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white ml-0.5" />
                     </div>
                   </div>

@@ -101,74 +101,30 @@ BEGIN
   END IF;
 END $$;
 
--- STEP 4: Drop the legacy columns now that their data is safely preserved
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
-  ) THEN
-    ALTER TABLE public.site_content DROP COLUMN content;
-  END IF;
-
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
-  ) THEN
-    ALTER TABLE public.site_content DROP COLUMN last_published;
-  END IF;
-END $$;
-
--- STEP 5: Drop the old, unused "category_metadata" table if it exists.
--- It was never read or written by any application code, and its CREATE TABLE
--- statement in older versions of this project referenced a function that
--- does not exist in Postgres (gen_random_column_or_uuid_v4), which caused the
--- whole setup script to fail with an error before anything else ran.
-DROP TABLE IF EXISTS public.category_metadata;
-
 -- STEP 6: Enforce NOT NULL on the data column and backfill any nulls first
 UPDATE public.site_content SET data = '{}'::jsonb WHERE data IS NULL;
 ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
 
--- STEP 7: Row Level Security
--- This app does not use Supabase Auth sessions — the admin login is a custom,
--- app-level password check, and every write goes through this project's own
--- serverless API routes (api/publish-site.ts), which check for a valid admin
--- session token before touching the database. Because of that, RLS is kept
--- permissive on this single row for both reads and writes, and the API layer
--- is the real gate.
---
--- If you want database-level write protection as well (recommended for a
--- production business site), set SUPABASE_SERVICE_ROLE_KEY in your server
--- environment (Vercel → Project Settings → Environment Variables — never
--- prefix it with VITE_) and then tighten the write policy below to
--- `TO service_role` only.
+-- Administrator roles must be assigned through the trusted Supabase dashboard/SQL.
+-- Never use user_metadata for authorization.
 ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public can read site_content" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon inserts" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon updates" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon insert" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon update" ON public.site_content;
-DROP POLICY IF EXISTS "Public read site_content" ON public.site_content;
-DROP POLICY IF EXISTS "Allow public read access" ON public.site_content;
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.site_content;
-DROP POLICY IF EXISTS "Allow authenticated users to write" ON public.site_content;
-DROP POLICY IF EXISTS "Public read access for site_content" ON public.site_content;
-DROP POLICY IF EXISTS "Allow write access for site_content" ON public.site_content;
-
-CREATE POLICY "Allow public read access"
-  ON public.site_content
-  FOR SELECT
-  TO anon, authenticated
-  USING (true);
-
-CREATE POLICY "Allow app-level writes"
-  ON public.site_content
-  FOR ALL
-  TO anon, authenticated
-  USING (true)
-  WITH CHECK (true);
+DO $$ DECLARE policy_row record;
+BEGIN
+  FOR policy_row IN SELECT policyname FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'site_content'
+  LOOP
+    EXECUTE format('DROP POLICY %I ON public.site_content', policy_row.policyname);
+  END LOOP;
+END $$;
+GRANT SELECT ON public.site_content TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.site_content TO authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.site_content FROM anon;
+CREATE POLICY "Public read" ON public.site_content FOR SELECT TO anon, authenticated USING (id = 'current');
+-- Fixed-password CMS writes are authorized by the server and use service_role.
+-- Public and ordinary authenticated clients have no write policies.
+REVOKE INSERT, UPDATE, DELETE ON public.site_content FROM authenticated;
+-- Remove obsolete password hashes and connection settings from public content.
+UPDATE public.site_content SET data = data - 'adminAuth' - 'supabaseConfig';
 
 -- STEP 8: Add public.site_content to the Realtime publication so admin edits
 -- reflect on the live site instantly for every open browser tab.

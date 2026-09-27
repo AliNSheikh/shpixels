@@ -22,7 +22,7 @@ export function Gallery() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1d1d1d] border border-[#2b2b2b] text-[11px] font-mono tracking-widest text-[#a8a6a1] uppercase mb-3">
-              <Camera className="w-3.5 h-3.5 text-[#2563eb]" />
+              <Camera className="w-3.5 h-3.5 text-[var(--site-accent)]" />
               <span>{sectionBadge}</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-[#f1f2ed] tracking-tight uppercase font-quicksand">
@@ -40,7 +40,7 @@ export function Gallery() {
             <div
               key={item.id}
               onClick={() => setActiveImage(item)}
-              className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb]/60 cursor-pointer transition-all duration-300 shadow-md"
+              className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)]/60 cursor-pointer transition-all duration-300 shadow-md"
             >
               <OptimizedImage
                 src={item.image}
@@ -64,7 +64,7 @@ export function Gallery() {
                       </p>
                     )}
                   </div>
-                  <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[#2563eb] text-white flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[var(--site-accent)] text-white flex items-center justify-center flex-shrink-0">
                     <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 </div>
@@ -87,7 +87,7 @@ export function Gallery() {
           >
             <div className="flex items-center justify-between p-4 border-b border-[#2b2b2b]">
               <div>
-                <span className="text-xs text-[#2563eb] font-mono uppercase tracking-wider font-semibold">
+                <span className="text-xs text-[var(--site-accent)] font-mono uppercase tracking-wider font-semibold">
                   {activeImage.category}
                 </span>
                 <h3 className="text-lg font-bold text-[#f1f2ed] font-quicksand">

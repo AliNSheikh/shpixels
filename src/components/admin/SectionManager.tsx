@@ -1,3 +1,4 @@
+import { ComponentSettings } from './ComponentSettings';
 import React, { useState } from 'react';
 import { 
   Sparkles, Workflow, Film, Sliders, Image, Type, Video, 
@@ -437,6 +438,7 @@ export function SectionManager() {
 
   return (
     <div className="space-y-6">
+      <ComponentSettings />
       {/* Top Banner / Notification */}
       {saveSuccess && (
         <div className="fixed top-5 right-5 z-50 p-4 rounded-xl bg-emerald-950/90 border border-emerald-500 text-emerald-300 text-xs sm:text-sm font-mono shadow-2xl flex items-center gap-2 animate-fadeIn">

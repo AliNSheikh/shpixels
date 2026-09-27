@@ -19,7 +19,7 @@ export function Services() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 sm:mb-16">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1d1d1d] border border-[#2b2b2b] text-[10px] sm:text-[11px] font-mono tracking-widest text-[#a8a6a1] uppercase mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-[#2563eb]" />
+              <Sparkles className="w-3.5 h-3.5 text-[var(--site-accent)]" />
               <span>{sectionBadge}</span>
             </div>
             <h2 className="text-2xl sm:text-5xl font-black text-[#f1f2ed] tracking-tight uppercase font-quicksand">
@@ -39,11 +39,11 @@ export function Services() {
             return (
               <div
                 key={service.id}
-                className="group relative rounded-xl sm:rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] p-3.5 sm:p-7 transition-all duration-300 hover:border-[#2563eb]/60 hover:shadow-xl hover:shadow-[#2563eb]/10 flex flex-col justify-between"
+                className="group relative rounded-xl sm:rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] p-3.5 sm:p-7 transition-all duration-300 hover:border-[var(--site-accent)]/60 hover:shadow-xl hover:shadow-[var(--site-accent)]/10 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3 sm:mb-6">
-                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-[#232323] border border-[#2b2b2b] group-hover:bg-[#2563eb] text-[#38bdf8] group-hover:text-white flex items-center justify-center transition-colors duration-300 flex-shrink-0">
+                    <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-[#232323] border border-[#2b2b2b] group-hover:bg-[var(--site-accent)] text-[#38bdf8] group-hover:text-white flex items-center justify-center transition-colors duration-300 flex-shrink-0">
                       <IconComp className="w-4 h-4 sm:w-6 sm:h-6" />
                     </div>
 
@@ -67,7 +67,7 @@ export function Services() {
                   <div className="pt-2 sm:pt-4 border-t border-[#232323] space-y-1 sm:space-y-1.5">
                     {service.features.map((f, i) => (
                       <div key={i} className="flex items-center gap-1.5 text-[10px] sm:text-xs text-[#706e6a]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#2563eb] shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--site-accent)] shrink-0" />
                         <span>{f}</span>
                       </div>
                     ))}

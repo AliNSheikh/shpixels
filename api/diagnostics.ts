@@ -87,9 +87,9 @@ export default async function handler(req: any, res: any) {
     }
 
     // 2. Test server write capability if authenticated admin requested it
-    const isAdmin = verifyAdminAuthorization(req);
+    const isAdmin = await verifyAdminAuthorization(req);
     if (isAdmin && checks.rowCurrentExists) {
-      checks.serverWritable = Boolean(serviceRoleKey || anonKey);
+      checks.serverWritable = false; // Only a successful publish proves write access.
     }
 
     return res.status(200).json({

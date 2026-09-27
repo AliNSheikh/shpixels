@@ -1,24 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   GlobalContent, ProjectItem, YouTubeVideoItem, ContactData, NavigationItem, 
-  WorkflowStep, ServiceItem, ClientLogo, CategoryDetail, AdminAuthData 
+  WorkflowStep, ServiceItem, ClientLogo, CategoryDetail
 } from '../types/content';
 import { initialContent } from '../data/initialContent';
-import { 
-  verifyPassword, hashPassword, generateSalt, DEFAULT_SALT 
-} from '../utils/cryptoAuth';
 import { sanitizeGlobalContent } from '../utils/sanitizeContent';
 import { 
   fetchAuthoritativeContent, 
   subscribeToContentChanges, 
   checkDatabaseHealth,
+  getSupabaseClient,
   getSupabaseUrl,
   getSupabaseAnonKey
 } from '../lib/supabase';
 
 const AUTH_KEY = 'mografix_admin_auth_v1';
 const DRAFT_KEY = 'shpixels_admin_draft_v1';
-const DEFAULT_PASS = 'mografix2026';
+
 
 export type SyncState = 'synced' | 'saving' | 'unsaved' | 'error' | 'syncing';
 export type RealtimeState = 'connected' | 'connecting' | 'disconnected';
@@ -176,14 +174,13 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   pendingEditsRef.current = hasUnsavedChanges;
 
   // Admin session authentication
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    try {
-      const token = localStorage.getItem(AUTH_KEY);
-      return Boolean(token && token.startsWith('shpix_'));
-    } catch {
-      return false;
-    }
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  useEffect(() => {
+    localStorage.removeItem(AUTH_KEY);
+    let active = true;
+    fetch('/api/admin-login').then(res => { if (active) setIsAuthenticated(res.ok); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   // Admin view toggle (URL sync)
   const [isAdminView, setIsAdminView] = useState<boolean>(() => {
@@ -264,8 +261,8 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // If database is reachable but table is empty, keep initialContent and report
-      setServerSyncStatus('synced');
+      setServerSyncStatus('error');
+      setPublishError(res.error || 'Unable to load published content.');
     } catch (err: any) {
       console.warn('[CMS] Failed to fetch authoritative content:', err);
       setServerSyncStatus('error');
@@ -286,7 +283,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       (update) => {
         const incomingVersion = update.version;
         // Ignore stale or older versions
-        if (incomingVersion > currentVersionRef.current) {
+        if (incomingVersion > currentVersionRef.current && !pendingEditsRef.current) {
           console.log(`[Supabase Realtime] Received authoritative version v${incomingVersion}. Updating site.`);
           const safeData = sanitizeGlobalContent(update.data);
           setContent(safeData);
@@ -361,18 +358,18 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     setPublishError(null);
     setServerSyncStatus('saving');
 
-    const adminToken = localStorage.getItem(AUTH_KEY) || 'shpix_admin_default';
+
 
     try {
       const response = await fetch('/api/publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`,
-          'x-admin-token': adminToken
+
         },
         body: JSON.stringify({
           data: content,
+          expectedVersion: publicationVersion,
           note: note || 'Published from SHPIXELS Admin CMS'
         })
       });
@@ -419,17 +416,17 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
   // One-click seed initial content to empty Supabase database
   const seedInitialContentToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {
-    const adminToken = localStorage.getItem(AUTH_KEY) || 'shpix_admin_default';
+
     try {
       const res = await fetch('/api/publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`,
-          'x-admin-token': adminToken
+
         },
         body: JSON.stringify({
           data: initialContent,
+          expectedVersion: publicationVersion,
           note: 'Initial Supabase seed from template'
         })
       });
@@ -447,7 +444,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     } catch (e: any) {
       return { success: false, message: e.message || 'Network error during seed' };
     }
-  }, [refreshDiagnostics]);
+  }, [refreshDiagnostics, publicationVersion]);
 
   // Section update helpers
   const updateSectionHeader = useCallback((sectionKey: string, headerUpdates: Partial<import('../types/content').SectionHeaderInfo>) => {
@@ -880,7 +877,13 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       if (!parsed || typeof parsed !== 'object' || !parsed.projects) {
         return { success: false, error: 'Invalid SHPIXELS content schema' };
       }
-      markLocalEdit(parsed);
+      for (const key of ['navigation', 'projects', 'services', 'featuredVideos', 'gallery', 'workflow']) {
+        if (!Array.isArray(parsed[key])) return { success: false, error: `Required collection: ${key}` };
+      }
+      for (const key of ['hero', 'about', 'branding', 'seo', 'contact', 'footer']) {
+        if (!parsed[key] || typeof parsed[key] !== 'object' || Array.isArray(parsed[key])) return { success: false, error: `Required section: ${key}` };
+      }
+      markLocalEdit(sanitizeGlobalContent(parsed));
       return { success: true };
     } catch (e: any) {
       return { success: false, error: e.message || 'JSON parse error' };
@@ -891,77 +894,24 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     markLocalEdit(initialContent);
   }, [markLocalEdit]);
 
-  // Cryptographically secure Admin Login with SHA-256 + Salt
-  const loginAdmin = useCallback(async (password: string): Promise<{ success: boolean; error?: string }> => {
-    const trimmedInput = (password || '').trim();
-    if (!trimmedInput) {
-      return { success: false, error: 'Please enter your password.' };
-    }
-
-    const isMasterPassword = trimmedInput === DEFAULT_PASS;
-    const salt = content.adminAuth?.salt || DEFAULT_SALT;
-    let expectedHash = content.adminAuth?.passwordHash;
-    if (!expectedHash) {
-      expectedHash = await hashPassword(DEFAULT_PASS, salt);
-    }
-
-    let isValid = false;
-    try {
-      isValid = await verifyPassword(trimmedInput, expectedHash, salt);
-    } catch {}
-
-    if (isValid || isMasterPassword) {
-      const sessionToken = `shpix_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      localStorage.setItem(AUTH_KEY, sessionToken);
-      setIsAuthenticated(true);
-      return { success: true };
-    }
-
-    return { success: false, error: 'Incorrect administrator password.' };
-  }, [content.adminAuth]);
-
-  const logoutAdmin = useCallback(() => {
-    localStorage.removeItem(AUTH_KEY);
-    setIsAuthenticated(false);
+  // Supabase administrator authentication
+  const loginAdmin = useCallback(async (password: string) => {
+    const response = await fetch('/api/admin-login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password })
+    });
+    const result = await response.json();
+    if (!response.ok) return { success: false, error: result.error || 'Sign in failed.' };
+    setIsAuthenticated(true);
+    return { success: true };
   }, []);
 
-  const changeAdminPassword = useCallback(async (oldPass: string, newPass: string): Promise<{ success: boolean; error?: string }> => {
-    if (!oldPass || !oldPass.trim()) {
-      return { success: false, error: 'Current password is required.' };
-    }
-    if (!newPass || newPass.trim().length < 6) {
-      return { success: false, error: 'New password must be at least 6 characters.' };
-    }
+  const logoutAdmin = useCallback(() => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem(DRAFT_KEY);
+    void fetch('/api/admin-login', { method: 'DELETE' });
+  }, []);
 
-    const isMasterPassword = oldPass.trim() === DEFAULT_PASS;
-    const salt = content.adminAuth?.salt || DEFAULT_SALT;
-    let expectedHash = content.adminAuth?.passwordHash;
-    if (!expectedHash) {
-      expectedHash = await hashPassword(DEFAULT_PASS, salt);
-    }
-
-    const isOldValid = await verifyPassword(oldPass.trim(), expectedHash, salt);
-    if (!isOldValid && !isMasterPassword) {
-      return { success: false, error: 'Current password does not match.' };
-    }
-
-    const newSalt = generateSalt();
-    const newHash = await hashPassword(newPass.trim(), newSalt);
-
-    const updatedAuth: AdminAuthData = {
-      passwordHash: newHash,
-      salt: newSalt,
-      updatedAt: new Date().toISOString()
-    };
-
-    setContent((prev) => {
-      const next = { ...prev, adminAuth: updatedAuth };
-      markLocalEdit(next);
-      return next;
-    });
-
-    return { success: true };
-  }, [content.adminAuth, markLocalEdit]);
+  const changeAdminPassword = useCallback(async () => ({ success: false, error: 'This site uses a fixed server-managed password.' }), []);
 
   // Favicon & Page title synchronization
   useEffect(() => {
@@ -978,6 +928,26 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       document.title = content.seo.pageTitle;
     }
   }, [content.branding?.favicon, content.seo?.favicon, content.seo?.pageTitle]);
+
+  useEffect(() => {
+    const fields = [
+      ['name', 'description', content.seo.metaDescription],
+      ['property', 'og:title', content.seo.ogTitle],
+      ['property', 'og:description', content.seo.ogDescription],
+      ['property', 'og:image', content.seo.ogImage],
+      ['name', 'google-site-verification', content.seo.googleSiteVerification || '']
+    ];
+    for (const [attribute, name, value] of fields) {
+      let tag = document.querySelector<HTMLMetaElement>(`meta[${attribute}="${name}"]`);
+      if (!tag) { tag = document.createElement('meta'); tag.setAttribute(attribute, name); document.head.appendChild(tag); }
+      tag.content = value;
+    }
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+    canonical.href = content.seo.canonicalUrl;
+    const accent = /^#[0-9a-f]{6}$/i.test(content.branding.accentColor) ? content.branding.accentColor : '#2563eb';
+    document.documentElement.style.setProperty('--site-accent', accent);
+  }, [content.seo, content.branding.accentColor]);
 
   const contextValue = useMemo(() => ({
     content,

@@ -496,12 +496,6 @@ export const initialContent: GlobalContent = {
       color: "#10b981"
     }
   },
-  adminAuth: {
-    // Salted SHA-256 for 'mografix2026' with salt 'shpixels_secure_salt_2026'
-    passwordHash: "4d7023cb2d6084c00d5946188c0f56d4aa86318719131695206fb5963c0de8cf",
-    salt: "shpixels_secure_salt_2026",
-    updatedAt: "2026-09-23T00:00:00.000Z"
-  },
   clientLogos: [
     { id: "cl-1", name: "Sony Cinema Line", logoUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=200&q=80" },
     { id: "cl-2", name: "DJI Aerial Systems", logoUrl: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=200&q=80" },

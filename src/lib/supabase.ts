@@ -42,7 +42,8 @@ export function getSupabaseClient(): SupabaseClient | null {
     supabaseInstance = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
       auth: {
         persistSession: false,
-        autoRefreshToken: false
+        autoRefreshToken: false,
+        detectSessionInUrl: false
       },
       realtime: {
         params: {

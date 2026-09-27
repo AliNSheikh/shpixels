@@ -1,3 +1,4 @@
+import SUPABASE_SETUP_SQL from '../../../supabase-schema.sql?raw';
 import { useState } from 'react';
 import { 
   Settings, Save, Check, Key, Sliders, Sparkles, Image as ImageIcon, 
@@ -24,197 +25,7 @@ const ACCENT_COLOR_PRESETS = [
 const DEFAULT_LOGO = '/assets/shpixels-logo.svg';
 const DEFAULT_FAVICON = '/assets/shpixels-icon.svg';
 
-const SUPABASE_SETUP_SQL = `
--- ==============================================================================
--- MOGRAFIX CMS — Supabase Database Setup (single source of truth)
--- ==============================================================================
--- This is the ONLY schema file this project needs. Run this once against a new
--- Supabase project, or re-run it any time — every step is idempotent and safe
--- to execute repeatedly.
---
--- What it creates:
---   public.site_content
---     id           TEXT PRIMARY KEY DEFAULT 'current'   (a single row holds the whole site)
---     data         JSONB NOT NULL DEFAULT '{}'::jsonb   (the entire GlobalContent object)
---     version      BIGINT NOT NULL DEFAULT 1            (incremented on every publish)
---     published_at TIMESTAMPTZ DEFAULT NOW()
---     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
---     updated_by   TEXT DEFAULT 'Admin'
---
--- This exactly matches the column names the app code reads and writes
--- (see api/_supabase.ts, api/content.ts, api/publish-site.ts, src/lib/supabase.ts).
--- Older versions of this project shipped two different, conflicting schema
--- files (one using a "content" column, one using "data", plus an unused,
--- broken "category_metadata" table). Both have been replaced by this single file.
---
--- Instructions:
--- 1. Open your Supabase project dashboard (https://supabase.com/dashboard)
--- 2. Go to "SQL Editor" → "New Query"
--- 3. Paste this entire script and click "RUN"
--- 4. Copy your Project URL + anon public key from Project Settings → API
--- 5. Set them as environment variables (see .env.example / README.md), then
---    redeploy so the app picks them up.
--- ==============================================================================
 
--- STEP 1: Create the table if it doesn't already exist
-CREATE TABLE IF NOT EXISTS public.site_content (
-  id TEXT PRIMARY KEY DEFAULT 'current',
-  data JSONB NOT NULL DEFAULT '{}'::jsonb,
-  version BIGINT NOT NULL DEFAULT 1,
-  published_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_by TEXT DEFAULT 'Admin'
-);
-
--- STEP 2: Ensure every canonical column exists (handles older/partial tables)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'data'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN data JSONB;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'version'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN version BIGINT NOT NULL DEFAULT 1;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'published_at'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN published_at TIMESTAMPTZ DEFAULT NOW();
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_at'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_by'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN updated_by TEXT DEFAULT 'Admin';
-  END IF;
-END $$;
-
--- STEP 3: Migrate data from a legacy "content" / "last_published" column if
--- this database was set up with an older version of this project.
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
-  ) THEN
-    UPDATE public.site_content
-    SET data = content
-    WHERE (data IS NULL OR data = '{}'::jsonb) AND content IS NOT NULL;
-  END IF;
-
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
-  ) THEN
-    UPDATE public.site_content
-    SET published_at = last_published
-    WHERE published_at IS NULL AND last_published IS NOT NULL;
-  END IF;
-END $$;
-
--- STEP 4: Drop the legacy columns now that their data is safely preserved
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
-  ) THEN
-    ALTER TABLE public.site_content DROP COLUMN content;
-  END IF;
-
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
-  ) THEN
-    ALTER TABLE public.site_content DROP COLUMN last_published;
-  END IF;
-END $$;
-
--- STEP 5: Drop the old, unused "category_metadata" table if it exists.
--- It was never read or written by any application code, and its CREATE TABLE
--- statement in older versions of this project referenced a function that
--- does not exist in Postgres (gen_random_column_or_uuid_v4), which caused the
--- whole setup script to fail with an error before anything else ran.
-DROP TABLE IF EXISTS public.category_metadata;
-
--- STEP 6: Enforce NOT NULL on the data column and backfill any nulls first
-UPDATE public.site_content SET data = '{}'::jsonb WHERE data IS NULL;
-ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
-
--- STEP 7: Row Level Security
--- This app does not use Supabase Auth sessions — the admin login is a custom,
--- app-level password check, and every write goes through this project's own
--- serverless API routes (api/publish-site.ts), which check for a valid admin
--- session token before touching the database. Because of that, RLS is kept
--- permissive on this single row for both reads and writes, and the API layer
--- is the real gate.
---
--- If you want database-level write protection as well (recommended for a
--- production business site), set SUPABASE_SERVICE_ROLE_KEY in your server
--- environment (Vercel → Project Settings → Environment Variables — never
--- prefix it with VITE_) and then tighten the write policy below to
--- \`TO service_role\` only.
-ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public can read site_content" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon inserts" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon updates" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon insert" ON public.site_content;
-DROP POLICY IF EXISTS "Allow anon update" ON public.site_content;
-DROP POLICY IF EXISTS "Public read site_content" ON public.site_content;
-DROP POLICY IF EXISTS "Allow public read access" ON public.site_content;
-DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.site_content;
-DROP POLICY IF EXISTS "Allow authenticated users to write" ON public.site_content;
-DROP POLICY IF EXISTS "Public read access for site_content" ON public.site_content;
-DROP POLICY IF EXISTS "Allow write access for site_content" ON public.site_content;
-
-CREATE POLICY "Allow public read access"
-  ON public.site_content
-  FOR SELECT
-  TO anon, authenticated
-  USING (true);
-
-CREATE POLICY "Allow app-level writes"
-  ON public.site_content
-  FOR ALL
-  TO anon, authenticated
-  USING (true)
-  WITH CHECK (true);
-
--- STEP 8: Add public.site_content to the Realtime publication so admin edits
--- reflect on the live site instantly for every open browser tab.
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables
-    WHERE pubname = 'supabase_realtime'
-    AND tablename = 'site_content'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.site_content;
-  END IF;
-END $$;
-
--- ==============================================================================
--- Confirmation query — run this after the script to verify the table is ready:
--- SELECT id, version, published_at, updated_at FROM public.site_content;
--- ==============================================================================
-`;
 
 export function SiteSettings() {
   const { 
@@ -338,8 +149,8 @@ export function SiteSettings() {
       setPassError(isAr ? 'يرجى إدخال كلمة المرور الحالية.' : 'Please enter current password.');
       return;
     }
-    if (!newPass.trim() || newPass.trim().length < 6) {
-      setPassError(isAr ? 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل.' : 'New password must be at least 6 characters.');
+    if (!newPass.trim() || newPass.length < 12) {
+      setPassError(isAr ? 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل.' : 'New password must be at least 12 characters.');
       return;
     }
     if (newPass !== confirmPass) {
@@ -351,7 +162,7 @@ export function SiteSettings() {
     try {
       const res = await changeAdminPassword(currentPass, newPass);
       if (res.success) {
-        setPassSuccess(isAr ? '✓ تم تشفير وتحديث كلمة المرور بنجاح!' : '✓ Password encrypted & updated successfully!');
+        setPassSuccess(isAr ? '✓ تم تشفير وتحديث كلمة المرور بنجاح!' : '✓ Password updated successfully!');
         setCurrentPass('');
         setNewPass('');
         setConfirmPass('');
@@ -1127,110 +938,6 @@ export function SiteSettings() {
       </div>
 
       {/* ============================================================ */}
-      {/* SECURITY CREDENTIALS (SALTED SHA-256 ENCRYPTED AUTH)         */}
-      {/* ============================================================ */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] space-y-6 shadow-xl relative overflow-hidden">
-        <div className="flex items-center justify-between pb-3 border-b border-[#232323]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#2563eb]/20 text-[#38bdf8] flex items-center justify-center border border-[#2563eb]/30">
-              <Lock className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-[#f1f2ed] uppercase font-quicksand">
-                {isAr ? 'أمان وكلمة مرور لوحة التحكم (Encrypted Password)' : 'Encrypted Admin Authentication Security'}
-              </h3>
-              <p className="text-[11px] text-[#a8a6a1]">
-                {isAr 
-                  ? 'يتم تخزين كلمة المرور بتشفير SHA-256 مع بصمة ملحية ديناميكية (Salt) لمنع أي اختراق أو استرجاع غير مصرح به.' 
-                  : 'Passwords are cryptographically hashed using salted SHA-256 to ensure maximum protection against unauthorized access.'}
-              </p>
-            </div>
-          </div>
-          <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-            SHA-256 + Salt
-          </span>
-        </div>
-
-        {passSuccess && (
-          <div className="p-3.5 rounded-xl bg-emerald-950/50 border border-emerald-800 text-emerald-300 text-xs font-mono flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
-            <span>{passSuccess}</span>
-          </div>
-        )}
-
-        {passError && (
-          <div className="p-3.5 rounded-xl bg-red-950/50 border border-red-800 text-red-300 text-xs font-mono flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-400" />
-            <span>{passError}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleChangePassword} className="space-y-4 max-w-xl">
-          <div>
-            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
-              {isAr ? 'كلمة المرور الحالية *' : 'Current Admin Password *'}
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={currentPass}
-              onChange={(e) => setCurrentPass(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
-                {isAr ? 'كلمة المرور الجديدة *' : 'New Password (Min. 6 chars) *'}
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={newPass}
-                onChange={(e) => setNewPass(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
-                {isAr ? 'تأكيد كلمة المرور الجديدة *' : 'Confirm New Password *'}
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={confirmPass}
-                onChange={(e) => setConfirmPass(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={isUpdatingPass}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-bold text-white shadow-lg shadow-[#2563eb]/20 cursor-pointer disabled:opacity-50"
-            >
-              {isUpdatingPass ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
-                  <span>{isAr ? 'جارِ التشفير والتحديث...' : 'Encrypting & Updating...'}</span>
-                </>
-              ) : (
-                <>
-                  <Key className="w-3.5 h-3.5" />
-                  <span>{isAr ? 'تحديث وتشفير كلمة المرور' : 'Encrypt & Save Password'}</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-
       {/* Database Seed Confirmation Modal */}
       <ConfirmModal
         isOpen={seedConfirmOpen}

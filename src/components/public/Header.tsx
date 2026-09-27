@@ -110,7 +110,7 @@ export function Header() {
                   onError={() => setLogoError(true)}
                 />
               ) : (
-                <div className="w-9 h-9 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black tracking-tighter shadow-md group-hover:bg-[#3b82f6] transition-colors border border-[#3b82f6]/40">
+                <div className="w-9 h-9 rounded-lg bg-[var(--site-accent)] flex items-center justify-center text-white font-black tracking-tighter shadow-md group-hover:bg-[#3b82f6] transition-colors border border-[#3b82f6]/40">
                   <Film className="w-5 h-5 text-white" />
                 </div>
               )}
@@ -120,7 +120,7 @@ export function Header() {
               <div className="flex flex-col">
                 <span className="font-extrabold text-xl tracking-wider text-[#f1f2ed] uppercase font-quicksand flex items-center">
                   <span>{content.branding.logoText || content.branding.siteName}</span>
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2563eb] ml-1" />
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--site-accent)] ml-1" />
                 </span>
                 <span className="text-[9px] tracking-[0.2em] uppercase text-[#a8a6a1] font-mono -mt-1 font-medium">
                   {content.branding.logoSubtext || (language === 'ar' ? 'إنتاج سينمائي • شريف عبس' : 'SHARIF ABS • CINEMATOGRAPHY')}
@@ -153,7 +153,7 @@ export function Header() {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-[#a8a6a1] hover:text-[#f1f2ed] bg-[#1d1d1d] hover:bg-[#232323] border border-[#2b2b2b] transition-all cursor-pointer"
               title={language === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية'}
             >
-              <Globe className="w-3.5 h-3.5 text-[#2563eb]" />
+              <Globe className="w-3.5 h-3.5 text-[var(--site-accent)]" />
               <span className={language === 'en' ? 'font-bold text-[#f1f2ed]' : 'text-[#706e6a]'}>EN</span>
               <span className="text-[#444]">/</span>
               <span className={language === 'ar' ? 'font-bold text-[#f1f2ed]' : 'text-[#706e6a]'}>عربي</span>
@@ -164,7 +164,7 @@ export function Header() {
               id="header-contact-btn"
               href="#contact"
               onClick={(e) => handleNavClick(e, '#contact')}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase text-white bg-[#2563eb] hover:bg-[#3b82f6] transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-[#2563eb]/20 border border-[#3b82f6]/40 group cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold tracking-wider uppercase text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-[var(--site-accent)]/20 border border-[#3b82f6]/40 group cursor-pointer"
             >
               <span>{t('nav.getInTouch', 'Get in Touch')}</span>
               <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'} transition-transform`} />
@@ -214,7 +214,7 @@ export function Header() {
               id="mobile-contact-cta"
               href="#contact"
               onClick={(e) => handleNavClick(e, '#contact')}
-              className="w-full py-3 rounded-lg text-center font-semibold text-sm tracking-wider uppercase text-white bg-[#2563eb] hover:bg-[#3b82f6] transition-colors shadow-md"
+              className="w-full py-3 rounded-lg text-center font-semibold text-sm tracking-wider uppercase text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-colors shadow-md"
             >
               {t('nav.getInTouch', 'Get in Touch')}
             </a>
