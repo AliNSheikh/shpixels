@@ -896,13 +896,39 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
   // Supabase administrator authentication
   const loginAdmin = useCallback(async (password: string) => {
-    const response = await fetch('/api/admin-login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password })
-    });
-    const result = await response.json();
-    if (!response.ok) return { success: false, error: result.error || 'Sign in failed.' };
-    setIsAuthenticated(true);
-    return { success: true };
+    try {
+      const response = await fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ password })
+      });
+
+      const raw = await response.text();
+      let result: any = {};
+      if (raw) {
+        try {
+          result = JSON.parse(raw);
+        } catch {
+          return {
+            success: false,
+            error: `Admin login endpoint returned HTTP ${response.status} with a non-JSON response. Check the Vercel Function logs.`
+          };
+        }
+      }
+
+      if (!response.ok) {
+        return { success: false, error: result.error || `Sign in failed (HTTP ${response.status}).` };
+      }
+
+      setIsAuthenticated(true);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unable to reach the admin login endpoint.'
+      };
+    }
   }, []);
 
   const logoutAdmin = useCallback(() => {
