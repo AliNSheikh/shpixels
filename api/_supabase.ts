@@ -1,4 +1,4 @@
-import { hasAdminSession } from './_admin-auth';
+import { hasAdminSession } from './_admin-auth.js';
 /**
  * Server-Side Supabase Client & Database Utility
  * Exclusively used by Serverless API routes (Vercel) and development server.
