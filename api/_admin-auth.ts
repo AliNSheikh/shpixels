@@ -1,31 +1,67 @@
-import { createHmac, timingSafeEqual, scryptSync, randomBytes } from 'node:crypto';
+import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
 
-const PASSWORD_SALT = '96e213ce331f903eb16dd2bf816266a1';
-const PASSWORD_HASH = '5a4dfb5a87a3e65ad31c2401b12ef134e064d1cf9dc7ef67f32b7c38ab31199e893ec58b948863766fee5c42f6811e184bcfd8148e9b2475350dbf59a376d84b';
 const COOKIE = 'cms_admin';
 const MAX_AGE = 8 * 60 * 60;
-export function passwordMatches(password: string): boolean {
-  return timingSafeEqual(scryptSync(password, PASSWORD_SALT, 64), Buffer.from(PASSWORD_HASH, 'hex'));
+
+function configuredAdminEmail(): string {
+  return String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
 }
+
 function signature(value: string): string {
   const secret = process.env.ADMIN_SESSION_SECRET;
-  if (!secret || secret.length < 32) throw new Error('ADMIN_SESSION_SECRET is not configured.');
+  if (!secret || secret.length < 32) {
+    throw new Error('ADMIN_SESSION_SECRET is not configured.');
+  }
   return createHmac('sha256', secret).update(value).digest('hex');
 }
-export function createSession(): string {
-  const payload = Buffer.from(JSON.stringify({ expires: Date.now() + MAX_AGE * 1000, nonce: randomBytes(16).toString('hex') })).toString('base64url');
+
+export function createSession(email: string): string {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const allowedEmail = configuredAdminEmail();
+
+  if (!normalizedEmail || !allowedEmail || normalizedEmail !== allowedEmail) {
+    throw new Error('Administrator email is not configured or does not match.');
+  }
+
+  const payload = Buffer.from(JSON.stringify({
+    email: normalizedEmail,
+    expires: Date.now() + MAX_AGE * 1000,
+    nonce: randomBytes(16).toString('hex')
+  })).toString('base64url');
+
   return payload + '.' + signature(payload);
 }
+
 export function hasAdminSession(req: any): boolean {
   try {
-    const cookie = String(req.headers?.cookie || '').split(';').map(x => x.trim()).find(x => x.startsWith(COOKIE + '='));
+    const allowedEmail = configuredAdminEmail();
+    if (!allowedEmail) return false;
+
+    const cookie = String(req.headers?.cookie || '')
+      .split(';')
+      .map((x: string) => x.trim())
+      .find((x: string) => x.startsWith(COOKIE + '='));
+
     const token = cookie?.slice(COOKIE.length + 1) || '';
     const parts = token.split('.');
+
     if (parts.length !== 2 || !/^[a-f0-9]{64}$/.test(parts[1])) return false;
-    if (!timingSafeEqual(Buffer.from(parts[1], 'hex'), Buffer.from(signature(parts[0]), 'hex'))) return false;
-    return JSON.parse(Buffer.from(parts[0], 'base64url').toString()).expires > Date.now();
-  } catch { return false; }
+
+    const expectedSignature = Buffer.from(signature(parts[0]), 'hex');
+    const suppliedSignature = Buffer.from(parts[1], 'hex');
+    if (expectedSignature.length !== suppliedSignature.length) return false;
+    if (!timingSafeEqual(suppliedSignature, expectedSignature)) return false;
+
+    const payload = JSON.parse(Buffer.from(parts[0], 'base64url').toString());
+    return (
+      payload?.expires > Date.now() &&
+      String(payload?.email || '').trim().toLowerCase() === allowedEmail
+    );
+  } catch {
+    return false;
+  }
 }
+
 export function sessionCookie(req: any, token: string): string {
   const secure = req.secure || req.headers?.['x-forwarded-proto'] === 'https';
   return COOKIE + '=' + token + '; HttpOnly; SameSite=Strict; Path=/; Max-Age=' + (token ? MAX_AGE : 0) + (secure ? '; Secure' : '');

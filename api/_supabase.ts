@@ -9,6 +9,40 @@ import { hasAdminSession } from './_admin-auth.js';
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+export function getServerSupabaseAuth(): { client: SupabaseClient | null; error?: string } {
+  const url =
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL;
+
+  const publicKey =
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!url || !publicKey) {
+    return {
+      client: null,
+      error: 'Supabase Auth is missing SUPABASE_URL and a publishable/anon key. Verify the Vercel Supabase integration and redeploy.'
+    };
+  }
+
+  try {
+    return {
+      client: createClient(url.trim().replace(/\/$/, ''), publicKey.trim(), {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      })
+    };
+  } catch (err: any) {
+    return { client: null, error: err.message };
+  }
+}
+
 export function getServerSupabase(accessToken?: string): { client: SupabaseClient | null; error?: string } {
   // NOTE: no hardcoded fallback URL/key here on purpose. If these env vars are
   // missing, every API route must fail loudly with a clear "not configured"
