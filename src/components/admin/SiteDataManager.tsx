@@ -29,6 +29,16 @@ export function SiteDataManager() {
     updateContent({ contact: { ...content.contact, ...updates } });
   const setFooter = (updates: Partial<typeof content.footer>) =>
     updateContent({ footer: { ...content.footer, ...updates } });
+  const setSectionHeader = (section: string, updates: { badge?: string; title?: string; description?: string }) =>
+    updateContent({
+      sectionHeaders: {
+        ...(content.sectionHeaders || {}),
+        [section]: {
+          ...(content.sectionHeaders?.[section] || {}),
+          ...updates
+        }
+      }
+    });
 
   const updateHeaderCta = (id: string, updates: Partial<HeaderCta>) =>
     updateContent({ headerCtas: (content.headerCtas || []).map((item) => item.id === id ? { ...item, ...updates } : item) });
@@ -203,6 +213,23 @@ export function SiteDataManager() {
             </label>
             {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
           </div>
+        </div>
+      </section>
+
+      <section className={cardClass}>
+        <h3 className="font-bold text-[#f1f2ed]">New Section Headings</h3>
+        <div className="grid lg:grid-cols-3 gap-4">
+          {(['experience', 'skills', 'testimonials'] as const).map((section) => {
+            const header = content.sectionHeaders?.[section] || {};
+            return (
+              <div key={section} className="p-4 rounded-xl bg-[#171717] border border-[#262626] space-y-2">
+                <div className="text-xs font-bold uppercase text-[#f1f2ed]">{section}</div>
+                <input className={fieldClass} value={header.badge || ''} onChange={(e) => setSectionHeader(section, { badge: e.target.value })} placeholder="Badge" />
+                <input className={fieldClass} value={header.title || ''} onChange={(e) => setSectionHeader(section, { title: e.target.value })} placeholder="Section title" />
+                <textarea className={fieldClass} rows={3} value={header.description || ''} onChange={(e) => setSectionHeader(section, { description: e.target.value })} placeholder="Description" />
+              </div>
+            );
+          })}
         </div>
       </section>
 
