@@ -21,7 +21,7 @@ export function MediaManager() {
   const handleSaveLogo = (url: string) => {
     setLogoInput(url);
     updateContent({
-      branding: { ...content.branding, logoImage: url }
+      branding: { ...content.branding, logoImage: url, logoLight: url }
     });
     setSavedKey('logo');
     setTimeout(() => setSavedKey(null), 2000);
