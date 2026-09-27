@@ -179,9 +179,7 @@ export function SiteSettings() {
   // Preview contrast toggles
   const [logoPreviewBg, setLogoPreviewBg] = useState<'dark' | 'light' | 'checker'>('dark');
 
-  const handleSaveAll = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-
+  const buildSettingsContent = () => {
     const updatedMarquee = hero.marqueeText
       .split('•')
       .map((s) => s.trim())
@@ -197,7 +195,8 @@ export function SiteSettings() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    updateContent({
+    return {
+      ...content,
       branding: {
         ...content.branding,
         ...branding,
@@ -227,7 +226,13 @@ export function SiteSettings() {
         skills: updatedSkills.length > 0 ? updatedSkills : content.about.skills
       },
       footer
-    });
+    };
+  };
+
+  const handleSaveAll = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const nextContent = buildSettingsContent();
+    updateContent(nextContent);
 
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
@@ -235,8 +240,12 @@ export function SiteSettings() {
 
   const handleSaveAndPublish = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    handleSaveAll();
-    await publishSite('Settings and branding published');
+    const nextContent = buildSettingsContent();
+    const ok = await publishSite('Settings and branding published', nextContent);
+    if (ok) {
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
+    }
   };
 
   return (
