@@ -227,14 +227,20 @@ export function Header() {
           </div>
 
           <div className="pt-4 border-t border-[#2b2b2b] flex flex-col gap-2.5">
-            <a
-              id="mobile-contact-cta"
-              href="#contact"
-              onClick={(e) => handleNavClick(e, '#contact')}
-              className="w-full py-3 rounded-lg text-center font-semibold text-sm tracking-wider uppercase text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-colors shadow-md"
-            >
-              {t('nav.getInTouch', 'Get in Touch')}
-            </a>
+            {(headerCtas.length > 0 ? headerCtas : [{ id: 'mobile-contact', label: t('nav.getInTouch', 'Get in Touch'), url: '#contact', target: '_self', variant: 'primary' }]).slice(0, 2).map((cta) => (
+              <a
+                key={cta.id}
+                href={cta.url}
+                target={cta.target || '_self'}
+                rel={cta.target === '_blank' ? 'noopener noreferrer' : undefined}
+                onClick={(e) => cta.target === '_blank' ? setMobileMenuOpen(false) : handleNavClick(e, cta.url)}
+                className={`w-full py-3 rounded-lg text-center font-semibold text-sm tracking-wider uppercase transition-colors shadow-md ${
+                  cta.variant === 'secondary' ? 'text-[#f1f2ed] bg-[#232323]' : 'text-white bg-[var(--site-accent)] hover:bg-[#3b82f6]'
+                }`}
+              >
+                {cta.label}
+              </a>
+            ))}
           </div>
         </div>
       )}
