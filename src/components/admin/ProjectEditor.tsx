@@ -43,6 +43,11 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
     client: '',
     year: '2026',
     coverImage: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=80',
+    slug: '',
+    liveUrl: '',
+    githubUrl: '',
+    techStack: [],
+    completionDate: '',
     videos: [],
     gallery: [],
     externalLinks: [],
@@ -79,6 +84,11 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
         client: '',
         year: '2026',
         coverImage: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=80',
+        slug: '',
+        liveUrl: '',
+        githubUrl: '',
+        techStack: [],
+        completionDate: '',
         videos: [
           {
             id: `vid-${Date.now()}`,
@@ -293,6 +303,59 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
               onChange={(e) => setFormData({ ...formData, year: e.target.value })}
               placeholder="2026"
               className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed] font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">Project Slug</label>
+            <input
+              type="text"
+              value={formData.slug || ''}
+              onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') })}
+              placeholder="project-slug"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed] font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">Completion Date</label>
+            <input
+              type="date"
+              value={formData.completionDate || ''}
+              onChange={(e) => setFormData({ ...formData, completionDate: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">Live URL</label>
+            <input
+              type="url"
+              value={formData.liveUrl || ''}
+              onChange={(e) => setFormData({ ...formData, liveUrl: e.target.value })}
+              placeholder="https://..."
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed] font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">GitHub URL</label>
+            <input
+              type="url"
+              value={formData.githubUrl || ''}
+              onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })}
+              placeholder="https://github.com/..."
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed] font-mono"
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">Tech Stack / Tags</label>
+            <input
+              type="text"
+              value={(formData.techStack || []).join(', ')}
+              onChange={(e) => setFormData({ ...formData, techStack: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) })}
+              placeholder="React, Node.js, Supabase, Tailwind"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed]"
             />
           </div>
         </div>
