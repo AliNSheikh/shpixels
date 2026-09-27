@@ -4,20 +4,26 @@ A high-performance cinematic portfolio and dynamic content management portal bui
 
 ---
 
-## Fixed-password administrator setup
+## Supabase email/password administrator setup
 
-The login at `/admin` asks only for the fixed password. Its salted scrypt hash is in the server-only `api/_admin-auth.ts`; the readable password is never bundled into the browser. Email login, email recovery and dashboard password changes are disabled. A successful login sets an eight-hour signed HttpOnly, SameSite=Strict cookie (Secure on HTTPS).
+The CMS login at `/admin` uses **Supabase Authentication** with an email address and password. The browser sends the credentials only to the server-side `/api/admin-login` endpoint; the server verifies them with Supabase Auth and then creates an eight-hour signed HttpOnly CMS session cookie.
 
-Environment setup:
-- On Vercel with the Supabase Marketplace integration, the app now supports the integration-provided `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` automatically.
-- For local/manual configuration, `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` and the legacy `SUPABASE_SERVICE_ROLE_KEY` are still supported.
-- `ADMIN_SESSION_SECRET` is application-specific and must still be created manually in Vercel. Use a private random string with at least 32 characters. Rotating it invalidates existing CMS sessions.
+### One-time setup
 
-Run `supabase-schema.sql` in Supabase SQL Editor to remove legacy anonymous write policies and public password hashes. Only the server service-role client writes; every publishing endpoint first verifies the signed admin cookie. Do not expose either server secret with a VITE_ prefix. Deploy over HTTPS. The built-in attempt limit is per server instance; use a shared rate limiter or hosting firewall for multi-instance deployments.
+1. In **Supabase → Authentication → Users**, create the administrator user with the email and password you want to use for the CMS.
+2. In **Vercel → Project → Settings → Environment Variables**, add:
+   - `ADMIN_EMAIL` — exactly the same email as the Supabase Authentication user.
+   - `ADMIN_SESSION_SECRET` — a private random string of at least 32 characters.
+3. The Vercel Supabase integration should provide the Supabase URL and publishable/secret keys automatically. This code supports `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, and the compatible legacy aliases.
+4. Redeploy after changing Vercel environment variables.
+
+Only the account matching `ADMIN_EMAIL` can receive a CMS session, even if other Supabase Authentication users exist. Password changes are managed in Supabase Authentication; there is no hardcoded CMS password in the repository.
+
+Run `supabase-schema.sql` in Supabase SQL Editor for the content table and write policies. Secure publishing continues to require the server-side Supabase secret/service-role credential and a valid CMS session.
 
 Run `npm install`, `npm run dev` (development), or `npm run build` then `npm start` with NODE_ENV=production. Checks: `npm run lint` and `npm test`.
 
-The dashboard supports website content CRUD, component visibility, and advanced JSON editing. Publishing uses revision checks to avoid overwriting a newer revision.
+The dashboard supports website content CRUD, component visibility, advanced JSON editing, and revision-aware publishing.
 
 ---
 
