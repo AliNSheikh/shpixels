@@ -271,6 +271,16 @@ CREATE TABLE IF NOT EXISTS public.project_gallery (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.project_links (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  label TEXT NOT NULL,
+  url TEXT NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  version BIGINT NOT NULL DEFAULT 1,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.project_tags (
   project_id TEXT NOT NULL,
   tag TEXT NOT NULL,
@@ -578,6 +588,7 @@ BEGIN
   DELETE FROM public.project_categories;
   DELETE FROM public.project_videos;
   DELETE FROM public.project_gallery;
+  DELETE FROM public.project_links;
   DELETE FROM public.project_tags;
   DELETE FROM public.projects;
   DELETE FROM public.featured_videos;
@@ -808,6 +819,20 @@ BEGIN
     FROM jsonb_array_elements(COALESCE(project_row->'gallery','[]'::jsonb))
       WITH ORDINALITY AS g(value,ord)
     WHERE (g.value #>> '{}') IS NOT NULL;
+
+    INSERT INTO public.project_links
+      (id,project_id,label,url,display_order,version,updated_at)
+    SELECT
+      COALESCE(project_row->>'id','project-'||project_ord::text) || '-link-' || l.ord::text,
+      COALESCE(project_row->>'id','project-'||project_ord::text),
+      COALESCE(l.item->>'label','Link'),
+      COALESCE(l.item->>'url',''),
+      l.ord::INTEGER,
+      NEW.version,
+      COALESCE(NEW.updated_at,NOW())
+    FROM jsonb_array_elements(COALESCE(project_row->'externalLinks','[]'::jsonb))
+      WITH ORDINALITY AS l(item,ord)
+    WHERE COALESCE(l.item->>'url','') <> '';
 
     INSERT INTO public.project_tags
       (project_id,tag,display_order,version,updated_at)
@@ -1042,6 +1067,7 @@ ALTER TABLE public.project_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_gallery ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.project_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.featured_videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gallery_items ENABLE ROW LEVEL SECURITY;
@@ -1066,7 +1092,7 @@ BEGIN
       AND tablename IN (
         'site_content','site_sections','site_settings','navigation_items','header_ctas',
         'hero_settings','about_profile','services','project_categories','projects',
-        'project_videos','project_gallery','project_tags','featured_videos','gallery_items',
+        'project_videos','project_gallery','project_links','project_tags','featured_videos','gallery_items',
         'client_logos','workflow_steps','timeline_items','skills','testimonials',
         'footer_links','section_headers','section_visibility','contact_inquiries'
       )
@@ -1089,6 +1115,7 @@ GRANT SELECT ON
   public.projects,
   public.project_videos,
   public.project_gallery,
+  public.project_links,
   public.project_tags,
   public.featured_videos,
   public.gallery_items,
@@ -1125,6 +1152,8 @@ CREATE POLICY "Public read projects" ON public.projects
 CREATE POLICY "Public read project videos" ON public.project_videos
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read project gallery" ON public.project_gallery
+  FOR SELECT TO anon, authenticated USING (TRUE);
+CREATE POLICY "Public read project links" ON public.project_links
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read project tags" ON public.project_tags
   FOR SELECT TO anon, authenticated USING (TRUE);
@@ -1163,6 +1192,7 @@ REVOKE INSERT, UPDATE, DELETE ON
   public.projects,
   public.project_videos,
   public.project_gallery,
+  public.project_links,
   public.project_tags,
   public.featured_videos,
   public.gallery_items,
@@ -1210,6 +1240,7 @@ ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 -- SELECT * FROM public.navigation_items ORDER BY display_order;
 -- SELECT * FROM public.projects ORDER BY display_order;
 -- SELECT * FROM public.project_videos ORDER BY project_id, display_order;
+-- SELECT * FROM public.project_links ORDER BY project_id, display_order;
 -- SELECT * FROM public.timeline_items ORDER BY item_type, display_order;
 -- SELECT * FROM public.skills ORDER BY category, display_order;
 -- SELECT * FROM public.testimonials ORDER BY display_order;
