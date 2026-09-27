@@ -186,7 +186,8 @@ export function SectionManager() {
   };
 
   const handleStartEditService = (service: ServiceItem) => {
-    setServiceFormData({ ...service, features: service.features ? [...service.features] : [] });
+    const deliverables = service.deliverables?.length ? service.deliverables : (service.features || []);
+    setServiceFormData({ ...service, features: [...deliverables], deliverables: [...deliverables] });
     setEditingServiceId(service.id);
     setIsAddingService(false);
   };
@@ -195,12 +196,17 @@ export function SectionManager() {
     e.preventDefault();
     if (!serviceFormData.title.trim()) return;
 
+    const normalizedService = {
+      ...serviceFormData,
+      deliverables: [...(serviceFormData.features || [])]
+    };
+
     if (isAddingService) {
-      addService(serviceFormData);
+      addService(normalizedService);
       setIsAddingService(false);
       notifySave(isAr ? '✓ تمت إضافة الخدمة بنجاح!' : '✓ New service added!');
     } else {
-      updateService(serviceFormData);
+      updateService(normalizedService);
       setEditingServiceId(null);
       notifySave(isAr ? '✓ تم تحديث تفاصيل الخدمة!' : '✓ Service updated!');
     }
@@ -210,7 +216,8 @@ export function SectionManager() {
     if (!newFeatureText.trim()) return;
     setServiceFormData({
       ...serviceFormData,
-      features: [...(serviceFormData.features || []), newFeatureText.trim()]
+      features: [...(serviceFormData.features || []), newFeatureText.trim()],
+      deliverables: [...(serviceFormData.features || []), newFeatureText.trim()]
     });
     setNewFeatureText('');
   };
@@ -218,7 +225,8 @@ export function SectionManager() {
   const handleRemoveFeatureFromService = (idx: number) => {
     setServiceFormData({
       ...serviceFormData,
-      features: serviceFormData.features.filter((_, i) => i !== idx)
+      features: serviceFormData.features.filter((_, i) => i !== idx),
+      deliverables: serviceFormData.features.filter((_, i) => i !== idx)
     });
   };
 
@@ -975,7 +983,7 @@ export function SectionManager() {
                 {/* Features bullet points */}
                 <div className="space-y-2">
                   <label className="block text-xs font-mono uppercase text-[#a8a6a1]">
-                    {isAr ? 'مزايا ونقاط الخدمة (Features)' : 'Features / Bullet Points'}
+                    {isAr ? 'مخرجات وتفاصيل الخدمة' : 'Deliverables / Detailed Bullet Points'}
                   </label>
                   <div className="flex gap-2">
                     <input
