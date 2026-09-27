@@ -1,4 +1,4 @@
-import { createSession, hasAdminSession, passwordMatches, sessionCookie } from './_admin-auth';
+import { createSession, hasAdminSession, passwordMatches, sessionCookie } from './_admin-auth.js';
 
 const attempts = new Map<string, { count: number; until: number }>();
 
