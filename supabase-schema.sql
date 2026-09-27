@@ -1,35 +1,24 @@
 -- ==============================================================================
--- MOGRAFIX CMS — Supabase Database Setup (single source of truth)
+-- SHPIXELS CMS — Supabase Database Setup (canonical content + section projections)
 -- ==============================================================================
--- This is the ONLY schema file this project needs. Run this once against a new
--- Supabase project, or re-run it any time — every step is idempotent and safe
--- to execute repeatedly.
+-- The application writes one authoritative JSON document to public.site_content.
+-- Two read-only projection tables are maintained automatically by a trigger:
 --
--- What it creates:
---   public.site_content
---     id           TEXT PRIMARY KEY DEFAULT 'current'   (a single row holds the whole site)
---     data         JSONB NOT NULL DEFAULT '{}'::jsonb   (the entire GlobalContent object)
---     version      BIGINT NOT NULL DEFAULT 1            (incremented on every publish)
---     published_at TIMESTAMPTZ DEFAULT NOW()
---     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
---     updated_by   TEXT DEFAULT 'Admin'
+--   public.site_sections
+--     One row per top-level CMS section (branding, contact, projects, etc.).
 --
--- This exactly matches the column names the app code reads and writes
--- (see api/_supabase.ts, api/content.ts, api/publish-site.ts, src/lib/supabase.ts).
--- Older versions of this project shipped two different, conflicting schema
--- files (one using a "content" column, one using "data", plus an unused,
--- broken "category_metadata" table). Both have been replaced by this single file.
+--   public.site_settings
+--     Explicit searchable columns for the most important global settings:
+--     logo, favicon, email, phone, WhatsApp, location and social links.
 --
--- Instructions:
--- 1. Open your Supabase project dashboard (https://supabase.com/dashboard)
--- 2. Go to "SQL Editor" → "New Query"
--- 3. Paste this entire script and click "RUN"
--- 4. Copy your Project URL + anon public key from Project Settings → API
--- 5. Set them as environment variables (see .env.example / README.md), then
---    redeploy so the app picks them up.
+-- This design keeps publishing atomic (one source of truth) while still making
+-- every section and every global contact/branding field visible in the database.
+-- Re-running this file is safe.
 -- ==============================================================================
 
--- STEP 1: Create the table if it doesn't already exist
+-- ------------------------------------------------------------------------------
+-- 1. Canonical site document
+-- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.site_content (
   id TEXT PRIMARY KEY DEFAULT 'current',
   data JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -39,107 +28,372 @@ CREATE TABLE IF NOT EXISTS public.site_content (
   updated_by TEXT DEFAULT 'Admin'
 );
 
--- STEP 2: Ensure every canonical column exists (handles older/partial tables)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'data'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN data JSONB;
-  END IF;
+ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS data JSONB;
+ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS updated_by TEXT DEFAULT 'Admin';
 
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'version'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN version BIGINT NOT NULL DEFAULT 1;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'published_at'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN published_at TIMESTAMPTZ DEFAULT NOW();
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_at'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'updated_by'
-  ) THEN
-    ALTER TABLE public.site_content ADD COLUMN updated_by TEXT DEFAULT 'Admin';
-  END IF;
-END $$;
-
--- STEP 3: Migrate data from a legacy "content" / "last_published" column if
--- this database was set up with an older version of this project.
+-- Migrate older schema variants when those legacy columns are present.
 DO $$
 BEGIN
   IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'content'
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'site_content'
+      AND column_name = 'content'
   ) THEN
-    UPDATE public.site_content
-    SET data = content
-    WHERE (data IS NULL OR data = '{}'::jsonb) AND content IS NOT NULL;
+    EXECUTE $sql$
+      UPDATE public.site_content
+      SET data = content
+      WHERE (data IS NULL OR data = '{}'::jsonb)
+        AND content IS NOT NULL
+    $sql$;
   END IF;
 
   IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public' AND table_name = 'site_content' AND column_name = 'last_published'
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'site_content'
+      AND column_name = 'last_published'
   ) THEN
-    UPDATE public.site_content
-    SET published_at = last_published
-    WHERE published_at IS NULL AND last_published IS NOT NULL;
+    EXECUTE $sql$
+      UPDATE public.site_content
+      SET published_at = last_published
+      WHERE published_at IS NULL
+        AND last_published IS NOT NULL
+    $sql$;
   END IF;
 END $$;
 
--- STEP 6: Enforce NOT NULL on the data column and backfill any nulls first
 UPDATE public.site_content SET data = '{}'::jsonb WHERE data IS NULL;
 ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
 
--- Administrator roles must be assigned through the trusted Supabase dashboard/SQL.
--- Never use user_metadata for authorization.
-ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
-DO $$ DECLARE policy_row record;
+-- Never keep authentication secrets inside public CMS content.
+UPDATE public.site_content
+SET data = data - 'adminAuth' - 'supabaseConfig'
+WHERE id = 'current';
+
+CREATE INDEX IF NOT EXISTS site_content_data_gin_idx
+  ON public.site_content USING GIN (data);
+
+-- ------------------------------------------------------------------------------
+-- 2. One database row per CMS section
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.site_sections (
+  section_key TEXT PRIMARY KEY,
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  version BIGINT NOT NULL DEFAULT 1,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.site_sections ADD COLUMN IF NOT EXISTS data JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_sections ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.site_sections ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+-- ------------------------------------------------------------------------------
+-- 3. Explicit global branding/contact/settings projection
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.site_settings (
+  id TEXT PRIMARY KEY DEFAULT 'current',
+
+  site_name TEXT,
+  logo_text TEXT,
+  logo_subtext TEXT,
+  logo_image TEXT,
+  favicon TEXT,
+  accent_color TEXT,
+
+  email TEXT,
+  phone TEXT,
+  whatsapp TEXT,
+  location TEXT,
+  instagram TEXT,
+  youtube TEXT,
+  tiktok TEXT,
+  linkedin TEXT,
+  behance TEXT,
+
+  cta_heading TEXT,
+  cta_subtitle TEXT,
+  response_time_note TEXT,
+
+  branding JSONB NOT NULL DEFAULT '{}'::jsonb,
+  contact JSONB NOT NULL DEFAULT '{}'::jsonb,
+  seo JSONB NOT NULL DEFAULT '{}'::jsonb,
+  footer JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+  version BIGINT NOT NULL DEFAULT 1,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS site_name TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_text TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_subtext TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_image TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS favicon TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS accent_color TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS whatsapp TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS instagram TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS youtube TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS tiktok TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS linkedin TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS behance TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS cta_heading TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS cta_subtitle TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS response_time_note TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS branding JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS contact JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS seo JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS footer JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+-- ------------------------------------------------------------------------------
+-- 4. Keep projections synchronized automatically after every CMS publication
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.sync_shpixels_site_projections()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
-  FOR policy_row IN SELECT policyname FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'site_content'
+  IF NEW.id <> 'current' THEN
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.site_sections (section_key, data, version, updated_at)
+  SELECT
+    entry.key,
+    entry.value,
+    NEW.version,
+    COALESCE(NEW.updated_at, NOW())
+  FROM jsonb_each(COALESCE(NEW.data, '{}'::jsonb)) AS entry
+  ON CONFLICT (section_key) DO UPDATE
+  SET
+    data = EXCLUDED.data,
+    version = EXCLUDED.version,
+    updated_at = EXCLUDED.updated_at;
+
+  DELETE FROM public.site_sections
+  WHERE section_key NOT IN (
+    SELECT key
+    FROM jsonb_each(COALESCE(NEW.data, '{}'::jsonb))
+  );
+
+  INSERT INTO public.site_settings (
+    id,
+    site_name,
+    logo_text,
+    logo_subtext,
+    logo_image,
+    favicon,
+    accent_color,
+    email,
+    phone,
+    whatsapp,
+    location,
+    instagram,
+    youtube,
+    tiktok,
+    linkedin,
+    behance,
+    cta_heading,
+    cta_subtitle,
+    response_time_note,
+    branding,
+    contact,
+    seo,
+    footer,
+    version,
+    updated_at
+  )
+  VALUES (
+    'current',
+    NEW.data #>> '{branding,siteName}',
+    NEW.data #>> '{branding,logoText}',
+    NEW.data #>> '{branding,logoSubtext}',
+    NEW.data #>> '{branding,logoImage}',
+    COALESCE(
+      NEW.data #>> '{branding,favicon}',
+      NEW.data #>> '{seo,favicon}'
+    ),
+    NEW.data #>> '{branding,accentColor}',
+    NEW.data #>> '{contact,email}',
+    NEW.data #>> '{contact,phone}',
+    NEW.data #>> '{contact,whatsapp}',
+    NEW.data #>> '{contact,location}',
+    NEW.data #>> '{contact,instagram}',
+    NEW.data #>> '{contact,youtube}',
+    NEW.data #>> '{contact,tiktok}',
+    NEW.data #>> '{contact,linkedin}',
+    NEW.data #>> '{contact,behance}',
+    NEW.data #>> '{contact,ctaHeading}',
+    NEW.data #>> '{contact,ctaSubtitle}',
+    NEW.data #>> '{contact,responseTimeNote}',
+    COALESCE(NEW.data -> 'branding', '{}'::jsonb),
+    COALESCE(NEW.data -> 'contact', '{}'::jsonb),
+    COALESCE(NEW.data -> 'seo', '{}'::jsonb),
+    COALESCE(NEW.data -> 'footer', '{}'::jsonb),
+    NEW.version,
+    COALESCE(NEW.updated_at, NOW())
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    site_name = EXCLUDED.site_name,
+    logo_text = EXCLUDED.logo_text,
+    logo_subtext = EXCLUDED.logo_subtext,
+    logo_image = EXCLUDED.logo_image,
+    favicon = EXCLUDED.favicon,
+    accent_color = EXCLUDED.accent_color,
+    email = EXCLUDED.email,
+    phone = EXCLUDED.phone,
+    whatsapp = EXCLUDED.whatsapp,
+    location = EXCLUDED.location,
+    instagram = EXCLUDED.instagram,
+    youtube = EXCLUDED.youtube,
+    tiktok = EXCLUDED.tiktok,
+    linkedin = EXCLUDED.linkedin,
+    behance = EXCLUDED.behance,
+    cta_heading = EXCLUDED.cta_heading,
+    cta_subtitle = EXCLUDED.cta_subtitle,
+    response_time_note = EXCLUDED.response_time_note,
+    branding = EXCLUDED.branding,
+    contact = EXCLUDED.contact,
+    seo = EXCLUDED.seo,
+    footer = EXCLUDED.footer,
+    version = EXCLUDED.version,
+    updated_at = EXCLUDED.updated_at;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS sync_shpixels_site_projections_trigger
+  ON public.site_content;
+
+CREATE TRIGGER sync_shpixels_site_projections_trigger
+AFTER INSERT OR UPDATE OF data, version, updated_at
+ON public.site_content
+FOR EACH ROW
+EXECUTE FUNCTION public.sync_shpixels_site_projections();
+
+-- Backfill projection tables from the current canonical row.
+UPDATE public.site_content
+SET updated_at = updated_at
+WHERE id = 'current';
+
+-- ------------------------------------------------------------------------------
+-- 5. Row Level Security
+-- ------------------------------------------------------------------------------
+ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_sections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+
+DO $$
+DECLARE
+  policy_row RECORD;
+BEGIN
+  FOR policy_row IN
+    SELECT schemaname, tablename, policyname
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename IN ('site_content', 'site_sections', 'site_settings')
   LOOP
-    EXECUTE format('DROP POLICY %I ON public.site_content', policy_row.policyname);
+    EXECUTE format(
+      'DROP POLICY %I ON %I.%I',
+      policy_row.policyname,
+      policy_row.schemaname,
+      policy_row.tablename
+    );
   END LOOP;
 END $$;
-GRANT SELECT ON public.site_content TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON public.site_content TO authenticated;
-REVOKE INSERT, UPDATE, DELETE ON public.site_content FROM anon;
-CREATE POLICY "Public read" ON public.site_content FOR SELECT TO anon, authenticated USING (id = 'current');
--- Fixed-password CMS writes are authorized by the server and use service_role.
--- Public and ordinary authenticated clients have no write policies.
-REVOKE INSERT, UPDATE, DELETE ON public.site_content FROM authenticated;
--- Remove obsolete password hashes and connection settings from public content.
-UPDATE public.site_content SET data = data - 'adminAuth' - 'supabaseConfig';
 
--- STEP 8: Add public.site_content to the Realtime publication so admin edits
--- reflect on the live site instantly for every open browser tab.
+GRANT SELECT ON public.site_content TO anon, authenticated;
+GRANT SELECT ON public.site_sections TO anon, authenticated;
+GRANT SELECT ON public.site_settings TO anon, authenticated;
+
+REVOKE INSERT, UPDATE, DELETE ON public.site_content FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.site_sections FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE ON public.site_settings FROM anon, authenticated;
+
+CREATE POLICY "Public read current site"
+ON public.site_content
+FOR SELECT
+TO anon, authenticated
+USING (id = 'current');
+
+CREATE POLICY "Public read site sections"
+ON public.site_sections
+FOR SELECT
+TO anon, authenticated
+USING (true);
+
+CREATE POLICY "Public read site settings"
+ON public.site_settings
+FOR SELECT
+TO anon, authenticated
+USING (id = 'current');
+
+-- All writes are performed server-side using SUPABASE_SECRET_KEY/service_role
+-- after the CMS session has been verified.
+
+-- ------------------------------------------------------------------------------
+-- 6. Supabase Realtime
+-- ------------------------------------------------------------------------------
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables
+    SELECT 1
+    FROM pg_publication_tables
     WHERE pubname = 'supabase_realtime'
-    AND tablename = 'site_content'
+      AND schemaname = 'public'
+      AND tablename = 'site_content'
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.site_content;
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'site_sections'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.site_sections;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'site_settings'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.site_settings;
+  END IF;
 END $$;
 
--- ==============================================================================
--- Confirmation query — run this after the script to verify the table is ready:
+-- ------------------------------------------------------------------------------
+-- 7. Verification queries
+-- ------------------------------------------------------------------------------
+-- Canonical document/version:
 -- SELECT id, version, published_at, updated_at FROM public.site_content;
+--
+-- Every stored top-level CMS section:
+-- SELECT section_key, version, updated_at
+-- FROM public.site_sections
+-- ORDER BY section_key;
+--
+-- Logo, contact details and social links:
+-- SELECT site_name, logo_image, favicon, email, phone, whatsapp,
+--        instagram, youtube, tiktok, linkedin, behance, version, updated_at
+-- FROM public.site_settings
+-- WHERE id = 'current';
 -- ==============================================================================
