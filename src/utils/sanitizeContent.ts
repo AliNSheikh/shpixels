@@ -47,7 +47,12 @@ export function sanitizeGlobalContent(rawContent: GlobalContent): GlobalContent 
   return {
     ...rawContent,
     branding,
-    categories: cleanCategories.length > 0 ? cleanCategories : rawContent.categories,
+    sectionVisibility: rawContent.sectionVisibility || {},
+    showreel: rawContent.showreel || { caption: '', specs: [] },
+    categories: cleanCategories.length > 0 ? cleanCategories : (rawContent.categories || []),
+    categoryDetails: rawContent.categoryDetails || {},
+    clientLogos: rawContent.clientLogos || [],
+    sectionHeaders: rawContent.sectionHeaders || {},
     projects: sanitizedProjects
   };
 }

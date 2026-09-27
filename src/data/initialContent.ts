@@ -444,6 +444,12 @@ export const initialContent: GlobalContent = {
     quote: "Every frame carries purpose. Every story deserves cinematic depth.",
     disclaimer: "SHPIXELS — Professional videographer portfolio & creative production studio by Sharif Abs."
   },
+  sectionVisibility: {},
+  showreel: {
+    caption: "",
+    specs: []
+  },
+  sectionHeaders: {},
   categories: [
     "Commercial & Brand Ads",
     "Sport & Gym",

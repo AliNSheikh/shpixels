@@ -59,9 +59,22 @@ export default async function handler(req: any, res: any) {
 
     const note = req.body?.note || 'Published from SHPIXELS Admin CMS';
 
+    // Make every CMS-managed section explicit in the canonical JSON document.
+    // This protects older clients/imports that may not yet contain newer optional
+    // sections and guarantees that the database projection trigger sees them.
+    const completePayload = {
+      sectionVisibility: {},
+      showreel: { caption: '', specs: [] },
+      categories: [],
+      categoryDetails: {},
+      clientLogos: [],
+      sectionHeaders: {},
+      ...rawPayload
+    };
+
     // Build mutated payload with authoritative version and history
     const finalContent = {
-      ...rawPayload,
+      ...completePayload,
       lastPublished: now,
       publicationInfo: {
         publishedAt: now,
@@ -76,7 +89,7 @@ export default async function handler(req: any, res: any) {
           publishedBy: 'Admin',
           note
         },
-        ...(rawPayload.publicationHistory || []).slice(0, 19)
+        ...(completePayload.publicationHistory || []).slice(0, 19)
       ]
     };
 
@@ -87,7 +100,8 @@ export default async function handler(req: any, res: any) {
       data: finalContent,
       version: nextVersion,
       published_at: now,
-      updated_at: now
+      updated_at: now,
+      updated_by: 'Admin'
     };
 
     const query = currentRows?.length
