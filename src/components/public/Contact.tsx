@@ -323,6 +323,7 @@ export function Contact() {
                     </label>
                     <textarea
                       rows={4}
+                      required
                       value={formState.message}
                       onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                       placeholder={isAr ? 'صف أهداف الحملة، المدة المقترحة، المواعيد النهائية، أو شارك مراجع بصرية...' : 'Describe timeline, shoot locations, target audience, visual references...'}
@@ -333,10 +334,11 @@ export function Contact() {
                   <button
                     id="contact-submit-btn"
                     type="submit"
+                    disabled={submitting}
                     className="w-full py-3.5 sm:py-4 rounded-xl font-bold text-xs uppercase tracking-wider text-white bg-[var(--site-accent)] hover:bg-[#3b82f6] transition-all duration-200 shadow-xl flex items-center justify-center gap-2 border border-[#3b82f6]/40 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
-                    <span>{isAr ? 'إرسال تفاصيل المشروع' : 'Submit Production Inquiry'}</span>
+                    <span>{submitting ? (isAr ? 'جارِ الإرسال...' : 'Sending...') : (isAr ? 'إرسال تفاصيل المشروع' : 'Submit Production Inquiry')}</span>
                   </button>
                 </form>
               )}
