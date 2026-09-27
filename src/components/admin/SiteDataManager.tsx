@@ -132,13 +132,15 @@ export function SiteDataManager() {
           {(content.headerCtas || []).map((cta) => (
             <div key={cta.id} className="grid md:grid-cols-12 gap-2 items-center p-3 rounded-xl bg-[#171717] border border-[#262626]">
               <input className={`${fieldClass} md:col-span-3`} value={cta.label} onChange={(e) => updateHeaderCta(cta.id, { label: e.target.value })} placeholder="Label" />
-              <input className={`${fieldClass} md:col-span-4`} value={cta.url} onChange={(e) => updateHeaderCta(cta.id, { url: e.target.value })} placeholder="#contact or https://..." />
+              <input className={`${fieldClass} md:col-span-3`} value={cta.url} onChange={(e) => updateHeaderCta(cta.id, { url: e.target.value })} placeholder="#contact or https://..." />
               <select className={`${fieldClass} md:col-span-2`} value={cta.target || '_self'} onChange={(e) => updateHeaderCta(cta.id, { target: e.target.value as '_self' | '_blank' })}>
                 <option value="_self">Same tab</option><option value="_blank">New tab</option>
               </select>
-              <select className={`${fieldClass} md:col-span-2`} value={cta.variant || 'primary'} onChange={(e) => updateHeaderCta(cta.id, { variant: e.target.value as 'primary' | 'secondary' })}>
+              <select className={`${fieldClass} md:col-span-1`} value={cta.variant || 'primary'} onChange={(e) => updateHeaderCta(cta.id, { variant: e.target.value as 'primary' | 'secondary' })}>
                 <option value="primary">Primary</option><option value="secondary">Secondary</option>
               </select>
+              <input className={`${fieldClass} md:col-span-1`} type="number" min={1} value={cta.order || 1} onChange={(e) => updateHeaderCta(cta.id, { order: Number(e.target.value) })} title="Display order" />
+              <label className="md:col-span-1 flex items-center justify-center gap-1 text-[10px] text-[#a8a6a1]"><input type="checkbox" checked={cta.visible !== false} onChange={(e) => updateHeaderCta(cta.id, { visible: e.target.checked })} /> Show</label>
               <button type="button" onClick={() => updateContent({ headerCtas: (content.headerCtas || []).filter((item) => item.id !== cta.id) })} className="md:col-span-1 p-2 text-red-400"><Trash2 className="w-4 h-4" /></button>
             </div>
           ))}
@@ -223,6 +225,8 @@ export function SiteDataManager() {
                 <input className={fieldClass} value={item.endDate || ''} disabled={item.isCurrent} onChange={(e) => updateTimeline(key, item.id, { endDate: e.target.value })} placeholder="End date" />
                 <input className={fieldClass} value={item.location || ''} onChange={(e) => updateTimeline(key, item.id, { location: e.target.value })} placeholder="Location" />
                 <label className="flex items-center gap-2 text-xs text-[#a8a6a1]"><input type="checkbox" checked={Boolean(item.isCurrent)} onChange={(e) => updateTimeline(key, item.id, { isCurrent: e.target.checked, endDate: e.target.checked ? '' : item.endDate })} /> Current</label>
+                <div><label className={labelClass}>Display Order</label><input className={fieldClass} type="number" min={1} value={item.order || 1} onChange={(e) => updateTimeline(key, item.id, { order: Number(e.target.value) })} /></div>
+                <label className="flex items-center gap-2 text-xs text-[#a8a6a1]"><input type="checkbox" checked={item.visible !== false} onChange={(e) => updateTimeline(key, item.id, { visible: e.target.checked })} /> Visible on public site</label>
                 <textarea className={`${fieldClass} md:col-span-2`} rows={3} value={item.description} onChange={(e) => updateTimeline(key, item.id, { description: e.target.value })} placeholder="Description" />
                 <div className="md:col-span-2 flex justify-end">
                   <button type="button" onClick={() => updateContent({ [key]: (content[key] || []).filter((x) => x.id !== item.id) })} className="text-red-400 text-xs flex items-center gap-1"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
@@ -241,10 +245,12 @@ export function SiteDataManager() {
         <div className="grid md:grid-cols-2 gap-3">
           {(content.skills || []).map((skill) => (
             <div key={skill.id} className="p-3 rounded-xl bg-[#171717] border border-[#262626] grid grid-cols-12 gap-2 items-center">
-              <input className={`${fieldClass} col-span-4`} value={skill.name} onChange={(e) => updateSkill(skill.id, { name: e.target.value })} placeholder="Skill" />
-              <input className={`${fieldClass} col-span-3`} value={skill.category} onChange={(e) => updateSkill(skill.id, { category: e.target.value })} placeholder="Category" />
-              <input className={`${fieldClass} col-span-2`} type="number" min={0} max={100} value={skill.proficiency ?? 0} onChange={(e) => updateSkill(skill.id, { proficiency: Number(e.target.value) })} />
-              <input className={`${fieldClass} col-span-2`} value={skill.icon || ''} onChange={(e) => updateSkill(skill.id, { icon: e.target.value })} placeholder="Icon" />
+              <input className={`${fieldClass} col-span-3`} value={skill.name} onChange={(e) => updateSkill(skill.id, { name: e.target.value })} placeholder="Skill" />
+              <input className={`${fieldClass} col-span-2`} value={skill.category} onChange={(e) => updateSkill(skill.id, { category: e.target.value })} placeholder="Category" />
+              <input className={`${fieldClass} col-span-2`} type="number" min={0} max={100} value={skill.proficiency ?? 0} onChange={(e) => updateSkill(skill.id, { proficiency: Number(e.target.value) })} title="Proficiency %" />
+              <input className={`${fieldClass} col-span-2`} value={skill.icon || ''} onChange={(e) => updateSkill(skill.id, { icon: e.target.value })} placeholder="Icon URL/name" />
+              <input className={`${fieldClass} col-span-1`} type="number" min={1} value={skill.order || 1} onChange={(e) => updateSkill(skill.id, { order: Number(e.target.value) })} title="Order" />
+              <label className="col-span-1 flex items-center justify-center text-[10px] text-[#a8a6a1]"><input type="checkbox" checked={skill.visible !== false} onChange={(e) => updateSkill(skill.id, { visible: e.target.checked })} /></label>
               <button type="button" className="col-span-1 text-red-400" onClick={() => updateContent({ skills: (content.skills || []).filter((x) => x.id !== skill.id) })}><Trash2 className="w-4 h-4" /></button>
             </div>
           ))}
@@ -263,6 +269,8 @@ export function SiteDataManager() {
               <input className={fieldClass} value={item.position || ''} onChange={(e) => updateTestimonial(item.id, { position: e.target.value })} placeholder="Position" />
               <input className={fieldClass} value={item.company || ''} onChange={(e) => updateTestimonial(item.id, { company: e.target.value })} placeholder="Company" />
               <input className={fieldClass} type="number" min={1} max={5} value={item.rating || 5} onChange={(e) => updateTestimonial(item.id, { rating: Number(e.target.value) })} />
+              <div><label className={labelClass}>Display Order</label><input className={fieldClass} type="number" min={1} value={item.order || 1} onChange={(e) => updateTestimonial(item.id, { order: Number(e.target.value) })} /></div>
+              <label className="flex items-center gap-2 text-xs text-[#a8a6a1]"><input type="checkbox" checked={item.visible !== false} onChange={(e) => updateTestimonial(item.id, { visible: e.target.checked })} /> Visible</label>
               <div className="md:col-span-2"><ImageUploadDropzone label="Client Avatar" value={item.avatar || ''} onChange={(url) => updateTestimonial(item.id, { avatar: url })} aspectRatio="aspect-square" compact /></div>
               <textarea className={`${fieldClass} md:col-span-2`} rows={3} value={item.body} onChange={(e) => updateTestimonial(item.id, { body: e.target.value })} placeholder="Testimonial" />
               <div className="md:col-span-2 flex justify-end"><button type="button" onClick={() => updateContent({ testimonials: (content.testimonials || []).filter((x) => x.id !== item.id) })} className="text-red-400 text-xs flex items-center gap-1"><Trash2 className="w-3.5 h-3.5" /> Delete</button></div>
@@ -292,9 +300,11 @@ export function SiteDataManager() {
           </div>
           {(content.footerLinks || []).map((item) => (
             <div key={item.id} className="grid md:grid-cols-12 gap-2">
-              <input className={`${fieldClass} md:col-span-4`} value={item.label} onChange={(e) => updateFooterLink(item.id, { label: e.target.value })} />
-              <input className={`${fieldClass} md:col-span-5`} value={item.url} onChange={(e) => updateFooterLink(item.id, { url: e.target.value })} />
+              <input className={`${fieldClass} md:col-span-3`} value={item.label} onChange={(e) => updateFooterLink(item.id, { label: e.target.value })} />
+              <input className={`${fieldClass} md:col-span-4`} value={item.url} onChange={(e) => updateFooterLink(item.id, { url: e.target.value })} />
               <select className={`${fieldClass} md:col-span-2`} value={item.target || '_self'} onChange={(e) => updateFooterLink(item.id, { target: e.target.value as '_self' | '_blank' })}><option value="_self">Same tab</option><option value="_blank">New tab</option></select>
+              <input className={`${fieldClass} md:col-span-1`} type="number" min={1} value={item.order || 1} onChange={(e) => updateFooterLink(item.id, { order: Number(e.target.value) })} title="Order" />
+              <label className="md:col-span-1 flex items-center justify-center text-[10px] text-[#a8a6a1]"><input type="checkbox" checked={item.visible !== false} onChange={(e) => updateFooterLink(item.id, { visible: e.target.checked })} /></label>
               <button type="button" className="md:col-span-1 text-red-400" onClick={() => updateContent({ footerLinks: (content.footerLinks || []).filter((x) => x.id !== item.id) })}><Trash2 className="w-4 h-4" /></button>
             </div>
           ))}
