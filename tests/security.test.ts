@@ -23,18 +23,26 @@ test('incomplete content is rejected',()=>{
 
 import loginHandler from '../api/admin-login.ts';
 
-import { createSession, hasAdminSession, passwordMatches } from '../api/_admin-auth.ts';
+import { createSession, hasAdminSession } from '../api/_admin-auth.ts';
 
-test('signed admin sessions reject tampering and expire; password is server verified', () => {
+test('signed admin sessions are bound to the configured email, reject tampering, and expire', () => {
   process.env.ADMIN_SESSION_SECRET='test-secret-with-at-least-thirty-two-characters';
-  const token=createSession();
+  process.env.ADMIN_EMAIL='admin@example.com';
+  const token=createSession('admin@example.com');
   assert.equal(hasAdminSession({headers:{cookie:`cms_admin=${token}`}}),true);
   assert.equal(hasAdminSession({headers:{cookie:`cms_admin=${token}x`}}),false);
-  assert.equal(passwordMatches('incorrect-password'),false);
+
+  process.env.ADMIN_EMAIL='different@example.com';
+  assert.equal(hasAdminSession({headers:{cookie:`cms_admin=${token}`}}),false);
+  process.env.ADMIN_EMAIL='admin@example.com';
+
   const original=Date.now;
   Date.now=()=>original()+9*60*60*1000;
   assert.equal(hasAdminSession({headers:{cookie:`cms_admin=${token}`}}),false);
   Date.now=original;
+
+  delete process.env.ADMIN_EMAIL;
+  delete process.env.ADMIN_SESSION_SECRET;
 });
 
 import { initialContent } from '../src/data/initialContent.ts';
@@ -44,6 +52,8 @@ test('admin publishing persists additions, edits and deletions and rejects stale
   process.env.SUPABASE_URL = 'https://test.supabase.co';
   process.env.SUPABASE_ANON_KEY = 'test-key';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key';
+  process.env.ADMIN_EMAIL = 'admin@example.com';
+  process.env.ADMIN_SESSION_SECRET = 'test-secret-with-at-least-thirty-two-characters';
   let saved:any = {id:'current',version:6,data:structuredClone(initialContent)};
   try {
     globalThis.fetch = async (input, options) => {
@@ -59,7 +69,7 @@ test('admin publishing persists additions, edits and deletions and rejects stale
     const publish = async (content:any, version:number) => {
       let status=0; let body:any;
       const res={setHeader(){},status(code:number){status=code;return this;},json(value:any){body=value;return this;}};
-      await handler({method:'POST',headers:{cookie:`cms_admin=${createSession()}`},body:{data:content,expectedVersion:version}},res);
+      await handler({method:'POST',headers:{cookie:`cms_admin=${createSession('admin@example.com')}`},body:{data:content,expectedVersion:version}},res);
       return {status,body};
     };
     const draft=structuredClone(initialContent);
@@ -76,6 +86,10 @@ test('admin publishing persists additions, edits and deletions and rejects stale
     assert.equal(saved.version,7);
   } finally {
     globalThis.fetch=previousFetch;
-    delete process.env.SUPABASE_URL;delete process.env.SUPABASE_ANON_KEY; delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_ANON_KEY;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.ADMIN_EMAIL;
+    delete process.env.ADMIN_SESSION_SECRET;
   }
 });
