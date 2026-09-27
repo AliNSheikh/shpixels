@@ -15,6 +15,9 @@ import { Portfolio } from './components/public/Portfolio';
 import { Process } from './components/public/Process';
 import { Gallery } from './components/public/Gallery';
 import { Contact } from './components/public/Contact';
+import { Experience } from './components/public/Experience';
+import { Skills } from './components/public/Skills';
+import { Testimonials } from './components/public/Testimonials';
 import { Footer } from './components/public/Footer';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminAuthModal } from './components/admin/AdminAuthModal';
@@ -41,6 +44,9 @@ function AppContent() {
         {content.sectionVisibility?.portfolio !== false && <Portfolio />}
         {content.sectionVisibility?.process !== false && <Process />}
         {content.sectionVisibility?.gallery !== false && <Gallery />}
+        {content.sectionVisibility?.experience !== false && <Experience />}
+        {content.sectionVisibility?.skills !== false && <Skills />}
+        {content.sectionVisibility?.testimonials !== false && <Testimonials />}
         {content.sectionVisibility?.contact !== false && <Contact />}
       </main>
       {content.sectionVisibility?.footer !== false && <Footer />}
