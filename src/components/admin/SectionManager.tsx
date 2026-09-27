@@ -152,7 +152,9 @@ export function SectionManager() {
     description: '',
     category: categories[0] || 'Commercial',
     icon: 'Film',
-    features: []
+    features: [],
+    order: (content.services?.length || 0) + 1,
+    visible: true
   });
   const [newFeatureText, setNewFeatureText] = useState('');
 
@@ -175,7 +177,9 @@ export function SectionManager() {
       description: '',
       category: categories[0] || 'Commercial',
       icon: 'Film',
-      features: ['High-end production', 'Multi-platform master delivery']
+      features: ['High-end production', 'Multi-platform master delivery'],
+      order: (content.services?.length || 0) + 1,
+      visible: true
     });
     setIsAddingService(true);
     setEditingServiceId(null);
@@ -935,6 +939,27 @@ export function SectionManager() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1">Display Order</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={serviceFormData.order || 1}
+                      onChange={(e) => setServiceFormData({ ...serviceFormData, order: Number(e.target.value) })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#1d1d1d] border border-[#2b2b2b] text-xs text-[#f1f2ed]"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-[#a8a6a1]">
+                    <input
+                      type="checkbox"
+                      checked={serviceFormData.visible !== false}
+                      onChange={(e) => setServiceFormData({ ...serviceFormData, visible: e.target.checked })}
+                    />
+                    Visible on public site
+                  </label>
+                </div>
+
                 <div>
                   <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1">
                     {isAr ? 'الوصف الكامل للخدمة' : 'Description'}
@@ -1008,7 +1033,7 @@ export function SectionManager() {
 
             {/* List of services */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {(content.services || []).map((service) => (
+              {[...(content.services || [])].sort((a, b) => (a.order || 0) - (b.order || 0)).map((service) => (
                 <div
                   key={service.id}
                   className="p-4 rounded-xl bg-[#232323] border border-[#2b2b2b] flex flex-col justify-between"
