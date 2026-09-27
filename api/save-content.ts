@@ -8,4 +8,4 @@
  * others succeed. Re-exporting the canonical handler means there is now only
  * ONE implementation of "write site content to Supabase" in the whole project.
  */
-export { default } from './publish-site';
+export { default } from './publish-site.js';
