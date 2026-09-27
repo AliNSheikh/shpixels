@@ -65,6 +65,12 @@ export default async function handler(req: any, res: any) {
     const completePayload = {
       sectionVisibility: {},
       showreel: { caption: '', specs: [] },
+      headerCtas: [],
+      experience: [],
+      education: [],
+      skills: [],
+      testimonials: [],
+      footerLinks: [],
       categories: [],
       categoryDetails: {},
       clientLogos: [],
