@@ -101,7 +101,7 @@ interface ContentContextType {
   lastSaved: Date | null;
 
   // Server publication & real-time sync
-  publishSite: (note?: string) => Promise<boolean>;
+  publishSite: (note?: string, contentOverride?: GlobalContent) => Promise<boolean>;
   isPublishing: boolean;
   publishSuccess: boolean;
   publishError: string | null;
@@ -169,6 +169,12 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   const currentVersionRef = useRef<number>(1);
   currentVersionRef.current = publicationVersion;
 
+  // Keep the latest draft snapshot outside React render timing so persistence
+  // never publishes stale content immediately after a section-level Save click.
+  const latestContentRef = useRef<GlobalContent>(initialContent);
+  const localEditRevisionRef = useRef(0);
+  const publishInFlightRef = useRef(false);
+
   // Track unsaved local edits
   const pendingEditsRef = useRef<boolean>(false);
   pendingEditsRef.current = hasUnsavedChanges;
@@ -231,6 +237,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         const ver = res.version || 1;
         // Supabase ALWAYS wins over default/initialContent
         const safeData = sanitizeGlobalContent(res.data);
+        latestContentRef.current = safeData;
         setContent(safeData);
         setPublicationVersion(ver);
         currentVersionRef.current = ver;
@@ -286,6 +293,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         if (incomingVersion > currentVersionRef.current && !pendingEditsRef.current) {
           console.log(`[Supabase Realtime] Received authoritative version v${incomingVersion}. Updating site.`);
           const safeData = sanitizeGlobalContent(update.data);
+          latestContentRef.current = safeData;
           setContent(safeData);
           setPublicationVersion(incomingVersion);
           currentVersionRef.current = incomingVersion;
@@ -322,8 +330,11 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     };
   }, [fetchAuthoritative, refreshDiagnostics]);
 
-  // Mark draft changes locally in memory
+  // Mark draft changes locally in memory. Every editor action flows through
+  // this function, which also advances a revision counter used by auto-save.
   const markLocalEdit = useCallback((newContent: GlobalContent) => {
+    latestContentRef.current = newContent;
+    localEditRevisionRef.current += 1;
     setContent(newContent);
     setHasUnsavedChanges(true);
     setServerSyncStatus('unsaved');
@@ -352,24 +363,32 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   }, [markLocalEdit]);
 
   // PUBLISH / SAVE SITE: The ONE authoritative mutation path
-  // Admin CMS -> POST /api/publish -> Supabase UPSERT -> Realtime Event -> All connected browsers
-  const publishSite = useCallback(async (note?: string): Promise<boolean> => {
+  // Admin CMS -> POST /api/publish -> Supabase UPSERT -> Realtime Event -> All connected browsers.
+  // contentOverride is used by compound forms (for example Site Settings) so a
+  // Save & Publish click cannot publish the previous React render by mistake.
+  const publishSite = useCallback(async (note?: string, contentOverride?: GlobalContent): Promise<boolean> => {
+    if (publishInFlightRef.current) {
+      return false;
+    }
+
+    const snapshot = sanitizeGlobalContent(contentOverride || latestContentRef.current);
+    const revisionAtStart = localEditRevisionRef.current;
+    const expectedVersion = currentVersionRef.current;
+
+    publishInFlightRef.current = true;
     setIsPublishing(true);
     setPublishError(null);
     setServerSyncStatus('saving');
-
-
 
     try {
       const response = await fetch('/api/publish', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          data: content,
-          expectedVersion: publicationVersion,
+          data: snapshot,
+          expectedVersion,
           note: note || 'Published from SHPIXELS Admin CMS'
         })
       });
@@ -380,39 +399,58 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         throw new Error(result.error || 'Failed to publish content to Supabase');
       }
 
-      // Reconcile with authoritative Supabase response
-      const updatedVersion = Number(result.version || publicationVersion + 1);
+      // Reconcile with authoritative Supabase response.
+      const updatedVersion = Number(result.version || expectedVersion + 1);
       const updatedTime = result.published_at || new Date().toISOString();
-
       const safeData = sanitizeGlobalContent(result.data);
-      setContent(safeData);
+
       setPublicationVersion(updatedVersion);
       currentVersionRef.current = updatedVersion;
       setLastPublishedAt(updatedTime);
       setLastSaved(new Date(updatedTime));
       setLastSyncTime(updatedTime);
-      setHasUnsavedChanges(false);
-      setServerSyncStatus('synced');
       setPublishSuccess(true);
 
-      // Clean up session draft
-      try {
-        sessionStorage.removeItem(DRAFT_KEY);
-      } catch {}
+      // Do not overwrite edits that happened while this request was in flight.
+      if (localEditRevisionRef.current === revisionAtStart) {
+        latestContentRef.current = safeData;
+        setContent(safeData);
+        setHasUnsavedChanges(false);
+        setServerSyncStatus('synced');
+        try {
+          sessionStorage.removeItem(DRAFT_KEY);
+        } catch {}
+      } else {
+        setHasUnsavedChanges(true);
+        setServerSyncStatus('unsaved');
+      }
 
       setTimeout(() => setPublishSuccess(false), 3500);
-      refreshDiagnostics();
+      void refreshDiagnostics();
       return true;
     } catch (err: any) {
       console.error('[CMS] Publish failed:', err);
       setPublishError(err.message || 'Database write error');
       setServerSyncStatus('error');
-      setIsPublishing(false);
       return false;
     } finally {
+      publishInFlightRef.current = false;
       setIsPublishing(false);
     }
-  }, [content, publicationVersion, refreshDiagnostics]);
+  }, [refreshDiagnostics]);
+
+  // Every section-level Save operation now persists to Supabase automatically.
+  // A short debounce prevents text-field editors (such as navigation labels)
+  // from issuing a database write on every keystroke.
+  useEffect(() => {
+    if (!isAdminView || !isAuthenticated || !hasUnsavedChanges || isPublishing) return;
+
+    const timer = window.setTimeout(() => {
+      void publishSite('Automatic CMS save');
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [content, hasUnsavedChanges, isAdminView, isAuthenticated, isPublishing, publishSite]);
 
   // One-click seed initial content to empty Supabase database
   const seedInitialContentToSupabase = useCallback(async (): Promise<{ success: boolean; message: string }> => {
@@ -432,6 +470,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        latestContentRef.current = data.data;
         setContent(data.data);
         setPublicationVersion(data.version);
         setLastPublishedAt(data.published_at);
