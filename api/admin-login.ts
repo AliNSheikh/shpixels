@@ -66,10 +66,40 @@ export default async function handler(req: any, res: any) {
 
     const { data, error: authError } = await client.auth.signInWithPassword({ email, password });
 
-    if (authError || !data.user || normalizedEmail(data.user.email) !== adminEmail) {
+    if (authError) {
       record.count++;
       attempts.set(ip, record);
-      return res.status(401).json({ error: 'Invalid email or password.' });
+
+      console.warn('[api/admin-login] Supabase Auth rejected the administrator login:', {
+        code: (authError as any).code || null,
+        status: (authError as any).status || null,
+        message: authError.message
+      });
+
+      const code = String((authError as any).code || '').toLowerCase();
+      const message = String(authError.message || '').toLowerCase();
+
+      if (code === 'email_not_confirmed' || message.includes('email not confirmed')) {
+        return res.status(403).json({
+          error: 'Your Supabase administrator email is not confirmed. Confirm the user in Supabase Authentication, then try again.'
+        });
+      }
+
+      if (code === 'invalid_credentials' || message.includes('invalid login credentials')) {
+        return res.status(401).json({
+          error: 'Supabase rejected the email/password. Verify this user has an Email/Password identity and reset its password in Supabase Authentication.'
+        });
+      }
+
+      return res.status(401).json({
+        error: 'Supabase authentication failed. Check the Vercel Function log for the Supabase Auth error code.'
+      });
+    }
+
+    if (!data.user || normalizedEmail(data.user.email) !== adminEmail) {
+      record.count++;
+      attempts.set(ip, record);
+      return res.status(403).json({ error: 'Authenticated Supabase user is not the configured CMS administrator.' });
     }
 
     const token = createSession(adminEmail);

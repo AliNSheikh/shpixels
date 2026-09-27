@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "tsx server.ts",
@@ -35,7 +35,7 @@
     "esbuild": "^0.28.2",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2",
+    "typescript": "7.0.2",
     "@types/express": "^4.17.21"
   }
 }
