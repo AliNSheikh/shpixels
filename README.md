@@ -27,6 +27,16 @@ The dashboard supports website content CRUD, component visibility, advanced JSON
 
 ---
 
+## Database persistence architecture
+
+The CMS now automatically persists every editor change to Supabase after a short debounce. The database uses three coordinated tables:
+
+- `public.site_content`: canonical single-row JSONB document containing the entire website.
+- `public.site_sections`: one row for every top-level CMS section such as `branding`, `contact`, `hero`, `projects`, `gallery`, `seo`, `sectionHeaders`, and `sectionVisibility`.
+- `public.site_settings`: explicit global columns for site name, logo, favicon, email, phone, WhatsApp, location and social links, plus JSONB copies of branding/contact/SEO/footer settings.
+
+The projection tables are synchronized by a PostgreSQL trigger whenever `site_content` is published. After deploying this version, run the latest `supabase-schema.sql` once in **Supabase → SQL Editor**, then publish/save the site once from the CMS. Use **Site Settings → Test Database** or `/api/diagnostics` to verify that all sections and global settings match the canonical content.
+
 ## 🚀 Quick Deployment Guide
 
 ### Option 1: Deploy to Vercel (Recommended)
