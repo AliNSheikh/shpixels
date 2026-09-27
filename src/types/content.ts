@@ -8,6 +8,8 @@ export interface SEOData {
   favicon?: string;
   googleSiteVerification?: string;
   googleAnalyticsId?: string;
+  googleTagManagerId?: string;
+  metaPixelId?: string;
   sitemapEnabled?: boolean;
 }
 
@@ -21,6 +23,8 @@ export interface BrandingData {
   logoText: string;
   logoSubtext: string;
   logoImage?: string;
+  logoLight?: string;
+  logoDark?: string;
   favicon?: string;
   accentColor: string;
 }
@@ -31,6 +35,8 @@ export interface NavigationItem {
   href: string;
   order: number;
   visible: boolean;
+  target?: '_self' | '_blank';
+  kind?: 'link' | 'cta';
 }
 
 export interface HeroData {
@@ -43,6 +49,9 @@ export interface HeroData {
   secondaryCtaLink: string;
   featuredVideoId: string;
   bgImageUrl: string;
+  backgroundType?: 'image' | 'video';
+  backgroundVideoUrl?: string;
+  typingStrings?: string[];
   marqueeItems: string[];
 }
 
@@ -63,6 +72,10 @@ export interface AboutData {
   skills: string[];
   tools: string[];
   experienceYears: number;
+  specialties?: string[];
+  resumeUrl?: string;
+  resumeLabel?: string;
+  location?: string;
 }
 
 export interface ServiceItem {
@@ -73,6 +86,9 @@ export interface ServiceItem {
   category: string;
   icon: string;
   features: string[];
+  deliverables?: string[];
+  order?: number;
+  visible?: boolean;
 }
 
 export interface ProjectVideo {
@@ -92,6 +108,11 @@ export interface ProjectItem {
   client: string;
   year: string;
   coverImage: string;
+  slug?: string;
+  liveUrl?: string;
+  githubUrl?: string;
+  techStack?: string[];
+  completionDate?: string;
   videos: ProjectVideo[];
   gallery: string[];
   externalLinks: { label: string; url: string }[];
@@ -183,6 +204,8 @@ export interface ContactData {
   phone: string;
   whatsapp: string;
   location: string;
+  address?: string;
+  workingHours?: string;
   instagram: string;
   youtube: string;
   tiktok: string;
@@ -193,10 +216,66 @@ export interface ContactData {
   responseTimeNote: string;
 }
 
+export interface FooterLink {
+  id: string;
+  label: string;
+  url: string;
+  target?: '_self' | '_blank';
+  order?: number;
+  visible?: boolean;
+}
+
+export interface HeaderCta {
+  id: string;
+  label: string;
+  url: string;
+  target?: '_self' | '_blank';
+  variant?: 'primary' | 'secondary';
+  order?: number;
+  visible?: boolean;
+}
+
+export interface TimelineItem {
+  id: string;
+  type: 'experience' | 'education';
+  title: string;
+  organization: string;
+  startDate: string;
+  endDate?: string;
+  isCurrent?: boolean;
+  description: string;
+  location?: string;
+  order?: number;
+  visible?: boolean;
+}
+
+export interface SkillItem {
+  id: string;
+  name: string;
+  category: string;
+  proficiency?: number;
+  icon?: string;
+  order?: number;
+  visible?: boolean;
+}
+
+export interface TestimonialItem {
+  id: string;
+  clientName: string;
+  position?: string;
+  company?: string;
+  avatar?: string;
+  body: string;
+  rating?: number;
+  order?: number;
+  visible?: boolean;
+}
+
 export interface FooterData {
   copyrightText: string;
   quote: string;
   disclaimer: string;
+  legalNotice?: string;
 }
 
 export interface PublicationRecord {
@@ -228,6 +307,12 @@ export interface GlobalContent {
   workflow: WorkflowStep[];
   contact: ContactData;
   footer: FooterData;
+  headerCtas?: HeaderCta[];
+  experience?: TimelineItem[];
+  education?: TimelineItem[];
+  skills?: SkillItem[];
+  testimonials?: TestimonialItem[];
+  footerLinks?: FooterLink[];
   categories?: string[];
   categoryDetails?: Record<string, CategoryDetail>;
   adminAuth?: AdminAuthData;
