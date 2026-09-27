@@ -17,7 +17,9 @@ export function NavigationManager() {
     label: '',
     href: '#',
     order: navItems.length + 1,
-    visible: true
+    visible: true,
+    target: '_self',
+    kind: 'link'
   });
 
   const handleToggleVisible = (id: string) => {
@@ -64,7 +66,9 @@ export function NavigationManager() {
       label: '',
       href: '#',
       order: updated.length + 1,
-      visible: true
+      visible: true,
+      target: '_self',
+      kind: 'link'
     });
   };
 
@@ -143,8 +147,17 @@ export function NavigationManager() {
                 />
               </div>
 
-              {/* Visibility and Delete */}
+              {/* Target window */}
               <div className="w-full sm:col-span-3 flex items-center justify-end gap-2">
+                <select
+                  value={item.target || '_self'}
+                  onChange={(e) => handleSaveItemChanges(index, 'target', e.target.value)}
+                  className="px-2 py-1.5 rounded-lg bg-[#232323] border border-[#2b2b2b] text-[10px] text-[#a8a6a1]"
+                  title="Open link in"
+                >
+                  <option value="_self">Same tab</option>
+                  <option value="_blank">New tab</option>
+                </select>
                 <button
                   onClick={() => handleToggleVisible(item.id)}
                   className={`p-2 rounded-lg text-xs flex items-center gap-1 ${
@@ -203,6 +216,20 @@ export function NavigationManager() {
                   placeholder="e.g. #services, #contact, https://..."
                   className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none font-mono"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1">
+                  Open Link In
+                </label>
+                <select
+                  value={newItem.target || '_self'}
+                  onChange={(e) => setNewItem({ ...newItem, target: e.target.value as '_self' | '_blank' })}
+                  className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed]"
+                >
+                  <option value="_self">Same tab</option>
+                  <option value="_blank">New tab</option>
+                </select>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#2b2b2b]">
