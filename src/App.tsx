@@ -26,18 +26,16 @@ import { SiteRuntime } from './components/common/SiteRuntime';
 function AppContent() {
   const { isAdminView, isAuthenticated, content } = useContent();
 
-  const runtime = <SiteRuntime />;
-
   if (isAdminView) {
     if (!isAuthenticated) {
-      return <>{runtime}<AdminAuthModal /></>;
+      return <AdminAuthModal />;
     }
-    return <>{runtime}<AdminLayout /></>;
+    return <AdminLayout />;
   }
 
   return (
     <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
-      {runtime}
+      <SiteRuntime />
       {content.sectionVisibility?.header !== false && <Header />}
       <main>
         {content.sectionVisibility?.hero !== false && <Hero />}
