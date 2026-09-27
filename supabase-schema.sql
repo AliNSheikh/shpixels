@@ -244,7 +244,8 @@ CREATE TABLE IF NOT EXISTS public.projects (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS projects_slug_unique_idx
+DROP INDEX IF EXISTS public.projects_slug_unique_idx;
+CREATE INDEX IF NOT EXISTS projects_slug_idx
   ON public.projects(slug)
   WHERE slug IS NOT NULL AND slug <> '';
 
