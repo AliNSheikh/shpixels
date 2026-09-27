@@ -21,19 +21,23 @@ import { Testimonials } from './components/public/Testimonials';
 import { Footer } from './components/public/Footer';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminAuthModal } from './components/admin/AdminAuthModal';
+import { SiteRuntime } from './components/common/SiteRuntime';
 
 function AppContent() {
   const { isAdminView, isAuthenticated, content } = useContent();
 
+  const runtime = <SiteRuntime />;
+
   if (isAdminView) {
     if (!isAuthenticated) {
-      return <AdminAuthModal />;
+      return <>{runtime}<AdminAuthModal /></>;
     }
-    return <AdminLayout />;
+    return <>{runtime}<AdminLayout /></>;
   }
 
   return (
     <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
+      {runtime}
       {content.sectionVisibility?.header !== false && <Header />}
       <main>
         {content.sectionVisibility?.hero !== false && <Hero />}
