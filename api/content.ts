@@ -1,4 +1,4 @@
-import { getServerSupabase } from './_supabase';
+import { getServerSupabase } from './_supabase.js';
 
 export default async function handler(req: any, res: any) {
   // Set aggressive no-cache headers for instant edge freshness
