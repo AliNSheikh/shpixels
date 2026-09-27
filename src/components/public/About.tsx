@@ -96,6 +96,31 @@ export function About() {
               ))}
             </div>
 
+            {(about.specialties?.length || about.resumeUrl || about.location) && (
+              <div className="rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] p-4 space-y-3">
+                {about.location && <p className="text-xs text-[#706e6a] font-mono">{about.location}</p>}
+                {about.specialties && about.specialties.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {about.specialties.map((item, index) => (
+                      <span key={index} className="px-2.5 py-1 rounded-full bg-[#232323] border border-[#2b2b2b] text-xs text-[#d7d6d2]">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {about.resumeUrl && (
+                  <a
+                    href={about.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 rounded-full bg-[var(--site-accent)] text-white text-xs font-semibold"
+                  >
+                    {about.resumeLabel || 'Download Resume'}
+                  </a>
+                )}
+              </div>
+            )}
+
             {/* Capabilities / Tools */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-2 text-xs font-mono tracking-widest uppercase text-[#706e6a]">
