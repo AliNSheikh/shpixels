@@ -90,13 +90,25 @@ export function SiteSettings() {
     setIsTestingDb(true);
     setDbStatusMsg(null);
     try {
-      const freshHealth = await refreshDiagnostics();
-      setDbStatusMsg({
-        text: freshHealth.connected 
-          ? (isAr ? '✓ الاتصال بقاعدة بيانات Supabase سليم ومباشر!' : '✓ Connection to Supabase database verified successfully!')
-          : (freshHealth.error || (isAr ? 'تعذر الاتصال بـ Supabase' : 'Unable to connect to Supabase')),
-        isError: !freshHealth.connected
+      await refreshDiagnostics();
+
+      const response = await fetch('/api/diagnostics', {
+        headers: { 'Cache-Control': 'no-cache' },
+        credentials: 'same-origin'
       });
+      const report = await response.json();
+
+      if (response.ok && report.success) {
+        setDbStatusMsg({
+          text: isAr
+            ? '✓ قاعدة البيانات مكتملة: المحتوى الرئيسي، جميع أقسام الموقع، الشعار، البريد، الهاتف والروابط متزامنة.'
+            : '✓ Database audit passed: canonical content, every CMS section, logo, email, phone and social links are synchronized.',
+          isError: false
+        });
+      } else {
+        const details = report?.checks?.error || report?.error || 'Database audit failed';
+        setDbStatusMsg({ text: details, isError: true });
+      }
     } catch (err: any) {
       setDbStatusMsg({ text: err.message, isError: true });
     } finally {
