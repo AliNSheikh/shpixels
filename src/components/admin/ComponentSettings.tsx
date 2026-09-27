@@ -5,7 +5,7 @@ export function ComponentSettings() {
   const { content, updateContent, importJson } = useContent();
   const [json, setJson] = useState('');
   const [message, setMessage] = useState('');
-  const sections = ['header', 'hero', 'showreel', 'clientlogos', 'about', 'services', 'portfolio', 'process', 'gallery', 'contact', 'footer'];
+  const sections = ['header', 'hero', 'showreel', 'clientlogos', 'about', 'services', 'portfolio', 'process', 'gallery', 'experience', 'skills', 'testimonials', 'contact', 'footer'];
   return <section className="space-y-4 p-5 border border-gray-700 rounded-xl">
     <h2 className="text-xl font-bold">Website components</h2>
     <p>Choose which sections appear on the website. Changes are automatically saved to Supabase.</p>
