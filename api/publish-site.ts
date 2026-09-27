@@ -26,8 +26,11 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ success: false, error: validation.error });
   }
 
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return res.status(503).json({ success: false, error: 'Set the server-only SUPABASE_SERVICE_ROLE_KEY to enable secure publishing.' });
+  if (!process.env.SUPABASE_SECRET_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(503).json({
+      success: false,
+      error: 'Secure publishing needs SUPABASE_SECRET_KEY (Vercel Supabase integration) or legacy SUPABASE_SERVICE_ROLE_KEY.'
+    });
   }
   // 3. Connect to Supabase
   const { client, error: clientErr } = getServerSupabase();
