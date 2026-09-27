@@ -13,11 +13,17 @@ export function getServerSupabase(accessToken?: string): { client: SupabaseClien
   // NOTE: no hardcoded fallback URL/key here on purpose. If these env vars are
   // missing, every API route must fail loudly with a clear "not configured"
   // error rather than silently connecting to an unrelated Supabase project.
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    return { client: null, error: 'Server is missing SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) environment variables. Set them in your Vercel Project Settings → Environment Variables, then redeploy.' };
+    return { client: null, error: 'Server is missing Supabase environment variables. With the Vercel Supabase integration, verify SUPABASE_URL and SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY) are available, then redeploy.' };
   }
 
   try {
