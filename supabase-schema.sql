@@ -752,7 +752,7 @@ BEGIN
     NEW.version,
     COALESCE(NEW.updated_at, NOW())
   FROM (
-    SELECT value #>> '{}' AS name, ord
+    SELECT c.value #>> '{}' AS name, c.ord AS ord
     FROM jsonb_array_elements(COALESCE(NEW.data->'categories','[]'::jsonb))
       WITH ORDINALITY AS c(value, ord)
   ) AS x
@@ -784,7 +784,7 @@ BEGIN
     WITH ORDINALITY AS x(item, ord);
 
   FOR project_row, project_ord IN
-    SELECT item, ord
+    SELECT x.item, x.ord
     FROM jsonb_array_elements(COALESCE(NEW.data->'projects','[]'::jsonb))
       WITH ORDINALITY AS x(item,ord)
   LOOP
