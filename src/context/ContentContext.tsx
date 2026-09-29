@@ -725,6 +725,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         ...target,
         id: `proj-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         title: `${target.title} (Copy)`,
+        slug: '',
         order: (target.order || 0) + 1
       };
       const next = { ...prev, projects: [copy, ...(prev.projects || [])] };
