@@ -24,6 +24,7 @@ import { AdminAuthModal } from './components/admin/AdminAuthModal';
 import { SiteRuntime } from './components/common/SiteRuntime';
 import { ProjectNotFound, ProjectPage } from './components/public/ProjectPage';
 import { findProjectBySlug } from './utils/projectRoutes';
+import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButton';
 
 function AppContent() {
   const { isAdminView, isAuthenticated, content, serverSyncStatus } = useContent();
@@ -59,6 +60,7 @@ function AppContent() {
           <ProjectNotFound />
         )}
         {content.sectionVisibility?.footer !== false && <Footer />}
+        <WhatsAppFloatingButton />
       </div>
     );
   }
@@ -82,6 +84,7 @@ function AppContent() {
         {content.sectionVisibility?.contact !== false && <Contact />}
       </main>
       {content.sectionVisibility?.footer !== false && <Footer />}
+      <WhatsAppFloatingButton />
     </div>
   );
 }

@@ -56,9 +56,19 @@ export function sanitizeGlobalContent(rawContent: GlobalContent): GlobalContent 
     siteName: rawContent.branding?.siteName || rawContent.branding?.logoText || 'My Site'
   };
 
+  const contact = {
+    ...rawContent.contact,
+    website: rawContent.contact?.website || '',
+    facebook: rawContent.contact?.facebook || '',
+    snapchat: rawContent.contact?.snapchat || '',
+    wego: rawContent.contact?.wego || '',
+    socialLinks: rawContent.contact?.socialLinks || []
+  };
+
   return {
     ...rawContent,
     branding,
+    contact,
     sectionVisibility: rawContent.sectionVisibility || {},
     showreel: rawContent.showreel || { caption: '', specs: [] },
     headerCtas: rawContent.headerCtas || [],

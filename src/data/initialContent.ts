@@ -448,7 +448,12 @@ export const initialContent: GlobalContent = {
   contact: {
     email: "contact@shpixels.com",
     phone: "+971 50 123 4567",
+    website: "",
     whatsapp: "https://wa.me/971501234567",
+    facebook: "",
+    snapchat: "",
+    wego: "",
+    socialLinks: [],
     location: "Sharif Abs Studio • Available Globally for Remote & On-Location Projects",
     address: "",
     workingHours: "Sunday–Thursday • 09:00–18:00",
