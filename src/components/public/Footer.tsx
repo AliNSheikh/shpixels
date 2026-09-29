@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ArrowUp, Instagram, Youtube, Linkedin, Film } from 'lucide-react';
+import { ArrowUp, Film } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { getConfiguredSocialLinks, getPlatformLabel, SocialIcon } from '../common/SocialIcon';
 
 export function Footer() {
   const { content, setIsAdminView } = useContent();
@@ -25,6 +26,7 @@ export function Footer() {
     .filter((item) => item.visible !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
   const activeLogo = branding.logoLight || branding.logoImage || '';
+  const socialLinks = getConfiguredSocialLinks(contact);
   const isHomePage = typeof window === 'undefined' || window.location.pathname === '/';
   const resolveSiteHref = (href: string) => (!isHomePage && href.startsWith('#') ? `/${href}` : href);
 
@@ -79,41 +81,23 @@ export function Footer() {
                 : 'Bespoke cinematography studio specializing in luxury commercial advertisements, drone operations, and high-impact visual stories.')}
             </p>
 
-            <div className="flex items-center gap-3 pt-2">
-              {contact.instagram && (
-                <a
-                  href={contact.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[var(--site-accent)] hover:text-white transition-colors border border-[#2b2b2b]"
-                  title="Instagram"
-                >
-                  <Instagram className="w-4 h-4" />
-                </a>
-              )}
-              {contact.youtube && (
-                <a
-                  href={contact.youtube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[var(--site-accent)] hover:text-white transition-colors border border-[#2b2b2b]"
-                  title="YouTube"
-                >
-                  <Youtube className="w-4 h-4" />
-                </a>
-              )}
-              {contact.linkedin && (
-                <a
-                  href={contact.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[var(--site-accent)] hover:text-white transition-colors border border-[#2b2b2b]"
-                  title="LinkedIn"
-                >
-                  <Linkedin className="w-4 h-4" />
-                </a>
-              )}
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2.5 pt-2">
+                {socialLinks.map((item) => (
+                  <a
+                    key={item.id}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[var(--site-accent)] hover:text-white transition-colors border border-[#2b2b2b]"
+                    title={getPlatformLabel(item.platform, item.label)}
+                    aria-label={getPlatformLabel(item.platform, item.label)}
+                  >
+                    <SocialIcon platform={item.platform} className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Navigation Links */}
