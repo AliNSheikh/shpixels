@@ -397,10 +397,21 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         })
       });
 
-      const result = await response.json();
+      const rawResponse = await response.text();
+      let result: any = {};
+
+      if (rawResponse) {
+        try {
+          result = JSON.parse(rawResponse);
+        } catch {
+          throw new Error(
+            `Publish endpoint returned HTTP ${response.status} with a non-JSON response. Verify that /api/publish is deployed on Vercel.`
+          );
+        }
+      }
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to publish content to Supabase');
+        throw new Error(result.error || `Failed to publish content to Supabase (HTTP ${response.status})`);
       }
 
       if (result.warning) {
@@ -476,7 +487,16 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
           note: 'Initial Supabase seed from template'
         })
       });
-      const data = await res.json();
+      const rawResponse = await res.text();
+      let data: any = {};
+      try {
+        data = rawResponse ? JSON.parse(rawResponse) : {};
+      } catch {
+        return {
+          success: false,
+          message: `Seed endpoint returned HTTP ${res.status} with a non-JSON response. Verify that /api/publish is deployed on Vercel.`
+        };
+      }
       if (res.ok && data.success) {
         latestContentRef.current = data.data;
         setContent(data.data);
