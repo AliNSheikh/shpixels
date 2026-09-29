@@ -729,7 +729,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $shpixels$
 DECLARE
   project_row JSONB;
   project_ord BIGINT;
@@ -1336,7 +1336,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$shpixels$;
 
 DROP TRIGGER IF EXISTS sync_shpixels_site_projections_trigger ON public.site_content;
 CREATE TRIGGER sync_shpixels_site_projections_trigger
