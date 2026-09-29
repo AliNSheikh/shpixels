@@ -1,4 +1,5 @@
 import { GlobalContent, ProjectItem } from '../types/content';
+import { ensureUniqueProjectSlug } from './projectRoutes';
 
 /**
  * Deduplicates and ensures uniqueness of IDs across projects and other content collections.
@@ -10,19 +11,30 @@ export function sanitizeGlobalContent(rawContent: GlobalContent): GlobalContent 
   const { adminAuth, supabaseConfig, ...publicContent } = rawContent;
   rawContent = publicContent;
   const seenProjectIds = new Set<string>();
-  const sanitizedProjects: ProjectItem[] = [];
+  const projectsWithUniqueIds: ProjectItem[] = [];
 
   for (let i = 0; i < (rawContent.projects || []).length; i++) {
     const proj = rawContent.projects[i];
     let uniqueId = proj.id;
 
     if (!uniqueId || seenProjectIds.has(uniqueId)) {
-      // Generate a collision-free unique id
+      // Generate a collision-free unique id.
       uniqueId = `${uniqueId || 'proj'}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}-${i}`;
     }
 
     seenProjectIds.add(uniqueId);
-    sanitizedProjects.push(uniqueId === proj.id ? proj : { ...proj, id: uniqueId });
+    projectsWithUniqueIds.push(uniqueId === proj.id ? proj : { ...proj, id: uniqueId });
+  }
+
+  // Every project receives a stable, URL-safe slug. Existing custom slugs are
+  // preserved; missing or colliding slugs are generated deterministically.
+  const sanitizedProjects: ProjectItem[] = [];
+  for (const project of projectsWithUniqueIds) {
+    const slug = ensureUniqueProjectSlug(project, [
+      ...sanitizedProjects,
+      ...projectsWithUniqueIds.filter((item) => item.id !== project.id)
+    ]);
+    sanitizedProjects.push(project.slug === slug ? project : { ...project, slug });
   }
 
   // Deduplicate categories while preserving order and casing
