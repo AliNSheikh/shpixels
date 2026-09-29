@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { useContent } from '../../context/ContentContext';
+import { ProjectItem } from '../../types/content';
+import { getProjectPath } from '../../utils/projectRoutes';
 
 function upsertMeta(selector: string, attributes: Record<string, string>, content: string | undefined) {
   let element = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -41,26 +43,33 @@ function removeScript(id: string) {
   document.getElementById(id)?.remove();
 }
 
-export function SiteRuntime() {
+export function SiteRuntime({ project = null }: { project?: ProjectItem | null }) {
   const { content } = useContent();
 
   useEffect(() => {
     const { seo, branding } = content;
+    const baseUrl = (seo.canonicalUrl || window.location.origin).replace(/\/$/, '');
+    const projectTitle = project ? `${project.title} | ${branding.siteName || 'SHPIXELS'}` : undefined;
+    const projectDescription = project?.description || undefined;
+    const pageTitle = projectTitle || seo.pageTitle || branding.siteName || 'SHPIXELS';
+    const pageDescription = projectDescription || seo.metaDescription;
+    const pageImage = project?.coverImage || seo.ogImage;
+    const pageCanonical = project ? `${baseUrl}${getProjectPath(project)}` : seo.canonicalUrl;
 
     document.documentElement.style.setProperty('--site-accent', branding.accentColor || '#2563eb');
-    document.title = seo.pageTitle || branding.siteName || 'SHPIXELS';
+    document.title = pageTitle;
 
-    upsertMeta('meta[name="description"]', { name: 'description' }, seo.metaDescription);
-    upsertMeta('meta[property="og:title"]', { property: 'og:title' }, seo.ogTitle || seo.pageTitle);
-    upsertMeta('meta[property="og:description"]', { property: 'og:description' }, seo.ogDescription || seo.metaDescription);
-    upsertMeta('meta[property="og:image"]', { property: 'og:image' }, seo.ogImage);
-    upsertMeta('meta[property="og:url"]', { property: 'og:url' }, seo.canonicalUrl);
-    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, seo.ogTitle || seo.pageTitle);
-    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, seo.ogDescription || seo.metaDescription);
-    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, seo.ogImage);
+    upsertMeta('meta[name="description"]', { name: 'description' }, pageDescription);
+    upsertMeta('meta[property="og:title"]', { property: 'og:title' }, projectTitle || seo.ogTitle || seo.pageTitle);
+    upsertMeta('meta[property="og:description"]', { property: 'og:description' }, projectDescription || seo.ogDescription || seo.metaDescription);
+    upsertMeta('meta[property="og:image"]', { property: 'og:image' }, pageImage);
+    upsertMeta('meta[property="og:url"]', { property: 'og:url' }, pageCanonical);
+    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, projectTitle || seo.ogTitle || seo.pageTitle);
+    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, projectDescription || seo.ogDescription || seo.metaDescription);
+    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, pageImage);
     upsertMeta('meta[name="google-site-verification"]', { name: 'google-site-verification' }, seo.googleSiteVerification);
 
-    upsertLink('link[rel="canonical"]', 'canonical', seo.canonicalUrl);
+    upsertLink('link[rel="canonical"]', 'canonical', pageCanonical);
     upsertLink('link[rel="icon"]', 'icon', branding.favicon || seo.favicon);
 
     const gaId = (seo.googleAnalyticsId || '').trim();
@@ -124,7 +133,7 @@ export function SiteRuntime() {
       `;
       document.head.appendChild(script);
     }
-  }, [content.seo, content.branding]);
+  }, [content.seo, content.branding, project]);
 
   return null;
 }
