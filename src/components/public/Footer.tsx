@@ -25,6 +25,8 @@ export function Footer() {
     .filter((item) => item.visible !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
   const activeLogo = branding.logoLight || branding.logoImage || '';
+  const isHomePage = typeof window === 'undefined' || window.location.pathname === '/';
+  const resolveSiteHref = (href: string) => (!isHomePage && href.startsWith('#') ? `/${href}` : href);
 
   const getNavLabel = (label: string) => {
     if (!isAr) return label;
@@ -123,7 +125,7 @@ export function Footer() {
               {navItems.map((item) => (
                 <li key={item.id}>
                   <a
-                    href={item.href}
+                    href={resolveSiteHref(item.href)}
                     className="hover:text-[#f1f2ed] transition-colors"
                   >
                     {getNavLabel(item.label)}
@@ -175,7 +177,7 @@ export function Footer() {
             {footerLinks.map((item) => (
               <a
                 key={item.id}
-                href={item.url}
+                href={resolveSiteHref(item.url)}
                 target={item.target || '_self'}
                 rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
                 className="hover:text-[#f1f2ed] transition-colors"
