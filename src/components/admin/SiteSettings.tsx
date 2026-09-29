@@ -35,6 +35,8 @@ export function SiteSettings() {
     publishSite,
     isPublishing,
     publishSuccess: isGlobalPublishSuccess,
+    publishError,
+    publishWarning,
     hasUnsavedChanges,
     lastPublishedAt,
     publicationVersion,
@@ -121,14 +123,39 @@ export function SiteSettings() {
     setDbStatusMsg(null);
     try {
       const res = await publishSite(isAr ? 'مزامنة يدوية من إعدادات الموقع' : 'Manual sync from Site Settings');
-      if (res) {
+
+      if (!res) {
         setDbStatusMsg({
-          text: isAr ? '✓ تم حفظ ونشر محتوى الموقع بالكامل لقاعدة Supabase بنجاح!' : '✓ All site content published to Supabase database successfully!',
+          text: isAr
+            ? 'فشل حفظ النسخة الرئيسية. راجع رسالة خطأ النشر الظاهرة أدناه ثم شغّل أحدث مخطط SQL إذا كان الخطأ متعلقاً بالمزامنة.'
+            : 'Canonical save failed. Review the publish error shown below and run the latest SQL schema if the failure is projection-related.',
+          isError: true
+        });
+        return;
+      }
+
+      // Verify the server after the write instead of reporting a false positive.
+      const response = await fetch('/api/diagnostics', {
+        headers: { 'Cache-Control': 'no-cache' },
+        credentials: 'same-origin'
+      });
+      const report = await response.json();
+
+      if (response.ok && report.success) {
+        setDbStatusMsg({
+          text: isAr
+            ? '✓ تم حفظ النسخة الرئيسية ومزامنة جميع جداول Supabase بنجاح.'
+            : '✓ Canonical content saved and all Supabase CMS tables synchronized successfully.',
           isError: false
         });
       } else {
         setDbStatusMsg({
-          text: isAr ? 'فشل الحفظ في قاعدة البيانات' : 'Failed to save to database',
+          text:
+            report?.checks?.projectionError ||
+            report?.checks?.error ||
+            (isAr
+              ? 'تم حفظ المحتوى الرئيسي، لكن بعض جداول العرض تحتاج إلى إصلاح المخطط.'
+              : 'Canonical content was saved, but one or more projection tables still need a schema repair.'),
           isError: true
         });
       }
@@ -884,6 +911,20 @@ export function SiteSettings() {
             </button>
           </div>
         </div>
+
+        {publishError && (
+          <div className="p-3.5 rounded-xl text-xs font-mono flex items-start gap-2 bg-red-950/50 border border-red-800/60 text-red-300 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span><strong>Publish error:</strong> {publishError}</span>
+          </div>
+        )}
+
+        {!publishError && publishWarning && (
+          <div className="p-3.5 rounded-xl text-xs font-mono flex items-start gap-2 bg-amber-950/40 border border-amber-700/50 text-amber-300 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span><strong>Database warning:</strong> {publishWarning}</span>
+          </div>
+        )}
 
         {dbStatusMsg && (
           <div className={`p-3.5 rounded-xl text-xs font-mono flex items-center gap-2 animate-fadeIn ${
