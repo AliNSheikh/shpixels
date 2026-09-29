@@ -1,4 +1,4 @@
-import { ProjectItem } from '../types/content';
+import type { ProjectItem } from '../types/content';
 
 export function normalizeProjectSlug(value: string | undefined | null): string {
   return String(value || '')
