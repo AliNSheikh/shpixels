@@ -457,9 +457,6 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  j JSONB;
-  details JSONB;
-  ord BIGINT;
   project_row JSONB;
   project_ord BIGINT;
 BEGIN
