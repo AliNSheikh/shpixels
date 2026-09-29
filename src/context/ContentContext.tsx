@@ -105,6 +105,7 @@ interface ContentContextType {
   isPublishing: boolean;
   publishSuccess: boolean;
   publishError: string | null;
+  publishWarning: string | null;
   hasUnsavedChanges: boolean;
   lastPublishedAt: string | null;
   publicationVersion: number;
@@ -149,6 +150,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const [publishSuccess, setPublishSuccess] = useState<boolean>(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishWarning, setPublishWarning] = useState<string | null>(null);
   const [serverSyncStatus, setServerSyncStatus] = useState<SyncState>('syncing');
   const [realtimeStatus, setRealtimeStatus] = useState<RealtimeState>('connecting');
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
@@ -379,6 +381,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     publishInFlightRef.current = true;
     setIsPublishing(true);
     setPublishError(null);
+    setPublishWarning(null);
     setServerSyncStatus('saving');
 
     try {
@@ -398,6 +401,10 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to publish content to Supabase');
+      }
+
+      if (result.warning) {
+        setPublishWarning(String(result.warning));
       }
 
       // Reconcile with authoritative Supabase response.
@@ -1066,6 +1073,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     isPublishing,
     publishSuccess,
     publishError,
+    publishWarning,
     hasUnsavedChanges,
     lastPublishedAt,
     publicationVersion,
@@ -1131,6 +1139,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
     isPublishing,
     publishSuccess,
     publishError,
+    publishWarning,
     hasUnsavedChanges,
     lastPublishedAt,
     publicationVersion,

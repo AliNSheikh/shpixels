@@ -103,6 +103,10 @@ export default async function handler(req: any, res: any) {
     settingsProjectionMatchesCanonical: false,
     normalizedTablesReady: false,
     missingNormalizedTables: [] as string[],
+    projectionStatusAvailable: false,
+    projectionOk: false,
+    projectionVersion: 0,
+    projectionError: null as string | null,
 
     currentVersion: 0,
     publishedAt: null as string | null,
@@ -219,6 +223,27 @@ export default async function handler(req: any, res: any) {
     }
     checks.normalizedTablesReady = checks.missingNormalizedTables.length === 0;
 
+    const { data: projectionRows, error: projectionStatusError } = await client
+      .from('cms_projection_status')
+      .select('version, ok, error, updated_at')
+      .eq('id', 'current')
+      .limit(1);
+
+    if (!projectionStatusError) {
+      checks.projectionStatusAvailable = true;
+      const projection = projectionRows?.[0];
+      if (projection) {
+        checks.projectionOk = Boolean(projection.ok);
+        checks.projectionVersion = Number(projection.version || 0);
+        checks.projectionError = projection.error || null;
+      }
+    } else if (
+      projectionStatusError.code !== '42P01' &&
+      !/does not exist|schema cache/i.test(projectionStatusError.message || '')
+    ) {
+      checks.error = checks.error || `Projection status audit failed: ${projectionStatusError.message}`;
+    }
+
     const isAdmin = await verifyAdminAuthorization(req);
     checks.serverWritable = Boolean(isAdmin && serviceRoleKey);
 
@@ -226,12 +251,17 @@ export default async function handler(req: any, res: any) {
       checks.error = checks.error || 'The canonical site_content.data JSON is missing required CMS sections.';
     } else if (!checks.sectionProjectionTableExists || !checks.settingsProjectionTableExists) {
       checks.error = checks.error || 'Database projection tables are missing. Run the latest supabase-schema.sql.';
+    } else if (!checks.normalizedTablesReady) {
+      checks.error = checks.error || `Normalized CMS tables are missing: ${checks.missingNormalizedTables.join(', ')}. Run the latest supabase-schema.sql.`;
+    } else if (checks.projectionStatusAvailable && (!checks.projectionOk || checks.projectionVersion !== checks.currentVersion)) {
+      checks.error =
+        checks.error ||
+        checks.projectionError ||
+        `Database projections are not synchronized with canonical version ${checks.currentVersion}. Publish once after running the latest schema.`;
     } else if (checks.missingSectionKeys.length > 0) {
       checks.error = checks.error || `Some CMS sections are not projected yet: ${checks.missingSectionKeys.join(', ')}. Publish the site once after running the latest schema.`;
     } else if (!checks.settingsProjectionMatchesCanonical) {
       checks.error = checks.error || 'Branding/contact projection does not match the canonical site content. Publish the site again to resync.';
-    } else if (!checks.normalizedTablesReady) {
-      checks.error = checks.error || `Normalized CMS tables are missing: ${checks.missingNormalizedTables.join(', ')}. Run the latest supabase-schema.sql.`;
     }
 
     return res.status(200).json({
