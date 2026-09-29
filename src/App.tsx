@@ -22,15 +22,45 @@ import { Footer } from './components/public/Footer';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminAuthModal } from './components/admin/AdminAuthModal';
 import { SiteRuntime } from './components/common/SiteRuntime';
+import { ProjectNotFound, ProjectPage } from './components/public/ProjectPage';
+import { findProjectBySlug } from './utils/projectRoutes';
 
 function AppContent() {
-  const { isAdminView, isAuthenticated, content } = useContent();
+  const { isAdminView, isAuthenticated, content, serverSyncStatus } = useContent();
 
   if (isAdminView) {
     if (!isAuthenticated) {
       return <AdminAuthModal />;
     }
     return <AdminLayout />;
+  }
+
+  const projectRoute = typeof window !== 'undefined'
+    ? window.location.pathname.match(/^\/projects\/([^/]+)\/?$/)
+    : null;
+
+  if (projectRoute) {
+    const project = findProjectBySlug(
+      (content.projects || []).filter((item) => item.published),
+      projectRoute[1]
+    );
+
+    return (
+      <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
+        <SiteRuntime project={project || null} />
+        {content.sectionVisibility?.header !== false && <Header />}
+        {serverSyncStatus === 'syncing' ? (
+          <main className="min-h-[75vh] pt-32 flex items-center justify-center">
+            <div className="text-xs font-mono uppercase tracking-[0.2em] text-[#706e6a]">Loading project…</div>
+          </main>
+        ) : project ? (
+          <ProjectPage project={project} />
+        ) : (
+          <ProjectNotFound />
+        )}
+        {content.sectionVisibility?.footer !== false && <Footer />}
+      </div>
+    );
   }
 
   return (
