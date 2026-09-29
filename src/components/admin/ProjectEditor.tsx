@@ -10,6 +10,7 @@ import { ImageUploadDropzone } from '../common/ImageUploadDropzone';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { useLanguage } from '../../context/LanguageContext';
 import { useContent } from '../../context/ContentContext';
+import { ensureUniqueProjectSlug, getProjectPath, normalizeProjectSlug } from '../../utils/projectRoutes';
 
 interface ProjectEditorProps {
   project: ProjectItem | null;
@@ -31,7 +32,7 @@ const FALLBACK_CATEGORIES = [
 
 export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEditorProps) {
   const { language } = useLanguage();
-  const { categories: contextCategories } = useContent();
+  const { categories: contextCategories, content } = useContent();
   const availableCategories = (contextCategories && contextCategories.length > 0) ? contextCategories : FALLBACK_CATEGORIES;
   const isAr = language === 'ar';
 
@@ -176,8 +177,14 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
       setTitleError(isAr ? 'يرجى كتابة عنوان المشروع' : 'Please provide a project title');
       return;
     }
+
     setTitleError(null);
-    onSave(formData);
+    const slug = ensureUniqueProjectSlug(
+      { ...formData, slug: normalizeProjectSlug(formData.slug) },
+      content.projects || []
+    );
+
+    onSave({ ...formData, slug });
   };
 
   return (
@@ -306,14 +313,17 @@ export function ProjectEditor({ project, onSave, onCancel, onDelete }: ProjectEd
             />
           </div>
           <div>
-            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">Project Slug</label>
+            <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">Project Slug / Unique Page URL</label>
             <input
               type="text"
               value={formData.slug || ''}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') })}
+              onChange={(e) => setFormData({ ...formData, slug: normalizeProjectSlug(e.target.value) })}
               placeholder="project-slug"
               className="w-full px-4 py-2.5 rounded-xl bg-[#232323] border border-[#2b2b2b] focus:border-[#2563eb] focus:outline-none text-sm text-[#f1f2ed] font-mono"
             />
+            <p className="mt-1.5 text-[10px] text-[#706e6a] font-mono break-all">
+              {isAr ? 'الرابط العام:' : 'Public URL:'} {getProjectPath({ ...formData, slug: formData.slug || undefined })}
+            </p>
           </div>
 
           <div>
