@@ -24,6 +24,7 @@ const NORMALIZED_PUBLIC_TABLES = [
   'footer_links',
   'section_headers',
   'section_visibility',
+  'contact_social_links',
   'contact_inquiries'
 ] as const;
 
@@ -180,7 +181,7 @@ export default async function handler(req: any, res: any) {
 
     const { data: settingsRows, error: settingsErr } = await client
       .from('site_settings')
-      .select('id, site_name, logo_image, favicon, email, phone, whatsapp, instagram, youtube, tiktok, linkedin, behance, version')
+      .select('id, site_name, logo_image, favicon, email, phone, website, whatsapp, facebook, instagram, tiktok, snapchat, youtube, behance, linkedin, wego, social_links, version')
       .eq('id', 'current')
       .limit(1);
 
@@ -197,10 +198,13 @@ export default async function handler(req: any, res: any) {
         checks.contactEmailStored = String(settings.email || '') === canonicalEmail;
         checks.contactPhoneStored = String(settings.phone || '') === canonicalPhone;
 
-        const linkKeys = ['whatsapp', 'instagram', 'youtube', 'tiktok', 'linkedin', 'behance'] as const;
-        checks.contactLinksStored = linkKeys.every(
+        const linkKeys = ['website', 'whatsapp', 'facebook', 'instagram', 'tiktok', 'snapchat', 'youtube', 'behance', 'linkedin', 'wego'] as const;
+        const presetLinksMatch = linkKeys.every(
           (key) => String(settings[key] || '') === String(canonical?.contact?.[key] || '')
         );
+        const canonicalSocialLinks = JSON.stringify(canonical?.contact?.socialLinks || []);
+        const projectedSocialLinks = JSON.stringify(settings.social_links || []);
+        checks.contactLinksStored = presetLinksMatch && canonicalSocialLinks === projectedSocialLinks;
 
         checks.settingsProjectionMatchesCanonical =
           checks.brandingLogoStored &&
