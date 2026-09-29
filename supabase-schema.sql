@@ -98,15 +98,20 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
 
   email TEXT,
   phone TEXT,
+  website TEXT,
   whatsapp TEXT,
+  facebook TEXT,
+  instagram TEXT,
+  tiktok TEXT,
+  snapchat TEXT,
+  youtube TEXT,
+  behance TEXT,
+  linkedin TEXT,
+  wego TEXT,
+  social_links JSONB NOT NULL DEFAULT '[]'::jsonb,
   location TEXT,
   address TEXT,
   working_hours TEXT,
-  instagram TEXT,
-  youtube TEXT,
-  tiktok TEXT,
-  linkedin TEXT,
-  behance TEXT,
   cta_heading TEXT,
   cta_subtitle TEXT,
   response_time_note TEXT,
@@ -138,6 +143,11 @@ ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS google_site_verificati
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS google_analytics_id TEXT;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS google_tag_manager_id TEXT;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS meta_pixel_id TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS website TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS facebook TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS snapchat TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS wego TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS social_links JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS address TEXT;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS working_hours TEXT;
 ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS copyright_text TEXT;
@@ -451,6 +461,18 @@ CREATE TABLE IF NOT EXISTS public.section_visibility (
 -- ------------------------------------------------------------------------------
 -- Inbound inquiry log (not part of public site_content)
 -- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.contact_social_links (
+  id TEXT PRIMARY KEY,
+  platform TEXT NOT NULL,
+  label TEXT,
+  url TEXT NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  visible BOOLEAN NOT NULL DEFAULT TRUE,
+  raw JSONB NOT NULL DEFAULT '{}'::jsonb,
+  version BIGINT NOT NULL DEFAULT 1,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.contact_inquiries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
@@ -703,6 +725,15 @@ ALTER TABLE public.section_visibility ADD COLUMN IF NOT EXISTS visible BOOLEAN N
 ALTER TABLE public.section_visibility ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
 ALTER TABLE public.section_visibility ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS platform TEXT;
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS label TEXT;
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS url TEXT;
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.contact_social_links ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS phone TEXT;
 ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS service TEXT;
 ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS budget TEXT;
@@ -762,8 +793,8 @@ BEGIN
     favicon, accent_color,
     page_title, meta_description, og_title, og_description, og_image, canonical_url,
     google_site_verification, google_analytics_id, google_tag_manager_id, meta_pixel_id,
-    email, phone, whatsapp, location, address, working_hours,
-    instagram, youtube, tiktok, linkedin, behance,
+    email, phone, website, whatsapp, facebook, instagram, tiktok, snapchat,
+    youtube, behance, linkedin, wego, social_links, location, address, working_hours,
     cta_heading, cta_subtitle, response_time_note,
     copyright_text, footer_quote, footer_disclaimer, legal_notice,
     branding, seo, contact, footer, version, updated_at
@@ -790,15 +821,20 @@ BEGIN
     NEW.data #>> '{seo,metaPixelId}',
     NEW.data #>> '{contact,email}',
     NEW.data #>> '{contact,phone}',
+    NEW.data #>> '{contact,website}',
     NEW.data #>> '{contact,whatsapp}',
+    NEW.data #>> '{contact,facebook}',
+    NEW.data #>> '{contact,instagram}',
+    NEW.data #>> '{contact,tiktok}',
+    NEW.data #>> '{contact,snapchat}',
+    NEW.data #>> '{contact,youtube}',
+    NEW.data #>> '{contact,behance}',
+    NEW.data #>> '{contact,linkedin}',
+    NEW.data #>> '{contact,wego}',
+    COALESCE(NEW.data #> '{contact,socialLinks}', '[]'::jsonb),
     NEW.data #>> '{contact,location}',
     NEW.data #>> '{contact,address}',
     NEW.data #>> '{contact,workingHours}',
-    NEW.data #>> '{contact,instagram}',
-    NEW.data #>> '{contact,youtube}',
-    NEW.data #>> '{contact,tiktok}',
-    NEW.data #>> '{contact,linkedin}',
-    NEW.data #>> '{contact,behance}',
     NEW.data #>> '{contact,ctaHeading}',
     NEW.data #>> '{contact,ctaSubtitle}',
     NEW.data #>> '{contact,responseTimeNote}',
@@ -834,15 +870,20 @@ BEGIN
     meta_pixel_id = EXCLUDED.meta_pixel_id,
     email = EXCLUDED.email,
     phone = EXCLUDED.phone,
+    website = EXCLUDED.website,
     whatsapp = EXCLUDED.whatsapp,
+    facebook = EXCLUDED.facebook,
+    instagram = EXCLUDED.instagram,
+    tiktok = EXCLUDED.tiktok,
+    snapchat = EXCLUDED.snapchat,
+    youtube = EXCLUDED.youtube,
+    behance = EXCLUDED.behance,
+    linkedin = EXCLUDED.linkedin,
+    wego = EXCLUDED.wego,
+    social_links = EXCLUDED.social_links,
     location = EXCLUDED.location,
     address = EXCLUDED.address,
     working_hours = EXCLUDED.working_hours,
-    instagram = EXCLUDED.instagram,
-    youtube = EXCLUDED.youtube,
-    tiktok = EXCLUDED.tiktok,
-    linkedin = EXCLUDED.linkedin,
-    behance = EXCLUDED.behance,
     cta_heading = EXCLUDED.cta_heading,
     cta_subtitle = EXCLUDED.cta_subtitle,
     response_time_note = EXCLUDED.response_time_note,
@@ -875,6 +916,7 @@ BEGIN
   DELETE FROM public.skills;
   DELETE FROM public.testimonials;
   DELETE FROM public.footer_links;
+  DELETE FROM public.contact_social_links;
   DELETE FROM public.section_headers;
   DELETE FROM public.section_visibility;
 
@@ -1291,6 +1333,45 @@ BEGIN
   FROM jsonb_array_elements(COALESCE(NEW.data->'footerLinks','[]'::jsonb))
     WITH ORDINALITY AS x(item,ord);
 
+  -- Contact/social links. Preset fields and arbitrary custom links are projected
+  -- into one queryable table. Empty URLs are intentionally omitted.
+  INSERT INTO public.contact_social_links
+    (id,platform,label,url,display_order,visible,raw,version,updated_at)
+  SELECT *
+  FROM (
+    VALUES
+      ('social-website', 'website', 'Website', NEW.data #>> '{contact,website}', 1, TRUE, jsonb_build_object('source','preset')),
+      ('social-whatsapp', 'whatsapp', 'WhatsApp', NEW.data #>> '{contact,whatsapp}', 2, TRUE, jsonb_build_object('source','preset')),
+      ('social-facebook', 'facebook', 'Facebook', NEW.data #>> '{contact,facebook}', 3, TRUE, jsonb_build_object('source','preset')),
+      ('social-instagram', 'instagram', 'Instagram', NEW.data #>> '{contact,instagram}', 4, TRUE, jsonb_build_object('source','preset')),
+      ('social-tiktok', 'tiktok', 'TikTok', NEW.data #>> '{contact,tiktok}', 5, TRUE, jsonb_build_object('source','preset')),
+      ('social-snapchat', 'snapchat', 'Snapchat', NEW.data #>> '{contact,snapchat}', 6, TRUE, jsonb_build_object('source','preset')),
+      ('social-youtube', 'youtube', 'YouTube', NEW.data #>> '{contact,youtube}', 7, TRUE, jsonb_build_object('source','preset')),
+      ('social-behance', 'behance', 'Behance', NEW.data #>> '{contact,behance}', 8, TRUE, jsonb_build_object('source','preset')),
+      ('social-linkedin', 'linkedin', 'LinkedIn', NEW.data #>> '{contact,linkedin}', 9, TRUE, jsonb_build_object('source','preset')),
+      ('social-wego', 'wego', 'WeGo', NEW.data #>> '{contact,wego}', 10, TRUE, jsonb_build_object('source','preset'))
+  ) AS preset(id,platform,label,url,display_order,visible,raw)
+  CROSS JOIN LATERAL (
+    SELECT NEW.version AS version, COALESCE(NEW.updated_at,NOW()) AS updated_at
+  ) AS meta
+  WHERE COALESCE(preset.url,'') <> '';
+
+  INSERT INTO public.contact_social_links
+    (id,platform,label,url,display_order,visible,raw,version,updated_at)
+  SELECT
+    COALESCE(NULLIF(x.item->>'id',''), 'custom-social-' || x.ord::text),
+    COALESCE(NULLIF(x.item->>'platform',''), 'custom'),
+    NULLIF(x.item->>'label',''),
+    COALESCE(x.item->>'url',''),
+    COALESCE((x.item->>'order')::INTEGER, 100 + x.ord::INTEGER),
+    COALESCE((x.item->>'visible')::BOOLEAN, TRUE),
+    x.item,
+    NEW.version,
+    COALESCE(NEW.updated_at,NOW())
+  FROM jsonb_array_elements(COALESCE(NEW.data #> '{contact,socialLinks}','[]'::jsonb))
+    WITH ORDINALITY AS x(item,ord)
+  WHERE COALESCE(x.item->>'url','') <> '';
+
   -- Section headers.
   INSERT INTO public.section_headers
     (section_key,badge,title,description,raw,version,updated_at)
@@ -1375,6 +1456,7 @@ ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.footer_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.section_headers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.section_visibility ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contact_social_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cms_projection_status ENABLE ROW LEVEL SECURITY;
 
@@ -1391,7 +1473,7 @@ BEGIN
         'hero_settings','about_profile','services','project_categories','projects',
         'project_videos','project_gallery','project_links','project_tags','featured_videos','gallery_items',
         'client_logos','workflow_steps','timeline_items','skills','testimonials',
-        'footer_links','section_headers','section_visibility','contact_inquiries'
+        'footer_links','section_headers','section_visibility','contact_social_links','contact_inquiries'
       )
   LOOP
     EXECUTE format('DROP POLICY %I ON %I.%I', rec.policyname, rec.schemaname, rec.tablename);
@@ -1423,7 +1505,8 @@ GRANT SELECT ON
   public.testimonials,
   public.footer_links,
   public.section_headers,
-  public.section_visibility
+  public.section_visibility,
+  public.contact_social_links
 TO anon, authenticated;
 
 CREATE POLICY "Public read site content" ON public.site_content
@@ -1474,6 +1557,8 @@ CREATE POLICY "Public read section headers" ON public.section_headers
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read section visibility" ON public.section_visibility
   FOR SELECT TO anon, authenticated USING (TRUE);
+CREATE POLICY "Public read contact social links" ON public.contact_social_links
+  FOR SELECT TO anon, authenticated USING (visible = TRUE);
 
 -- Projection tables and canonical content are server-write-only.
 REVOKE INSERT, UPDATE, DELETE ON
@@ -1500,7 +1585,8 @@ REVOKE INSERT, UPDATE, DELETE ON
   public.testimonials,
   public.footer_links,
   public.section_headers,
-  public.section_visibility
+  public.section_visibility,
+  public.contact_social_links
 FROM anon, authenticated;
 
 -- Inquiries are private. The server-side API uses the Supabase secret/service key.
@@ -1542,6 +1628,7 @@ ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 -- SELECT * FROM public.timeline_items ORDER BY item_type, display_order;
 -- SELECT * FROM public.skills ORDER BY category, display_order;
 -- SELECT * FROM public.testimonials ORDER BY display_order;
+-- SELECT * FROM public.contact_social_links ORDER BY display_order;
 -- SELECT * FROM public.contact_inquiries ORDER BY created_at DESC;
 -- SELECT * FROM public.cms_projection_status WHERE id='current';
 -- ==============================================================================
