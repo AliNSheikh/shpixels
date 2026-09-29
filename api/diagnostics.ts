@@ -251,10 +251,6 @@ export default async function handler(req: any, res: any) {
       checks.error = checks.error || 'The canonical site_content.data JSON is missing required CMS sections.';
     } else if (!checks.sectionProjectionTableExists || !checks.settingsProjectionTableExists) {
       checks.error = checks.error || 'Database projection tables are missing. Run the latest supabase-schema.sql.';
-    } else if (checks.missingSectionKeys.length > 0) {
-      checks.error = checks.error || `Some CMS sections are not projected yet: ${checks.missingSectionKeys.join(', ')}. Publish the site once after running the latest schema.`;
-    } else if (!checks.settingsProjectionMatchesCanonical) {
-      checks.error = checks.error || 'Branding/contact projection does not match the canonical site content. Publish the site again to resync.';
     } else if (!checks.normalizedTablesReady) {
       checks.error = checks.error || `Normalized CMS tables are missing: ${checks.missingNormalizedTables.join(', ')}. Run the latest supabase-schema.sql.`;
     } else if (checks.projectionStatusAvailable && (!checks.projectionOk || checks.projectionVersion !== checks.currentVersion)) {
@@ -262,6 +258,10 @@ export default async function handler(req: any, res: any) {
         checks.error ||
         checks.projectionError ||
         `Database projections are not synchronized with canonical version ${checks.currentVersion}. Publish once after running the latest schema.`;
+    } else if (checks.missingSectionKeys.length > 0) {
+      checks.error = checks.error || `Some CMS sections are not projected yet: ${checks.missingSectionKeys.join(', ')}. Publish the site once after running the latest schema.`;
+    } else if (!checks.settingsProjectionMatchesCanonical) {
+      checks.error = checks.error || 'Branding/contact projection does not match the canonical site content. Publish the site again to resync.';
     }
 
     return res.status(200).json({
