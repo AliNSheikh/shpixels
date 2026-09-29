@@ -199,18 +199,45 @@ export interface SectionHeaderInfo {
   description?: string;
 }
 
+export type SocialPlatform =
+  | 'website'
+  | 'whatsapp'
+  | 'facebook'
+  | 'instagram'
+  | 'tiktok'
+  | 'snapchat'
+  | 'youtube'
+  | 'behance'
+  | 'linkedin'
+  | 'wego'
+  | 'custom';
+
+export interface ContactSocialLink {
+  id: string;
+  platform: SocialPlatform;
+  label?: string;
+  url: string;
+  order?: number;
+  visible?: boolean;
+}
+
 export interface ContactData {
   email: string;
   phone: string;
+  website?: string;
   whatsapp: string;
+  facebook?: string;
+  instagram: string;
+  tiktok: string;
+  snapchat?: string;
+  youtube: string;
+  behance: string;
+  linkedin: string;
+  wego?: string;
+  socialLinks?: ContactSocialLink[];
   location: string;
   address?: string;
   workingHours?: string;
-  instagram: string;
-  youtube: string;
-  tiktok: string;
-  linkedin: string;
-  behance: string;
   ctaHeading: string;
   ctaSubtitle: string;
   responseTimeNote: string;
