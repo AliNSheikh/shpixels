@@ -3,7 +3,7 @@ import {
   Plus, Edit3, Trash2, Copy, Eye, EyeOff, Sparkles, 
   ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Video, 
   FolderKanban, Search, GripVertical, Check, ArrowUpDown,
-  Tag
+  Tag, ExternalLink
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,6 +11,7 @@ import { ProjectItem } from '../../types/content';
 import { ProjectEditorModal } from './ProjectEditorModal';
 import { CategoryManager } from './CategoryManager';
 import { ConfirmModal } from '../common/ConfirmModal';
+import { getProjectPath } from '../../utils/projectRoutes';
 
 export function ProjectManager() {
   const { 
@@ -437,6 +438,18 @@ export function ProjectManager() {
 
                   {/* Right Section: Toggle, Duplicate, Edit, Delete Actions */}
                   <div className="flex items-center gap-1.5 self-end lg:self-auto flex-shrink-0 pt-2 lg:pt-0 border-t border-[#232323] lg:border-t-0 w-full lg:w-auto justify-end">
+                    {project.published && (
+                      <a
+                        href={getProjectPath(project)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-lg text-[#38bdf8] hover:text-white hover:bg-[#2563eb]/20 transition-colors"
+                        title={isAr ? 'فتح صفحة المشروع' : 'Open Project Page'}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+
                     <button
                       onClick={() => handleTogglePublish(project)}
                       className={`p-2 rounded-lg text-xs flex items-center gap-1 transition-colors cursor-pointer ${
