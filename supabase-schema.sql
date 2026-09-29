@@ -54,6 +54,15 @@ SET data = (
     'categoryDetails', '{}'::jsonb,
     'clientLogos', '[]'::jsonb,
     'sectionHeaders', '{}'::jsonb
+  ) || jsonb_build_object(
+    'contact',
+    jsonb_build_object(
+      'website', '',
+      'facebook', '',
+      'snapchat', '',
+      'wego', '',
+      'socialLinks', '[]'::jsonb
+    ) || COALESCE(data->'contact', '{}'::jsonb)
   ) || COALESCE(data, '{}'::jsonb)
 ) - 'adminAuth' - 'supabaseConfig'
 WHERE id = 'current';
@@ -1359,7 +1368,7 @@ BEGIN
   INSERT INTO public.contact_social_links
     (id,platform,label,url,display_order,visible,raw,version,updated_at)
   SELECT
-    COALESCE(NULLIF(x.item->>'id',''), 'custom-social-' || x.ord::text),
+    'custom-' || COALESCE(NULLIF(x.item->>'id',''), 'social-' || x.ord::text),
     COALESCE(NULLIF(x.item->>'platform',''), 'custom'),
     NULLIF(x.item->>'label',''),
     COALESCE(x.item->>'url',''),
