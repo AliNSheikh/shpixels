@@ -120,15 +120,58 @@ export default async function handler(req: any, res: any) {
 
     if (upsertError) {
       console.error('[API/publish] Supabase upsert failed:', upsertError);
+
+      const rawMessage = String(upsertError.message || 'Unknown database error');
+      const looksLikeProjectionFailure =
+        /sync_shpixels_site_projections|project_categories|site_sections|projection|column .* does not exist|duplicate key/i.test(rawMessage);
+
       return res.status(500).json({
         success: false,
-        error: `Supabase database error: ${upsertError.message}`
+        error: looksLikeProjectionFailure
+          ? `Database projection schema is out of date or the projection trigger failed: ${rawMessage}. Run the latest supabase-schema.sql, then publish again.`
+          : `Supabase database error: ${rawMessage}`,
+        code: upsertError.code || null
       });
+    }
+
+    // The canonical document is now saved. The projection trigger is designed
+    // not to block this write; report its status separately so the CMS can tell
+    // the administrator whether normalized tables also synchronized.
+    let projectionWarning: string | null = null;
+    let projectionOk = true;
+
+    const { data: projectionRows, error: projectionReadError } = await client
+      .from('cms_projection_status')
+      .select('version, ok, error')
+      .eq('id', 'current')
+      .limit(1);
+
+    if (projectionReadError) {
+      projectionOk = false;
+      projectionWarning =
+        'Canonical content was saved, but projection status is unavailable. Run the latest supabase-schema.sql to install the complete database migration.';
+    } else {
+      const projection = projectionRows?.[0];
+      projectionOk = Boolean(
+        projection &&
+        projection.ok &&
+        Number(projection.version || 0) === nextVersion
+      );
+
+      if (!projectionOk) {
+        projectionWarning =
+          projection?.error ||
+          `Canonical content was saved, but normalized database tables have not synchronized to version ${nextVersion}.`;
+      }
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Successfully published to Supabase database',
+      message: projectionOk
+        ? 'Successfully published to Supabase database and synchronized all CMS tables'
+        : 'Canonical site content was saved to Supabase',
+      warning: projectionWarning,
+      projectionOk,
       version: nextVersion,
       published_at: now,
       updated_at: now,
