@@ -309,14 +309,22 @@ export function SiteDataManager() {
       <section className={cardClass}>
         <h3 className="font-bold text-[#f1f2ed]">Contact, Working Hours & Footer Legal</h3>
         <div className="grid md:grid-cols-2 gap-3">
-          <div><label className={labelClass}>Email</label><input className={fieldClass} value={content.contact.email} onChange={(e) => setContact({ email: e.target.value })} /></div>
-          <div><label className={labelClass}>Phone</label><input className={fieldClass} value={content.contact.phone} onChange={(e) => setContact({ phone: e.target.value })} /></div>
+          <div><label className={labelClass}>Email</label><input className={fieldClass} value={content.contact.email || ''} onChange={(e) => setContact({ email: e.target.value })} /></div>
+          <div><label className={labelClass}>Phone</label><input className={fieldClass} value={content.contact.phone || ''} onChange={(e) => setContact({ phone: e.target.value })} /></div>
+          <div><label className={labelClass}>Website</label><input className={fieldClass} value={content.contact.website || ''} onChange={(e) => setContact({ website: e.target.value })} placeholder="https://..." /></div>
+          <div><label className={labelClass}>WhatsApp</label><input className={fieldClass} value={content.contact.whatsapp || ''} onChange={(e) => setContact({ whatsapp: e.target.value })} placeholder="https://wa.me/... or +971..." /></div>
+          <div><label className={labelClass}>Facebook</label><input className={fieldClass} value={content.contact.facebook || ''} onChange={(e) => setContact({ facebook: e.target.value })} /></div>
+          <div><label className={labelClass}>Instagram</label><input className={fieldClass} value={content.contact.instagram || ''} onChange={(e) => setContact({ instagram: e.target.value })} /></div>
+          <div><label className={labelClass}>TikTok</label><input className={fieldClass} value={content.contact.tiktok || ''} onChange={(e) => setContact({ tiktok: e.target.value })} /></div>
+          <div><label className={labelClass}>Snapchat</label><input className={fieldClass} value={content.contact.snapchat || ''} onChange={(e) => setContact({ snapchat: e.target.value })} /></div>
+          <div><label className={labelClass}>YouTube</label><input className={fieldClass} value={content.contact.youtube || ''} onChange={(e) => setContact({ youtube: e.target.value })} /></div>
+          <div><label className={labelClass}>Behance</label><input className={fieldClass} value={content.contact.behance || ''} onChange={(e) => setContact({ behance: e.target.value })} /></div>
+          <div><label className={labelClass}>LinkedIn</label><input className={fieldClass} value={content.contact.linkedin || ''} onChange={(e) => setContact({ linkedin: e.target.value })} /></div>
+          <div><label className={labelClass}>WeGo</label><input className={fieldClass} value={content.contact.wego || ''} onChange={(e) => setContact({ wego: e.target.value })} /></div>
+          <div><label className={labelClass}>Location</label><input className={fieldClass} value={content.contact.location || ''} onChange={(e) => setContact({ location: e.target.value })} /></div>
           <div><label className={labelClass}>Address</label><input className={fieldClass} value={content.contact.address || ''} onChange={(e) => setContact({ address: e.target.value })} /></div>
           <div><label className={labelClass}>Working Hours</label><input className={fieldClass} value={content.contact.workingHours || ''} onChange={(e) => setContact({ workingHours: e.target.value })} /></div>
-          <div><label className={labelClass}>WhatsApp</label><input className={fieldClass} value={content.contact.whatsapp} onChange={(e) => setContact({ whatsapp: e.target.value })} /></div>
-          <div><label className={labelClass}>Instagram</label><input className={fieldClass} value={content.contact.instagram} onChange={(e) => setContact({ instagram: e.target.value })} /></div>
-          <div><label className={labelClass}>YouTube</label><input className={fieldClass} value={content.contact.youtube} onChange={(e) => setContact({ youtube: e.target.value })} /></div>
-          <div><label className={labelClass}>LinkedIn</label><input className={fieldClass} value={content.contact.linkedin} onChange={(e) => setContact({ linkedin: e.target.value })} /></div>
+          <div><label className={labelClass}>Response Note</label><input className={fieldClass} value={content.contact.responseTimeNote || ''} onChange={(e) => setContact({ responseTimeNote: e.target.value })} /></div>
           <div className="md:col-span-2"><label className={labelClass}>Legal Notice</label><textarea rows={3} className={fieldClass} value={content.footer.legalNotice || ''} onChange={(e) => setFooter({ legalNotice: e.target.value })} /></div>
         </div>
 
