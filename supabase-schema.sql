@@ -31,9 +31,32 @@ ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS published_at TIMESTAMPT
 ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS updated_by TEXT DEFAULT 'Admin';
 
+-- IMPORTANT: an older projection trigger may be installed already. Disable it
+-- before migration/backfill updates so a stale function cannot block this schema.
+DROP TRIGGER IF EXISTS sync_shpixels_site_projections_trigger ON public.site_content;
+
 UPDATE public.site_content SET data = '{}'::jsonb WHERE data IS NULL;
 ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
-UPDATE public.site_content SET data = data - 'adminAuth' - 'supabaseConfig' WHERE id = 'current';
+
+-- Backfill fields added by newer CMS versions without overwriting existing data.
+UPDATE public.site_content
+SET data = (
+  jsonb_build_object(
+    'sectionVisibility', '{}'::jsonb,
+    'showreel', jsonb_build_object('caption', '', 'specs', '[]'::jsonb),
+    'headerCtas', '[]'::jsonb,
+    'experience', '[]'::jsonb,
+    'education', '[]'::jsonb,
+    'skills', '[]'::jsonb,
+    'testimonials', '[]'::jsonb,
+    'footerLinks', '[]'::jsonb,
+    'categories', '[]'::jsonb,
+    'categoryDetails', '{}'::jsonb,
+    'clientLogos', '[]'::jsonb,
+    'sectionHeaders', '{}'::jsonb
+  ) || COALESCE(data, '{}'::jsonb)
+) - 'adminAuth' - 'supabaseConfig'
+WHERE id = 'current';
 
 CREATE INDEX IF NOT EXISTS site_content_data_gin_idx
   ON public.site_content USING GIN (data);
@@ -448,6 +471,257 @@ CREATE INDEX IF NOT EXISTS contact_inquiries_created_at_idx
   ON public.contact_inquiries(created_at DESC);
 
 -- ------------------------------------------------------------------------------
+-- Compatibility migrations for databases created by older SHPIXELS schemas
+-- ------------------------------------------------------------------------------
+-- CREATE TABLE IF NOT EXISTS does not add newly introduced columns to an existing
+-- table. These ALTER statements make this file safely upgrade older databases.
+
+ALTER TABLE public.site_sections ADD COLUMN IF NOT EXISTS data JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_sections ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.site_sections ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS site_name TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_text TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_subtext TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS logo_image TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS favicon TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS accent_color TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS whatsapp TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS instagram TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS youtube TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS tiktok TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS linkedin TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS behance TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS cta_heading TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS cta_subtitle TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS response_time_note TEXT;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS branding JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS seo JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS contact JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS footer JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.navigation_items ADD COLUMN IF NOT EXISTS target TEXT NOT NULL DEFAULT '_self';
+ALTER TABLE public.navigation_items ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'link';
+ALTER TABLE public.navigation_items ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.navigation_items ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.navigation_items ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.navigation_items ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.navigation_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.header_ctas ADD COLUMN IF NOT EXISTS target TEXT NOT NULL DEFAULT '_self';
+ALTER TABLE public.header_ctas ADD COLUMN IF NOT EXISTS variant TEXT NOT NULL DEFAULT 'primary';
+ALTER TABLE public.header_ctas ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.header_ctas ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.header_ctas ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.header_ctas ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.header_ctas ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS typing_strings JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS background_type TEXT DEFAULT 'image';
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS background_image TEXT;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS background_video TEXT;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS featured_youtube_video_id TEXT;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS primary_cta_text TEXT;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS primary_cta_link TEXT;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS secondary_cta_text TEXT;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS secondary_cta_link TEXT;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS marquee_items JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.hero_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS biography JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS profile_image TEXT;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS experience_years INTEGER;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS specialties JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS tools JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS resume_url TEXT;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS resume_label TEXT;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS stats JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.about_profile ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS subtitle TEXT;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS icon TEXT;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS deliverables JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.services ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS name_ar TEXT;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS description_ar TEXT;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS cover_image TEXT;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS color TEXT;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.project_categories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS slug TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS client_name TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS year TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS completion_date DATE;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS cover_image TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS live_url TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS github_url TEXT;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS published BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS project_id TEXT;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS youtube_url TEXT;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS youtube_video_id TEXT;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS caption TEXT;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS platform TEXT DEFAULT 'youtube';
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.project_videos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.project_gallery ADD COLUMN IF NOT EXISTS project_id TEXT;
+ALTER TABLE public.project_gallery ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.project_gallery ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.project_gallery ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.project_gallery ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.project_links ADD COLUMN IF NOT EXISTS project_id TEXT;
+ALTER TABLE public.project_links ADD COLUMN IF NOT EXISTS label TEXT;
+ALTER TABLE public.project_links ADD COLUMN IF NOT EXISTS url TEXT;
+ALTER TABLE public.project_links ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.project_links ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.project_links ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.project_tags ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.project_tags ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.project_tags ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS youtube_url TEXT;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS youtube_video_id TEXT;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS thumbnail TEXT;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS caption TEXT;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS client TEXT;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS caption TEXT;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS client TEXT;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS website_url TEXT;
+ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.workflow_steps ADD COLUMN IF NOT EXISTS step_number TEXT;
+ALTER TABLE public.workflow_steps ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.workflow_steps ADD COLUMN IF NOT EXISTS icon TEXT;
+ALTER TABLE public.workflow_steps ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.workflow_steps ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.workflow_steps ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.workflow_steps ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS item_type TEXT;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS organization TEXT;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS start_date TEXT;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS end_date TEXT;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.timeline_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS proficiency INTEGER;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS icon TEXT;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS position TEXT;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS avatar TEXT;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS testimonial_body TEXT;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS rating INTEGER;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.testimonials ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.footer_links ADD COLUMN IF NOT EXISTS target TEXT NOT NULL DEFAULT '_self';
+ALTER TABLE public.footer_links ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.footer_links ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.footer_links ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.footer_links ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.footer_links ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.section_headers ADD COLUMN IF NOT EXISTS badge TEXT;
+ALTER TABLE public.section_headers ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE public.section_headers ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.section_headers ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.section_headers ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.section_headers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.section_visibility ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.section_visibility ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.section_visibility ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS service TEXT;
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS budget TEXT;
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS message TEXT;
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS source_page TEXT;
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'new';
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE public.contact_inquiries ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE TABLE IF NOT EXISTS public.cms_projection_status (
+  id TEXT PRIMARY KEY DEFAULT 'current',
+  version BIGINT NOT NULL DEFAULT 0,
+  ok BOOLEAN NOT NULL DEFAULT FALSE,
+  error TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ------------------------------------------------------------------------------
 -- Projection trigger: one atomic CMS publish updates every normalized table
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.sync_shpixels_site_projections()
@@ -463,6 +737,10 @@ BEGIN
   IF NEW.id <> 'current' THEN
     RETURN NEW;
   END IF;
+
+  -- Projection failures must never block the canonical site_content save.
+  -- The nested block rolls back only the projections and records the error.
+  BEGIN
 
   -- Generic top-level section rows.
   INSERT INTO public.site_sections (section_key, data, version, updated_at)
@@ -791,7 +1069,7 @@ BEGIN
     INSERT INTO public.project_videos
       (id,project_id,title,youtube_url,youtube_video_id,caption,platform,display_order,raw,version,updated_at)
     SELECT
-      COALESCE(NULLIF(v.item->>'id',''), COALESCE(project_row->>'id','project-'||project_ord::text) || '-video-' || v.ord::text),
+      COALESCE(project_row->>'id','project-'||project_ord::text) || '-video-' || v.ord::text,
       COALESCE(project_row->>'id','project-'||project_ord::text),
       v.item->>'title',
       COALESCE(v.item->>'youtubeUrl',''),
@@ -1036,9 +1314,29 @@ BEGIN
     COALESCE(NEW.updated_at,NOW())
   FROM jsonb_each(COALESCE(NEW.data->'sectionVisibility','{}'::jsonb)) AS x(key,value);
 
+    INSERT INTO public.cms_projection_status (id, version, ok, error, updated_at)
+    VALUES ('current', NEW.version, TRUE, NULL, NOW())
+    ON CONFLICT (id) DO UPDATE
+    SET version = EXCLUDED.version,
+        ok = TRUE,
+        error = NULL,
+        updated_at = EXCLUDED.updated_at;
+
+  EXCEPTION WHEN OTHERS THEN
+    INSERT INTO public.cms_projection_status (id, version, ok, error, updated_at)
+    VALUES ('current', NEW.version, FALSE, SQLSTATE || ': ' || SQLERRM, NOW())
+    ON CONFLICT (id) DO UPDATE
+    SET version = EXCLUDED.version,
+        ok = FALSE,
+        error = EXCLUDED.error,
+        updated_at = EXCLUDED.updated_at;
+
+    RAISE WARNING 'SHPIXELS projection sync failed for version %: %: %', NEW.version, SQLSTATE, SQLERRM;
+  END;
+
   RETURN NEW;
 END;
-$$;
+$;
 
 DROP TRIGGER IF EXISTS sync_shpixels_site_projections_trigger ON public.site_content;
 CREATE TRIGGER sync_shpixels_site_projections_trigger
@@ -1078,6 +1376,7 @@ ALTER TABLE public.footer_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.section_headers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.section_visibility ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_inquiries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cms_projection_status ENABLE ROW LEVEL SECURITY;
 
 DO $$
 DECLARE
@@ -1206,6 +1505,7 @@ FROM anon, authenticated;
 
 -- Inquiries are private. The server-side API uses the Supabase secret/service key.
 REVOKE ALL ON public.contact_inquiries FROM anon, authenticated;
+REVOKE ALL ON public.cms_projection_status FROM anon, authenticated;
 
 -- ------------------------------------------------------------------------------
 -- Realtime on the canonical document only. All public clients receive one atomic
@@ -1243,4 +1543,5 @@ ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 -- SELECT * FROM public.skills ORDER BY category, display_order;
 -- SELECT * FROM public.testimonials ORDER BY display_order;
 -- SELECT * FROM public.contact_inquiries ORDER BY created_at DESC;
+-- SELECT * FROM public.cms_projection_status WHERE id='current';
 -- ==============================================================================
