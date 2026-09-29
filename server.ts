@@ -212,6 +212,37 @@ async function startServer() {
     const baseUrl = (contentData?.seo?.canonicalUrl || "https://shpixels.vercel.app").replace(/\/$/, "");
     const now = new Date().toISOString().split("T")[0];
 
+    const normalizeSlug = (value: unknown) =>
+      String(value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-{2,}/g, '');
+
+    const projects = (Array.isArray(contentData?.projects) ? contentData.projects : [])
+      .filter((project: any) => project?.published !== false);
+
+    const usedSlugs = new Set<string>();
+    const projectUrls = projects.map((project: any) => {
+      const base = normalizeSlug(project.slug) || normalizeSlug(project.title) || normalizeSlug(project.id) || 'project';
+      let slug = base;
+      let attempt = 2;
+      while (usedSlugs.has(slug)) {
+        slug = `${base}-${attempt}`;
+        attempt += 1;
+      }
+      usedSlugs.add(slug);
+
+      return `  <url>
+    <loc>${baseUrl}/projects/${encodeURIComponent(slug)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>${project.featured ? '0.9' : '0.8'}</priority>
+  </url>`;
+    });
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -220,48 +251,7 @@ async function startServer() {
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  <url>
-    <loc>${baseUrl}/#portfolio</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#showreel</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#about</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#services</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#process</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#gallery</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/#contact</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+${projectUrls.join('\n')}
 </urlset>`;
 
     res.header("Content-Type", "application/xml");

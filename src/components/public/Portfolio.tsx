@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Play, Sparkles, FolderKanban, Film, Layers } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
-import { ProjectItem } from '../../types/content';
-import { ProjectModal } from './ProjectModal';
+import { getProjectPath } from '../../utils/projectRoutes';
 import { useLanguage } from '../../context/LanguageContext';
 import { OptimizedImage } from '../common/OptimizedImage';
 
@@ -12,7 +11,6 @@ export function Portfolio() {
   const isAr = language === 'ar';
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [activeProject, setActiveProject] = useState<ProjectItem | null>(null);
 
   const publishedProjects = useMemo(() => {
     return [...content.projects]
@@ -142,11 +140,12 @@ export function Portfolio() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {filteredProjects.map((project, idx) => (
-              <div
+              <a
                 key={`${project.id || 'p'}-${idx}`}
                 id={`project-card-${project.id}`}
-                onClick={() => setActiveProject(project)}
-                className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)]/60 transition-all duration-300 cursor-pointer shadow-md hover:shadow-2xl hover:shadow-[var(--site-accent)]/20 flex flex-col justify-between"
+                href={getProjectPath(project)}
+                className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)]/60 transition-all duration-300 cursor-pointer shadow-md hover:shadow-2xl hover:shadow-[var(--site-accent)]/20 flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-[var(--site-accent)]"
+                aria-label={isAr ? `فتح صفحة مشروع ${project.title}` : `Open ${project.title} project page`}
               >
                 {/* Image Cover Container */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#171717]">
@@ -199,17 +198,9 @@ export function Portfolio() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
-        )}
-
-        {/* Active Project Modal */}
-        {activeProject && (
-          <ProjectModal
-            project={activeProject}
-            onClose={() => setActiveProject(null)}
-          />
         )}
       </div>
     </section>

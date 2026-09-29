@@ -42,10 +42,12 @@ export function Header() {
     .filter((item) => item.visible !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
   const activeLogo = content.branding.logoLight || content.branding.logoImage || '';
+  const isHomePage = typeof window === 'undefined' || window.location.pathname === '/';
+  const resolveSiteHref = (href: string) => (!isHomePage && href.startsWith('#') ? `/${href}` : href);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     setMobileMenuOpen(false);
-    if (href.startsWith('#')) {
+    if (href.startsWith('#') && isHomePage) {
       e.preventDefault();
       const target = document.querySelector(href);
       if (target) {
@@ -99,9 +101,9 @@ export function Header() {
           <div className="flex items-center gap-2.5">
             <a
               id="brand-logo-link"
-              href="#hero"
+              href={isHomePage ? '#hero' : '/'}
               onClick={(e) => {
-                handleNavClick(e, '#hero');
+                if (isHomePage) handleNavClick(e, '#hero');
                 handleLogoClick();
               }}
               className="group flex items-center focus:outline-none cursor-pointer"
@@ -139,7 +141,7 @@ export function Header() {
               <a
                 key={item.id}
                 id={`nav-link-${item.id}`}
-                href={item.href}
+                href={resolveSiteHref(item.href)}
                 target={item.target || '_self'}
                 rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
                 onClick={(e) => item.target === '_blank' ? setMobileMenuOpen(false) : handleNavClick(e, item.href)}
@@ -170,7 +172,7 @@ export function Header() {
               <a
                 key={cta.id}
                 id={`header-cta-${cta.id}`}
-                href={cta.url}
+                href={resolveSiteHref(cta.url)}
                 target={cta.target || '_self'}
                 rel={cta.target === '_blank' ? 'noopener noreferrer' : undefined}
                 onClick={(e) => cta.target === '_blank' ? undefined : handleNavClick(e, cta.url)}
@@ -215,7 +217,7 @@ export function Header() {
               <a
                 key={item.id}
                 id={`mobile-nav-link-${item.id}`}
-                href={item.href}
+                href={resolveSiteHref(item.href)}
                 target={item.target || '_self'}
                 rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
                 onClick={(e) => item.target === '_blank' ? setMobileMenuOpen(false) : handleNavClick(e, item.href)}
@@ -230,7 +232,7 @@ export function Header() {
             {(headerCtas.length > 0 ? headerCtas : [{ id: 'mobile-contact', label: t('nav.getInTouch', 'Get in Touch'), url: '#contact', target: '_self', variant: 'primary' }]).slice(0, 2).map((cta) => (
               <a
                 key={cta.id}
-                href={cta.url}
+                href={resolveSiteHref(cta.url)}
                 target={cta.target || '_self'}
                 rel={cta.target === '_blank' ? 'noopener noreferrer' : undefined}
                 onClick={(e) => cta.target === '_blank' ? setMobileMenuOpen(false) : handleNavClick(e, cta.url)}
