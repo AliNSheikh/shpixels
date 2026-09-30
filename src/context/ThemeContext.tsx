@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 
 export type SiteTheme = 'dark' | 'light';
 
@@ -11,7 +12,7 @@ interface ThemeContextValue {
 const STORAGE_KEY = 'shpixels_public_theme_v1';
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<SiteTheme>(() => {
     if (typeof window === 'undefined') return 'dark';
     const saved = window.localStorage.getItem(STORAGE_KEY);
