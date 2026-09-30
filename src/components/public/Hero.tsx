@@ -51,7 +51,7 @@ export function Hero() {
         <div
           className={`absolute inset-0 bg-gradient-to-b ${
             theme === 'light'
-              ? 'from-[#f7f8f5]/75 via-[#f7f8f5]/88 to-[#f7f8f5]'
+              ? 'from-[#f7f8f5]/75 via-[#f7f8f5]/85 to-[#f7f8f5]'
               : 'from-[#171717]/80 via-[#171717]/85 to-[#171717]'
           }`}
         />
