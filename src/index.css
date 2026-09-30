@@ -69,3 +69,100 @@
 .blue-glow-sm, .crimson-glow-sm {
   box-shadow: 0 0 15px 0 rgba(59, 130, 246, 0.35);
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Public light theme                                                         */
+/* -------------------------------------------------------------------------- */
+.public-site {
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+.public-site[data-theme="light"] {
+  background: #f7f8f5 !important;
+  color: #171918 !important;
+}
+
+.public-site[data-theme="light"] .bg-\[\#171717\] {
+  background-color: #f7f8f5 !important;
+}
+.public-site[data-theme="light"] .bg-\[\#141414\] {
+  background-color: #f4f5f1 !important;
+}
+.public-site[data-theme="light"] .bg-\[\#111111\] {
+  background-color: #eef0eb !important;
+}
+.public-site[data-theme="light"] .bg-\[\#1d1d1d\] {
+  background-color: #ffffff !important;
+}
+.public-site[data-theme="light"] .bg-\[\#1c1c1c\] {
+  background-color: #ffffff !important;
+}
+.public-site[data-theme="light"] .bg-\[\#232323\] {
+  background-color: #eef0eb !important;
+}
+
+.public-site[data-theme="light"] .bg-\[\#171717\]\/90,
+.public-site[data-theme="light"] .bg-\[\#171717\]\/95 {
+  background-color: rgb(255 255 255 / 0.92) !important;
+}
+.public-site[data-theme="light"] .bg-\[\#171717\]\/85,
+.public-site[data-theme="light"] .bg-\[\#171717\]\/80 {
+  background-color: rgb(247 248 245 / 0.88) !important;
+}
+.public-site[data-theme="light"] .bg-\[\#1d1d1d\]\/90,
+.public-site[data-theme="light"] .bg-\[\#1d1d1d\]\/80 {
+  background-color: rgb(255 255 255 / 0.9) !important;
+}
+.public-site[data-theme="light"] .bg-\[\#111111\]\/70 {
+  background-color: rgb(238 240 235 / 0.88) !important;
+}
+
+.public-site[data-theme="light"] .text-\[\#f1f2ed\] {
+  color: #171918 !important;
+}
+.public-site[data-theme="light"] .text-\[\#d7d6d2\] {
+  color: #343733 !important;
+}
+.public-site[data-theme="light"] .text-\[\#a8a6a1\] {
+  color: #5f655f !important;
+}
+.public-site[data-theme="light"] .text-\[\#706e6a\] {
+  color: #7b807a !important;
+}
+
+.public-site[data-theme="light"] .border-\[\#2b2b2b\] {
+  border-color: #d9ddd5 !important;
+}
+.public-site[data-theme="light"] .border-\[\#262626\] {
+  border-color: #e1e4dd !important;
+}
+.public-site[data-theme="light"] .border-\[\#232323\] {
+  border-color: #e4e7e0 !important;
+}
+.public-site[data-theme="light"] .border-\[\#2b2b2b\]\/70 {
+  border-color: rgb(210 215 207 / 0.8) !important;
+}
+
+.public-site[data-theme="light"] #desktop-nav,
+.public-site[data-theme="light"] #mobile-menu-drawer {
+  box-shadow: 0 10px 30px rgba(26, 36, 29, 0.06);
+}
+
+.public-site[data-theme="light"] .brand-marquee-logo-wrap {
+  background: #ffffff !important;
+  border-color: #d8ddd4 !important;
+  box-shadow: 0 5px 18px rgba(24, 32, 26, 0.05);
+}
+
+.public-site[data-theme="light"] ::selection {
+  background: var(--site-accent);
+  color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site,
+  .public-site * {
+    scroll-behavior: auto !important;
+  }
+}

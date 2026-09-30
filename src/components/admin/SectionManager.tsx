@@ -1191,17 +1191,16 @@ export function SectionManager() {
               </div>
             </div>
 
-            {/* Marquee Ticker */}
-            <div>
-              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
-                {isAr ? 'عناصر الشريط المتحرك (افصل بينها برمز •)' : 'Marquee Ticker (Separate with • symbol)'}
-              </label>
-              <input
-                type="text"
-                value={heroForm.marqueeItemsText}
-                onChange={(e) => setHeroForm({ ...heroForm, marqueeItemsText: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#232323] border border-[#2b2b2b] text-xs text-[#f1f2ed] focus:border-[#2563eb] focus:outline-none"
-              />
+            {/* Brand Logo Marquee */}
+            <div className="rounded-xl bg-[#232323] border border-[#2b2b2b] p-4">
+              <div className="text-xs font-mono uppercase text-[#f1f2ed]">
+                {isAr ? 'الشريط المتحرك للشعارات' : 'Brand Logo Marquee'}
+              </div>
+              <p className="mt-1.5 text-xs text-[#a8a6a1] leading-relaxed">
+                {isAr
+                  ? 'تم استبدال النصوص بشعارات العلامات التجارية. استخدم تبويب "Brand Logo Marquee" في لوحة التحكم لإضافة الشعارات أو تعديلها أو حذفها ورفعها من جهازك.'
+                  : 'The old text ticker has been replaced by brand logos. Use the “Brand Logo Marquee” tab in the CMS to add, edit, delete, order, or upload logos from your device.'}
+              </p>
             </div>
 
             {/* Background Image Upload & Preview */}

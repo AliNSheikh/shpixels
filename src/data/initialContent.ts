@@ -538,12 +538,7 @@ export const initialContent: GlobalContent = {
       color: "#10b981"
     }
   },
-  clientLogos: [
-    { id: "cl-1", name: "Sony Cinema Line", logoUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=200&q=80" },
-    { id: "cl-2", name: "DJI Aerial Systems", logoUrl: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=200&q=80" },
-    { id: "cl-3", name: "DaVinci Resolve Studio", logoUrl: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=200&q=80" },
-    { id: "cl-4", name: "Red Bull Energy", logoUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=200&q=80" }
-  ],
+  clientLogos: [],
   lastPublished: new Date().toISOString(),
   publicationInfo: {
     publishedAt: new Date().toISOString(),

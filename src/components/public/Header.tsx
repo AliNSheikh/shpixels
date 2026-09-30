@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Film, ArrowRight, Globe } from 'lucide-react';
+import { Menu, X, Film, ArrowRight, Moon, Sun } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export function Header() {
   const { content, setIsAdminView } = useContent();
-  const { language, toggleLanguage, t, isRTL } = useLanguage();
+  const { language, t, isRTL } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [clickCount, setClickCount] = useState(0);
@@ -13,7 +15,7 @@ export function Header() {
 
   useEffect(() => {
     setLogoError(false);
-  }, [content.branding.logoImage, content.branding.logoLight]);
+  }, [content.branding.logoImage, content.branding.logoLight, content.branding.logoDark, theme]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,7 +43,9 @@ export function Header() {
   const headerCtas = [...(content.headerCtas || [])]
     .filter((item) => item.visible !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
-  const activeLogo = content.branding.logoLight || content.branding.logoImage || '';
+  const activeLogo = theme === 'light'
+    ? (content.branding.logoDark || content.branding.logoImage || content.branding.logoLight || '')
+    : (content.branding.logoLight || content.branding.logoImage || content.branding.logoDark || '');
   const isHomePage = typeof window === 'undefined' || window.location.pathname === '/';
   const resolveSiteHref = (href: string) => (!isHomePage && href.startsWith('#') ? `/${href}` : href);
 
@@ -91,8 +95,12 @@ export function Header() {
       id="main-header"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-[#171717]/90 backdrop-blur-md border-b border-[#2b2b2b]/70 py-3 shadow-xl'
-          : 'bg-gradient-to-b from-[#171717]/90 via-[#171717]/40 to-transparent py-5'
+          ? theme === 'light'
+            ? 'bg-white/90 backdrop-blur-md border-b border-[#d9ddd5]/80 py-3 shadow-[0_12px_36px_rgba(22,32,25,0.08)]'
+            : 'bg-[#171717]/90 backdrop-blur-md border-b border-[#2b2b2b]/70 py-3 shadow-xl'
+          : theme === 'light'
+            ? 'bg-gradient-to-b from-white/95 via-white/60 to-transparent py-5'
+            : 'bg-gradient-to-b from-[#171717]/90 via-[#171717]/40 to-transparent py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -112,7 +120,7 @@ export function Header() {
                 <img 
                   src={activeLogo} 
                   alt={content.branding.logoText || content.branding.siteName} 
-                  className="h-9 w-auto max-w-[170px] sm:max-w-[210px] object-contain rounded-md" 
+                  className="h-11 sm:h-12 w-auto max-w-[220px] sm:max-w-[270px] object-contain rounded-md" 
                   onError={() => setLogoError(true)}
                 />
               ) : (
@@ -154,17 +162,19 @@ export function Header() {
 
           {/* Header Actions */}
           <div className="hidden md:flex items-center gap-2.5">
-            {/* Language Switcher Button (EN | العربية) */}
+            {/* Public theme switcher */}
             <button
-              id="language-toggle-btn"
-              onClick={toggleLanguage}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-[#a8a6a1] hover:text-[#f1f2ed] bg-[#1d1d1d] hover:bg-[#232323] border border-[#2b2b2b] transition-all cursor-pointer"
-              title={language === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية'}
+              id="theme-toggle-btn"
+              onClick={toggleTheme}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[#a8a6a1] hover:text-[#f1f2ed] bg-[#1d1d1d] hover:bg-[#232323] border border-[#2b2b2b] transition-all cursor-pointer"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              <Globe className="w-3.5 h-3.5 text-[var(--site-accent)]" />
-              <span className={language === 'en' ? 'font-bold text-[#f1f2ed]' : 'text-[#706e6a]'}>EN</span>
-              <span className="text-[#444]">/</span>
-              <span className={language === 'ar' ? 'font-bold text-[#f1f2ed]' : 'text-[#706e6a]'}>عربي</span>
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[var(--site-accent)]" />
+              ) : (
+                <Moon className="w-4 h-4 text-[var(--site-accent)]" />
+              )}
             </button>
 
             {/* Managed Header CTAs */}
@@ -188,13 +198,19 @@ export function Header() {
             ))}
           </div>
 
-          {/* Mobile Actions: Language toggle + Menu Button */}
+          {/* Mobile Actions: Theme toggle + Menu Button */}
           <div className="flex md:hidden items-center gap-2">
             <button
-              onClick={toggleLanguage}
-              className="p-1.5 px-2.5 rounded-lg text-xs font-mono text-[#a8a6a1] hover:text-white bg-[#1d1d1d] border border-[#2b2b2b]"
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-[#a8a6a1] hover:text-[#f1f2ed] bg-[#1d1d1d] border border-[#2b2b2b]"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {language === 'en' ? 'عربي' : 'EN'}
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[var(--site-accent)]" />
+              ) : (
+                <Moon className="w-4 h-4 text-[var(--site-accent)]" />
+              )}
             </button>
 
             <button

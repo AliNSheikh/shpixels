@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowUp, Film } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { getConfiguredSocialLinks, getPlatformLabel, SocialIcon } from '../common/SocialIcon';
 
 export function Footer() {
@@ -13,7 +14,7 @@ export function Footer() {
 
   useEffect(() => {
     setLogoError(false);
-  }, [branding.logoImage, branding.logoLight]);
+  }, [branding.logoImage, branding.logoLight, branding.logoDark, theme]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -25,7 +26,9 @@ export function Footer() {
   const footerLinks = [...(content.footerLinks || [])]
     .filter((item) => item.visible !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
-  const activeLogo = branding.logoLight || branding.logoImage || '';
+  const activeLogo = theme === 'light'
+    ? (branding.logoDark || branding.logoImage || branding.logoLight || '')
+    : (branding.logoLight || branding.logoImage || branding.logoDark || '');
   const socialLinks = getConfiguredSocialLinks(contact);
   const isHomePage = typeof window === 'undefined' || window.location.pathname === '/';
   const resolveSiteHref = (href: string) => (!isHomePage && href.startsWith('#') ? `/${href}` : href);

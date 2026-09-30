@@ -5,6 +5,7 @@
 
 import { ContentProvider, useContent } from './context/ContentContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Header } from './components/public/Header';
 import { Hero } from './components/public/Hero';
 import { Showreel } from './components/public/Showreel';
@@ -28,6 +29,7 @@ import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButt
 
 function AppContent() {
   const { isAdminView, isAuthenticated, content, serverSyncStatus } = useContent();
+  const { theme } = useTheme();
 
   if (isAdminView) {
     if (!isAuthenticated) {
@@ -47,7 +49,7 @@ function AppContent() {
     );
 
     return (
-      <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
+      <div data-theme={theme} className="public-site min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
         <SiteRuntime project={project || null} />
         {content.sectionVisibility?.header !== false && <Header />}
         {serverSyncStatus === 'syncing' ? (
@@ -66,7 +68,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
+    <div data-theme={theme} className="public-site min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
       <SiteRuntime />
       {content.sectionVisibility?.header !== false && <Header />}
       <main>
@@ -92,9 +94,11 @@ function AppContent() {
 export default function App() {
   return (
     <ContentProvider>
-      <LanguageProvider>
-        <AppContent />
-      </LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AppContent />
+        </LanguageProvider>
+      </ThemeProvider>
     </ContentProvider>
   );
 }

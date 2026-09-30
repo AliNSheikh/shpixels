@@ -27,11 +27,10 @@ export function About() {
                   src={about.profileImage}
                   alt={about.highlightText || 'Sharif Abs'}
                   sizes="(max-width: 1024px) 100vw, 480px"
-                  className="w-full h-full object-cover object-center grayscale hover:grayscale-0 transition-all duration-700"
+                  className="w-full h-full object-cover object-center"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-[#171717] via-transparent to-transparent opacity-80 pointer-events-none" />
-                
+
                 {/* Overlay Badge */}
                 <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 p-3.5 sm:p-4 rounded-xl bg-[#171717]/85 backdrop-blur-md border border-[#2b2b2b] z-10">
                   <div className="flex items-center gap-3">

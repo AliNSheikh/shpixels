@@ -5,7 +5,9 @@ export function ClientLogos() {
   const { content } = useContent();
   const { language } = useLanguage();
   const isAr = language === 'ar';
-  const logos = content.clientLogos || [];
+  const logos = [...(content.clientLogos || [])]
+    .filter((item) => item.visible !== false && Boolean(item.logoUrl || item.logo))
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
   if (logos.length === 0) return null;
 
@@ -29,7 +31,7 @@ export function ClientLogos() {
                   <img
                     src={logoSrc}
                     alt={client.name}
-                    className="h-6 sm:h-7 object-contain max-w-[120px] grayscale group-hover:grayscale-0 transition-all"
+                    className="h-6 sm:h-7 object-contain max-w-[120px]"
                   />
                 )}
                 <span className="text-xs font-medium text-[#a8a6a1] group-hover:text-white transition-colors">

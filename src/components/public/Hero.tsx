@@ -3,17 +3,21 @@ import { Play, ArrowRight, Sparkles, X } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { YouTubeEmbed } from '../common/YouTubeEmbed';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export function Hero() {
   const { content } = useContent();
   const { language, t, isRTL } = useLanguage();
+  const { theme } = useTheme();
   const isAr = language === 'ar';
   const [showreelModalOpen, setShowreelModalOpen] = useState(false);
   const [typingIndex, setTypingIndex] = useState(0);
 
   const hero = content.hero;
-  const marqueeList = hero.marqueeItems || [];
   const typingStrings = hero.typingStrings || [];
+  const brandLogos = [...(content.clientLogos || [])]
+    .filter((brand) => brand.visible !== false && Boolean(brand.logoUrl || brand.logo))
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
   useEffect(() => {
     if (typingStrings.length <= 1) return;
@@ -44,10 +48,22 @@ export function Hero() {
             className="w-full h-full object-cover object-center opacity-20 scale-105 filter blur-[1px]"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#171717]/80 via-[#171717]/85 to-[#171717]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.18)_0%,transparent_70%)]" />
+        <div
+          className={`absolute inset-0 bg-gradient-to-b ${
+            theme === 'light'
+              ? 'from-[#f7f8f5]/75 via-[#f7f8f5]/85 to-[#f7f8f5]'
+              : 'from-[#171717]/80 via-[#171717]/85 to-[#171717]'
+          }`}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.16)_0%,transparent_70%)]" />
         {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#232323_1px,transparent_1px),linear-gradient(to_bottom,#232323_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] opacity-20" />
+        <div
+          className={`absolute inset-0 bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] opacity-20 ${
+            theme === 'light'
+              ? 'bg-[linear-gradient(to_right,#dfe3db_1px,transparent_1px),linear-gradient(to_bottom,#dfe3db_1px,transparent_1px)]'
+              : 'bg-[linear-gradient(to_right,#232323_1px,transparent_1px),linear-gradient(to_bottom,#232323_1px,transparent_1px)]'
+          }`}
+        />
       </div>
 
       {/* Main Hero Content */}
@@ -107,20 +123,43 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Marquee Ticker */}
-      <div className="relative z-10 w-full overflow-hidden border-y border-[#2b2b2b] bg-[#111111]/70 backdrop-blur-sm py-2.5 sm:py-3 mt-8">
-        <div className="flex whitespace-nowrap animate-marquee">
-          {[...marqueeList, ...marqueeList, ...marqueeList, ...marqueeList].map((item, idx) => (
-            <span
-              key={idx}
-              className="mx-4 sm:mx-6 text-[10px] sm:text-xs font-mono font-bold tracking-[0.25em] text-[#706e6a] uppercase flex items-center gap-3"
-            >
-              <span>{item}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--site-accent)]" />
-            </span>
-          ))}
+      {/* Brand Logo Marquee */}
+      {brandLogos.length > 0 && (
+        <div className="relative z-10 w-full overflow-hidden border-y border-[#2b2b2b] bg-[#111111]/70 backdrop-blur-sm py-3 sm:py-4 mt-8">
+          <div className="flex items-center whitespace-nowrap animate-marquee">
+            {[...brandLogos, ...brandLogos, ...brandLogos, ...brandLogos].map((brand, idx) => {
+              const logoSrc = brand.logoUrl || brand.logo || '';
+              const website = brand.websiteUrl || brand.website || '';
+              const inner = (
+                <div className="brand-marquee-logo-wrap mx-3 sm:mx-5 h-12 sm:h-14 min-w-[120px] sm:min-w-[150px] px-5 rounded-xl border border-[#2b2b2b] bg-[#1d1d1d] flex items-center justify-center transition-all duration-200 hover:border-[var(--site-accent)]/60 hover:-translate-y-0.5">
+                  <img
+                    src={logoSrc}
+                    alt={brand.name}
+                    className="max-h-7 sm:max-h-8 max-w-[110px] sm:max-w-[140px] w-auto object-contain [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.18))]"
+                    loading="lazy"
+                  />
+                </div>
+              );
+
+              return website ? (
+                <a
+                  key={`${brand.id}-${idx}`}
+                  href={website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={brand.name}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div key={`${brand.id}-${idx}`} aria-label={brand.name}>
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Showreel Modal */}
       {showreelModalOpen && (

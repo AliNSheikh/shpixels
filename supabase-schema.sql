@@ -370,6 +370,7 @@ CREATE TABLE IF NOT EXISTS public.client_logos (
   logo_url TEXT,
   website_url TEXT,
   display_order INTEGER NOT NULL DEFAULT 0,
+  visible BOOLEAN NOT NULL DEFAULT TRUE,
   raw JSONB NOT NULL DEFAULT '{}'::jsonb,
   version BIGINT NOT NULL DEFAULT 1,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -671,6 +672,7 @@ ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ
 ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS logo_url TEXT;
 ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS website_url TEXT;
 ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
 ALTER TABLE public.client_logos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
@@ -1216,13 +1218,14 @@ BEGIN
 
   -- Client logos.
   INSERT INTO public.client_logos
-    (id,name,logo_url,website_url,display_order,raw,version,updated_at)
+    (id,name,logo_url,website_url,display_order,visible,raw,version,updated_at)
   SELECT
     COALESCE(NULLIF(x.item->>'id',''), 'client-' || x.ord::text),
     COALESCE(x.item->>'name',''),
     COALESCE(x.item->>'logoUrl',x.item->>'logo'),
     COALESCE(x.item->>'websiteUrl',x.item->>'website'),
-    x.ord::INTEGER,
+    COALESCE((x.item->>'order')::INTEGER, x.ord::INTEGER),
+    COALESCE((x.item->>'visible')::BOOLEAN, TRUE),
     x.item,
     NEW.version,
     COALESCE(NEW.updated_at,NOW())
@@ -1551,7 +1554,7 @@ CREATE POLICY "Public read featured videos" ON public.featured_videos
 CREATE POLICY "Public read gallery" ON public.gallery_items
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read client logos" ON public.client_logos
-  FOR SELECT TO anon, authenticated USING (TRUE);
+  FOR SELECT TO anon, authenticated USING (visible = TRUE);
 CREATE POLICY "Public read workflow" ON public.workflow_steps
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read timeline" ON public.timeline_items
