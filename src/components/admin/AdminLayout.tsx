@@ -25,7 +25,8 @@ import {
   Clock,
   Radio,
   Database,
-  Inbox
+  Inbox,
+  Building2
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -42,6 +43,7 @@ import { SEOManager } from './SEOManager';
 import { ExportManager } from './ExportManager';
 import { SiteDataManager } from './SiteDataManager';
 import { InquiryManager } from './InquiryManager';
+import { BrandLogoManager } from './BrandLogoManager';
 
 type AdminTab = 
   | 'home' 
@@ -49,7 +51,8 @@ type AdminTab =
   | 'categories' 
   | 'sections' 
   | 'videos' 
-  | 'media' 
+  | 'media'
+  | 'brands'
   | 'settings' 
   | 'navigation' 
   | 'links' 
@@ -130,6 +133,7 @@ export function AdminLayout() {
     { id: 'sections', label: isAr ? 'محرر كافة الأقسام والمحتوى' : 'Section & Pipeline Editor', icon: Layers },
     { id: 'videos', label: isAr ? 'فيديوهات YouTube 4K' : 'YouTube Videos', icon: Video },
     { id: 'media', label: isAr ? 'الوسائط والرفع المباشر' : 'Media & Desktop Upload', icon: Image },
+    { id: 'brands', label: isAr ? 'شعارات العلامات التجارية' : 'Brand Logo Marquee', icon: Building2, count: (content.clientLogos || []).length },
     { id: 'settings', label: isAr ? 'الشعار والهوية والإعدادات' : 'Logo, Brand & Settings', icon: Settings },
     { id: 'navigation', label: isAr ? 'قائمة التنقل' : 'Navigation Menu', icon: Menu },
     { id: 'links', label: isAr ? 'الروابط والتواصل' : 'Links & Social', icon: Globe },
@@ -454,6 +458,7 @@ export function AdminLayout() {
           {activeTab === 'sections' && <SectionManager />}
           {activeTab === 'videos' && <VideoManager />}
           {activeTab === 'media' && <MediaManager />}
+          {activeTab === 'brands' && <BrandLogoManager />}
           {activeTab === 'settings' && <SiteSettings />}
           {activeTab === 'navigation' && <NavigationManager />}
           {activeTab === 'links' && <LinkManager />}
