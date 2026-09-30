@@ -14,7 +14,7 @@ export function Footer() {
 
   useEffect(() => {
     setLogoError(false);
-  }, [branding.logoImage, branding.logoLight]);
+  }, [branding.logoImage, branding.logoLight, branding.logoDark, theme]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
