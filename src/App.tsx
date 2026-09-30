@@ -26,6 +26,7 @@ import { SiteRuntime } from './components/common/SiteRuntime';
 import { ProjectNotFound, ProjectPage } from './components/public/ProjectPage';
 import { findProjectBySlug } from './utils/projectRoutes';
 import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButton';
+import { PublicSiteErrorBoundary } from './components/common/PublicSiteErrorBoundary';
 
 function AppContent() {
   const { isAdminView, isAuthenticated, content, serverSyncStatus } = useContent();
@@ -50,43 +51,47 @@ function AppContent() {
 
     return (
       <div data-theme={theme} className="public-site min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
-        <SiteRuntime project={project || null} />
-        {content.sectionVisibility?.header !== false && <Header />}
-        {serverSyncStatus === 'syncing' ? (
-          <main className="min-h-[75vh] pt-32 flex items-center justify-center">
-            <div className="text-xs font-mono uppercase tracking-[0.2em] text-[#706e6a]">Loading project…</div>
-          </main>
-        ) : project ? (
-          <ProjectPage project={project} />
-        ) : (
-          <ProjectNotFound />
-        )}
-        {content.sectionVisibility?.footer !== false && <Footer />}
-        <WhatsAppFloatingButton />
+        <PublicSiteErrorBoundary>
+          <SiteRuntime project={project || null} />
+          {content.sectionVisibility?.header !== false && <Header />}
+          {serverSyncStatus === 'syncing' ? (
+            <main className="min-h-[75vh] pt-32 flex items-center justify-center">
+              <div className="text-xs font-mono uppercase tracking-[0.2em] text-[#706e6a]">Loading project…</div>
+            </main>
+          ) : project ? (
+            <ProjectPage project={project} />
+          ) : (
+            <ProjectNotFound />
+          )}
+          {content.sectionVisibility?.footer !== false && <Footer />}
+          <WhatsAppFloatingButton />
+        </PublicSiteErrorBoundary>
       </div>
     );
   }
 
   return (
     <div data-theme={theme} className="public-site min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
-      <SiteRuntime />
-      {content.sectionVisibility?.header !== false && <Header />}
-      <main>
-        {content.sectionVisibility?.hero !== false && <Hero />}
-        {content.sectionVisibility?.showreel !== false && <Showreel />}
-        {content.sectionVisibility?.clientlogos !== false && <ClientLogos />}
-        {content.sectionVisibility?.about !== false && <About />}
-        {content.sectionVisibility?.services !== false && <Services />}
-        {content.sectionVisibility?.portfolio !== false && <Portfolio />}
-        {content.sectionVisibility?.process !== false && <Process />}
-        {content.sectionVisibility?.gallery !== false && <Gallery />}
-        {content.sectionVisibility?.experience !== false && <Experience />}
-        {content.sectionVisibility?.skills !== false && <Skills />}
-        {content.sectionVisibility?.testimonials !== false && <Testimonials />}
-        {content.sectionVisibility?.contact !== false && <Contact />}
-      </main>
-      {content.sectionVisibility?.footer !== false && <Footer />}
-      <WhatsAppFloatingButton />
+      <PublicSiteErrorBoundary>
+        <SiteRuntime />
+        {content.sectionVisibility?.header !== false && <Header />}
+        <main>
+          {content.sectionVisibility?.hero !== false && <Hero />}
+          {content.sectionVisibility?.showreel !== false && <Showreel />}
+          {content.sectionVisibility?.clientlogos !== false && <ClientLogos />}
+          {content.sectionVisibility?.about !== false && <About />}
+          {content.sectionVisibility?.services !== false && <Services />}
+          {content.sectionVisibility?.portfolio !== false && <Portfolio />}
+          {content.sectionVisibility?.process !== false && <Process />}
+          {content.sectionVisibility?.gallery !== false && <Gallery />}
+          {content.sectionVisibility?.experience !== false && <Experience />}
+          {content.sectionVisibility?.skills !== false && <Skills />}
+          {content.sectionVisibility?.testimonials !== false && <Testimonials />}
+          {content.sectionVisibility?.contact !== false && <Contact />}
+        </main>
+        {content.sectionVisibility?.footer !== false && <Footer />}
+        <WhatsAppFloatingButton />
+      </PublicSiteErrorBoundary>
     </div>
   );
 }
