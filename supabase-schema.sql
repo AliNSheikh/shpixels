@@ -910,26 +910,26 @@ BEGIN
     updated_at = EXCLUDED.updated_at;
 
   -- Clear projection collections and rebuild them from the same canonical snapshot.
-  DELETE FROM public.navigation_items;
-  DELETE FROM public.header_ctas;
-  DELETE FROM public.services;
-  DELETE FROM public.project_categories;
-  DELETE FROM public.project_videos;
-  DELETE FROM public.project_gallery;
-  DELETE FROM public.project_links;
-  DELETE FROM public.project_tags;
-  DELETE FROM public.projects;
-  DELETE FROM public.featured_videos;
-  DELETE FROM public.gallery_items;
-  DELETE FROM public.client_logos;
-  DELETE FROM public.workflow_steps;
-  DELETE FROM public.timeline_items;
-  DELETE FROM public.skills;
-  DELETE FROM public.testimonials;
-  DELETE FROM public.footer_links;
-  DELETE FROM public.contact_social_links;
-  DELETE FROM public.section_headers;
-  DELETE FROM public.section_visibility;
+  DELETE FROM public.navigation_items WHERE TRUE;
+  DELETE FROM public.header_ctas WHERE TRUE;
+  DELETE FROM public.services WHERE TRUE;
+  DELETE FROM public.project_categories WHERE TRUE;
+  DELETE FROM public.project_videos WHERE TRUE;
+  DELETE FROM public.project_gallery WHERE TRUE;
+  DELETE FROM public.project_links WHERE TRUE;
+  DELETE FROM public.project_tags WHERE TRUE;
+  DELETE FROM public.projects WHERE TRUE;
+  DELETE FROM public.featured_videos WHERE TRUE;
+  DELETE FROM public.gallery_items WHERE TRUE;
+  DELETE FROM public.client_logos WHERE TRUE;
+  DELETE FROM public.workflow_steps WHERE TRUE;
+  DELETE FROM public.timeline_items WHERE TRUE;
+  DELETE FROM public.skills WHERE TRUE;
+  DELETE FROM public.testimonials WHERE TRUE;
+  DELETE FROM public.footer_links WHERE TRUE;
+  DELETE FROM public.contact_social_links WHERE TRUE;
+  DELETE FROM public.section_headers WHERE TRUE;
+  DELETE FROM public.section_visibility WHERE TRUE;
 
   -- Navigation.
   INSERT INTO public.navigation_items
