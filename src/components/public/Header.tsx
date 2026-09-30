@@ -99,7 +99,7 @@ export function Header() {
             ? 'bg-white/90 backdrop-blur-md border-b border-[#d9ddd5]/80 py-3 shadow-[0_12px_36px_rgba(22,32,25,0.08)]'
             : 'bg-[#171717]/90 backdrop-blur-md border-b border-[#2b2b2b]/70 py-3 shadow-xl'
           : theme === 'light'
-            ? 'bg-gradient-to-b from-white/95 via-white/65 to-transparent py-5'
+            ? 'bg-gradient-to-b from-white/95 via-white/60 to-transparent py-5'
             : 'bg-gradient-to-b from-[#171717]/90 via-[#171717]/40 to-transparent py-5'
       }`}
     >
