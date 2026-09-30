@@ -15,7 +15,7 @@ export function Header() {
 
   useEffect(() => {
     setLogoError(false);
-  }, [content.branding.logoImage, content.branding.logoLight]);
+  }, [content.branding.logoImage, content.branding.logoLight, content.branding.logoDark, theme]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,8 +95,12 @@ export function Header() {
       id="main-header"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-[#171717]/90 backdrop-blur-md border-b border-[#2b2b2b]/70 py-3 shadow-xl'
-          : 'bg-gradient-to-b from-[#171717]/90 via-[#171717]/40 to-transparent py-5'
+          ? theme === 'light'
+            ? 'bg-white/90 backdrop-blur-md border-b border-[#d9ddd5]/80 py-3 shadow-[0_12px_36px_rgba(22,32,25,0.08)]'
+            : 'bg-[#171717]/90 backdrop-blur-md border-b border-[#2b2b2b]/70 py-3 shadow-xl'
+          : theme === 'light'
+            ? 'bg-gradient-to-b from-white/95 via-white/65 to-transparent py-5'
+            : 'bg-gradient-to-b from-[#171717]/90 via-[#171717]/40 to-transparent py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
