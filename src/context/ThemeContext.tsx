@@ -15,14 +15,22 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<SiteTheme>(() => {
     if (typeof window === 'undefined') return 'dark';
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    return saved === 'light' ? 'light' : 'dark';
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      return saved === 'light' ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
   });
 
   const setTheme = (nextTheme: SiteTheme) => {
     setThemeState(nextTheme);
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, nextTheme);
+      try {
+        window.localStorage.setItem(STORAGE_KEY, nextTheme);
+      } catch {
+        // Theme still changes in-memory when browser storage is unavailable.
+      }
     }
   };
 
