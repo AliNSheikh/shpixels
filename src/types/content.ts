@@ -160,6 +160,8 @@ export interface ClientLogo {
   logo?: string;
   websiteUrl?: string;
   website?: string;
+  order?: number;
+  visible?: boolean;
 }
 
 export interface CategoryItem {
