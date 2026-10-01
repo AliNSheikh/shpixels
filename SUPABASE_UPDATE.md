@@ -37,7 +37,23 @@ Open the latest `supabase-schema.sql` from the `main` branch, copy the **entire*
 
 The schema is designed to be rerunnable and upgrades older tables using `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. It recreates the current projection function/trigger, RLS policies, Realtime publication configuration, and the `site-media` Storage bucket/policies.
 
-### 3. Verify the database installation
+### 3. Apply the BRANDS + typography migration
+
+Run the complete file:
+
+`supabase-migration-2026-10-01-brands-font.sql`
+
+This additive migration is safe to re-run. It performs the database changes required by the current public-site design and CMS:
+
+- adds `google_font_url` and `font_family` to `public.site_settings`
+- stores the Google Fonts URL and font-family values in canonical `site_content.data.branding`
+- keeps those typography values synchronized into `site_settings`
+- migrates the legacy `sectionVisibility.clientlogos` key to the dedicated `sectionVisibility.brands` key
+- adds a `#brands` Navigation Menu item when one does not already exist, while preserving existing menu items and shifting their display order safely
+
+No new BRANDS table is required: brand records continue to use the existing `public.client_logos` projection table.
+
+### 4. Verify the database installation
 
 Run the complete `supabase-verify.sql` file.
 
@@ -47,11 +63,13 @@ Expected results:
 - `has_legacy_delete_without_where = false`.
 - `has_legacy_ambiguous_ord = false`.
 - every expected table reports `exists = true`.
+- `site_settings.google_font_url` and `site_settings.font_family` are readable.
+- the Navigation projection contains the `#brands` entry when BRANDS is enabled in the menu.
 - the `site-media` Storage bucket exists.
 - `site_content` is present in `supabase_realtime`.
 - after the next CMS publish, `cms_projection_status.ok = true` and its version equals `site_content.version`.
 
-### 4. Check Vercel environment variables
+### 5. Check Vercel environment variables
 
 In **Vercel → Project → Settings → Environment Variables**, confirm the production deployment has values for the Supabase project currently being updated:
 
@@ -67,13 +85,13 @@ The `VITE_*` values are used by the browser for public reads/Realtime. The secre
 
 If any environment variable is changed, redeploy the latest `main` branch in Vercel.
 
-### 5. Publish the current CMS snapshot once
+### 6. Publish the current CMS snapshot once
 
 Open `/admin`, log in, then use **Site Settings → Publish Content to Supabase** (or **Save Site & Publish**) once.
 
 This writes the current canonical document and triggers a complete rebuild of the normalized tables.
 
-### 6. Run Test Database
+### 7. Run Test Database
 
 Use **Site Settings → Test Database**. The current diagnostics detect:
 
@@ -87,6 +105,14 @@ Use **Site Settings → Test Database**. The current diagnostics detect:
 - whether the authenticated Vercel server can write
 
 A healthy installation reports the canonical content and projection tables synchronized.
+
+## Search Console sitemap
+
+The production sitemap is generated dynamically from the current canonical content and published project/category routes. Submit this URL in Google Search Console:
+
+`https://shpixels.vercel.app/sitemap.xml`
+
+If you later change the canonical domain in the SEO manager, use the same `/sitemap.xml` path on the new canonical domain.
 
 ## Important notes
 

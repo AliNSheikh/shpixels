@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- SHPIXELS — Supabase verification
--- Safe/read-only checks to run AFTER supabase-schema.sql.
--- No DELETE/UPDATE/INSERT statements are executed by this file.
+-- Safe/read-only checks to run AFTER supabase-schema.sql and the latest additive
+-- migrations. No DELETE/UPDATE/INSERT statements are executed by this file.
 -- ==============================================================================
 
 -- 1) Canonical site document must exist.
@@ -16,7 +16,10 @@ SELECT
   data ? 'about' AS has_about,
   data ? 'projects' AS has_projects,
   data ? 'contact' AS has_contact,
-  data ? 'footer' AS has_footer
+  data ? 'footer' AS has_footer,
+  data #>> '{branding,googleFontUrl}' AS canonical_google_font_url,
+  data #>> '{branding,fontFamily}' AS canonical_font_family,
+  data #>> '{sectionVisibility,brands}' AS brands_visible
 FROM public.site_content
 WHERE id = 'current';
 
@@ -26,7 +29,7 @@ SELECT id, version, ok, error, updated_at
 FROM public.cms_projection_status
 WHERE id = 'current';
 
--- 3) Confirm the current trigger is installed on site_content.
+-- 3) Confirm the current triggers are installed on site_content.
 SELECT
   t.tgname AS trigger_name,
   p.proname AS function_name,
@@ -37,7 +40,8 @@ JOIN pg_namespace AS n ON n.oid = c.relnamespace
 JOIN pg_proc AS p ON p.oid = t.tgfoid
 WHERE n.nspname = 'public'
   AND c.relname = 'site_content'
-  AND NOT t.tgisinternal;
+  AND NOT t.tgisinternal
+ORDER BY t.tgname;
 
 -- 4) Detect the historical unsafe-delete bug. This query should return FALSE.
 SELECT
@@ -97,7 +101,26 @@ UNION ALL SELECT 'hero_settings', version FROM public.hero_settings WHERE id='cu
 UNION ALL SELECT 'about_profile', version FROM public.about_profile WHERE id='current'
 UNION ALL SELECT 'cms_projection_status', version FROM public.cms_projection_status WHERE id='current';
 
--- 8) Confirm brand logos/social links are projected when configured.
+-- 8) Verify typography projection added by the BRANDS + font migration.
+--    If these columns do not exist, run supabase-migration-2026-10-01-brands-font.sql.
+SELECT
+  id,
+  google_font_url,
+  font_family,
+  branding #>> '{googleFontUrl}' AS branding_google_font_url,
+  branding #>> '{fontFamily}' AS branding_font_family,
+  version,
+  updated_at
+FROM public.site_settings
+WHERE id = 'current';
+
+-- 9) Confirm the dedicated BRANDS menu target is present and projected.
+SELECT id, label, href, display_order, visible, version
+FROM public.navigation_items
+WHERE LOWER(href) = '#brands'
+ORDER BY display_order;
+
+-- 10) Confirm brand logos/social links are projected when configured.
 SELECT id, name, logo_url, website_url, display_order, visible, version
 FROM public.client_logos
 ORDER BY display_order, name;
@@ -106,12 +129,12 @@ SELECT id, platform, label, url, display_order, visible, version
 FROM public.contact_social_links
 ORDER BY display_order, platform;
 
--- 9) Supabase Storage bucket used by CMS uploads.
+-- 11) Supabase Storage bucket used by CMS uploads.
 SELECT id, name, public, file_size_limit, allowed_mime_types
 FROM storage.buckets
 WHERE id = 'site-media';
 
--- 10) Realtime publication membership for canonical content.
+-- 12) Realtime publication membership for canonical content.
 SELECT schemaname, tablename
 FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime'
