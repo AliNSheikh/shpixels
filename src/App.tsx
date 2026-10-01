@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { ReactNode } from 'react';
 import { ContentProvider, useContent } from './context/ContentContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -30,7 +31,7 @@ import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButt
 import { PublicSiteErrorBoundary } from './components/common/PublicSiteErrorBoundary';
 import { PublicSectionBoundary } from './components/common/PublicSectionBoundary';
 
-function PublicShell({ children }: { children: React.ReactNode }) {
+function PublicShell({ children }: { children: ReactNode }) {
   const { content } = useContent();
   const { theme } = useTheme();
 
