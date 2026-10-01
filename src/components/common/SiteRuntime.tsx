@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useContent } from '../../context/ContentContext';
 import { ProjectItem } from '../../types/content';
-import { getProjectPath } from '../../utils/projectRoutes';
+import { getCategoryPath, getProjectPath } from '../../utils/projectRoutes';
 
 function upsertMeta(selector: string, attributes: Record<string, string>, content: string | undefined) {
   let element = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -43,29 +43,79 @@ function removeScript(id: string) {
   document.getElementById(id)?.remove();
 }
 
-export function SiteRuntime({ project = null }: { project?: ProjectItem | null }) {
+function parseGoogleFontFamily(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const family = parsed.searchParams.getAll('family')[0] || '';
+    return family.split(':')[0].trim();
+  } catch {
+    return '';
+  }
+}
+
+function applyGoogleFont(urlValue: string | undefined, familyValue: string | undefined) {
+  const linkId = 'shpixels-google-font';
+  const existing = document.getElementById(linkId) as HTMLLinkElement | null;
+  const url = String(urlValue || '').trim();
+  const allowed = /^https:\/\/fonts\.googleapis\.com\//i.test(url);
+
+  if (!allowed) {
+    existing?.remove();
+    document.documentElement.style.setProperty('--site-font-family', "'Quicksand', system-ui, sans-serif");
+    return;
+  }
+
+  let link = existing;
+  if (!link) {
+    link = document.createElement('link');
+    link.id = linkId;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }
+  link.href = url;
+
+  const parsedFamily = parseGoogleFontFamily(url);
+  const family = String(familyValue || parsedFamily || 'Quicksand').replace(/["']/g, '').trim() || 'Quicksand';
+  document.documentElement.style.setProperty('--site-font-family', `'${family}', system-ui, -apple-system, BlinkMacSystemFont, sans-serif`);
+}
+
+export function SiteRuntime({
+  project = null,
+  categoryName = null
+}: {
+  project?: ProjectItem | null;
+  categoryName?: string | null;
+}) {
   const { content } = useContent();
 
   useEffect(() => {
     const { seo, branding } = content;
     const baseUrl = (seo.canonicalUrl || window.location.origin).replace(/\/$/, '');
+    const categoryDetail = categoryName ? content.categoryDetails?.[categoryName] : undefined;
     const projectTitle = project ? `${project.title} | ${branding.siteName || 'SHPIXELS'}` : undefined;
+    const categoryTitle = categoryName ? `${categoryName} | ${branding.siteName || 'SHPIXELS'}` : undefined;
     const projectDescription = project?.description || undefined;
-    const pageTitle = projectTitle || seo.pageTitle || branding.siteName || 'SHPIXELS';
-    const pageDescription = projectDescription || seo.metaDescription;
-    const pageImage = project?.coverImage || seo.ogImage;
-    const pageCanonical = project ? `${baseUrl}${getProjectPath(project)}` : seo.canonicalUrl;
+    const categoryDescription = categoryDetail?.description || categoryDetail?.descriptionAr || undefined;
+    const pageTitle = projectTitle || categoryTitle || seo.pageTitle || branding.siteName || 'SHPIXELS';
+    const pageDescription = projectDescription || categoryDescription || seo.metaDescription;
+    const pageImage = project?.coverImage || categoryDetail?.coverImage || seo.ogImage;
+    const pageCanonical = project
+      ? `${baseUrl}${getProjectPath(project)}`
+      : categoryName
+        ? `${baseUrl}${getCategoryPath(categoryName)}`
+        : seo.canonicalUrl || `${baseUrl}/`;
 
     document.documentElement.style.setProperty('--site-accent', branding.accentColor || '#2563eb');
+    applyGoogleFont(branding.googleFontUrl, branding.fontFamily);
     document.title = pageTitle;
 
     upsertMeta('meta[name="description"]', { name: 'description' }, pageDescription);
-    upsertMeta('meta[property="og:title"]', { property: 'og:title' }, projectTitle || seo.ogTitle || seo.pageTitle);
-    upsertMeta('meta[property="og:description"]', { property: 'og:description' }, projectDescription || seo.ogDescription || seo.metaDescription);
+    upsertMeta('meta[property="og:title"]', { property: 'og:title' }, projectTitle || categoryTitle || seo.ogTitle || seo.pageTitle);
+    upsertMeta('meta[property="og:description"]', { property: 'og:description' }, projectDescription || categoryDescription || seo.ogDescription || seo.metaDescription);
     upsertMeta('meta[property="og:image"]', { property: 'og:image' }, pageImage);
     upsertMeta('meta[property="og:url"]', { property: 'og:url' }, pageCanonical);
-    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, projectTitle || seo.ogTitle || seo.pageTitle);
-    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, projectDescription || seo.ogDescription || seo.metaDescription);
+    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, projectTitle || categoryTitle || seo.ogTitle || seo.pageTitle);
+    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, projectDescription || categoryDescription || seo.ogDescription || seo.metaDescription);
     upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, pageImage);
     upsertMeta('meta[name="google-site-verification"]', { name: 'google-site-verification' }, seo.googleSiteVerification);
 
@@ -133,7 +183,7 @@ export function SiteRuntime({ project = null }: { project?: ProjectItem | null }
       `;
       document.head.appendChild(script);
     }
-  }, [content.seo, content.branding, project]);
+  }, [content.seo, content.branding, content.categoryDetails, project, categoryName]);
 
   return null;
 }
