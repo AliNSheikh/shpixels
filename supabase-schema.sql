@@ -1470,7 +1470,7 @@ EXECUTE FUNCTION public.sync_shpixels_site_projections();
 -- into canonical featuredVideos/category videos. This is idempotent and keeps
 -- legacy project JSON untouched as an archive.
 -- ------------------------------------------------------------------------------
-DO $
+DO $$
 DECLARE
   doc JSONB;
   videos JSONB;
@@ -1568,7 +1568,7 @@ BEGIN
         updated_by = 'Schema migration: project videos to categories'
     WHERE id = 'current';
   END IF;
-END $;
+END $$;
 
 -- Backfill all projection tables from the current canonical row.
 UPDATE public.site_content SET updated_at = updated_at WHERE id = 'current';
