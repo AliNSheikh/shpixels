@@ -69,3 +69,35 @@ export function findProjectBySlug(projects: ProjectItem[], rawSlug: string): Pro
   const slug = normalizeProjectSlug(decoded);
   return projects.find((project) => getProjectSlug(project) === slug);
 }
+
+/**
+ * Category slugs intentionally support non-Latin letters so Arabic or other
+ * localized category names can have stable dedicated pages as well.
+ */
+export function normalizeCategorySlug(value: string | undefined | null): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '');
+}
+
+export function getCategorySlug(categoryName: string): string {
+  return normalizeCategorySlug(categoryName) || 'category';
+}
+
+export function getCategoryPath(categoryName: string): string {
+  return `/categories/${encodeURIComponent(getCategorySlug(categoryName))}`;
+}
+
+export function findCategoryBySlug(categories: string[], rawSlug: string): string | undefined {
+  let decoded = rawSlug;
+  try {
+    decoded = decodeURIComponent(rawSlug);
+  } catch {}
+
+  const slug = normalizeCategorySlug(decoded);
+  return categories.find((category) => getCategorySlug(category) === slug);
+}
