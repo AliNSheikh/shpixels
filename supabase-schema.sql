@@ -351,6 +351,24 @@ CREATE TABLE IF NOT EXISTS public.featured_videos (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.category_videos (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  youtube_url TEXT NOT NULL,
+  youtube_video_id TEXT NOT NULL,
+  thumbnail TEXT,
+  description TEXT,
+  category TEXT NOT NULL,
+  featured BOOLEAN NOT NULL DEFAULT FALSE,
+  visible BOOLEAN NOT NULL DEFAULT TRUE,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  caption TEXT,
+  client TEXT,
+  raw JSONB NOT NULL DEFAULT '{}'::jsonb,
+  version BIGINT NOT NULL DEFAULT 1,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.gallery_items (
   id TEXT PRIMARY KEY,
   title TEXT,
@@ -659,6 +677,21 @@ ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL D
 ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
 ALTER TABLE public.featured_videos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS youtube_url TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS youtube_video_id TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS thumbnail TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS visible BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS caption TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS client TEXT;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS raw JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE public.category_videos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS title TEXT;
 ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS image_url TEXT;
 ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS category TEXT;
@@ -920,6 +953,7 @@ BEGIN
   DELETE FROM public.project_tags WHERE TRUE;
   DELETE FROM public.projects WHERE TRUE;
   DELETE FROM public.featured_videos WHERE TRUE;
+  DELETE FROM public.category_videos WHERE TRUE;
   DELETE FROM public.gallery_items WHERE TRUE;
   DELETE FROM public.client_logos WHERE TRUE;
   DELETE FROM public.workflow_steps WHERE TRUE;
@@ -1199,6 +1233,32 @@ BEGIN
   FROM jsonb_array_elements(COALESCE(NEW.data->'featuredVideos','[]'::jsonb))
     WITH ORDINALITY AS x(item,ord);
 
+
+  -- Category videos are the current public portfolio model. The canonical
+  -- featuredVideos array is projected here for direct category-page rendering.
+  INSERT INTO public.category_videos
+    (id,title,youtube_url,youtube_video_id,thumbnail,description,category,featured,visible,
+     display_order,caption,client,raw,version,updated_at)
+  SELECT
+    COALESCE(NULLIF(x.item->>'id',''), 'video-' || x.ord::text),
+    COALESCE(NULLIF(x.item->>'title',''), COALESCE(x.item->>'category','Video') || ' Video'),
+    COALESCE(x.item->>'youtubeUrl',''),
+    COALESCE(x.item->>'videoId',''),
+    x.item->>'thumbnail',
+    x.item->>'description',
+    COALESCE(NULLIF(x.item->>'category',''),'Uncategorized'),
+    COALESCE((x.item->>'featured')::BOOLEAN,FALSE),
+    COALESCE((x.item->>'visible')::BOOLEAN,TRUE),
+    COALESCE((x.item->>'order')::INTEGER,x.ord::INTEGER),
+    x.item->>'caption',
+    x.item->>'client',
+    x.item,
+    NEW.version,
+    COALESCE(NEW.updated_at,NOW())
+  FROM jsonb_array_elements(COALESCE(NEW.data->'featuredVideos','[]'::jsonb))
+    WITH ORDINALITY AS x(item,ord)
+  WHERE COALESCE(x.item->>'videoId', x.item->>'youtubeUrl', '') <> '';
+
   -- Gallery.
   INSERT INTO public.gallery_items
     (id,title,image_url,category,caption,client,display_order,raw,version,updated_at)
@@ -1459,6 +1519,7 @@ ALTER TABLE public.project_gallery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.featured_videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.category_videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gallery_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.client_logos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.workflow_steps ENABLE ROW LEVEL SECURITY;
@@ -1483,7 +1544,7 @@ BEGIN
       AND tablename IN (
         'site_content','site_sections','site_settings','navigation_items','header_ctas',
         'hero_settings','about_profile','services','project_categories','projects',
-        'project_videos','project_gallery','project_links','project_tags','featured_videos','gallery_items',
+        'project_videos','project_gallery','project_links','project_tags','featured_videos','category_videos','gallery_items',
         'client_logos','workflow_steps','timeline_items','skills','testimonials',
         'footer_links','section_headers','section_visibility','contact_social_links','contact_inquiries'
       )
@@ -1509,6 +1570,7 @@ GRANT SELECT ON
   public.project_links,
   public.project_tags,
   public.featured_videos,
+  public.category_videos,
   public.gallery_items,
   public.client_logos,
   public.workflow_steps,
@@ -1551,6 +1613,8 @@ CREATE POLICY "Public read project tags" ON public.project_tags
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read featured videos" ON public.featured_videos
   FOR SELECT TO anon, authenticated USING (visible = TRUE);
+CREATE POLICY "Public read category videos" ON public.category_videos
+  FOR SELECT TO anon, authenticated USING (visible = TRUE);
 CREATE POLICY "Public read gallery" ON public.gallery_items
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read client logos" ON public.client_logos
@@ -1589,6 +1653,7 @@ REVOKE INSERT, UPDATE, DELETE ON
   public.project_links,
   public.project_tags,
   public.featured_videos,
+  public.category_videos,
   public.gallery_items,
   public.client_logos,
   public.workflow_steps,
@@ -1634,7 +1699,8 @@ ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 -- SELECT id, version, published_at, updated_at FROM public.site_content;
 -- SELECT * FROM public.site_settings WHERE id='current';
 -- SELECT * FROM public.navigation_items ORDER BY display_order;
--- SELECT * FROM public.projects ORDER BY display_order;
+-- SELECT * FROM public.category_videos ORDER BY category, display_order;
+-- Legacy project tables remain for backward compatibility but are no longer used by the public category portfolio.
 -- SELECT * FROM public.project_videos ORDER BY project_id, display_order;
 -- SELECT * FROM public.project_links ORDER BY project_id, display_order;
 -- SELECT * FROM public.timeline_items ORDER BY item_type, display_order;
