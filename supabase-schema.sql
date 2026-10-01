@@ -68,6 +68,60 @@ SET data = (
 ) - 'adminAuth' - 'supabaseConfig'
 WHERE id = 'current';
 
+-- One-time/idempotent content migration: videos nested inside legacy Projects are
+-- copied into the canonical featuredVideos array so the new category-first
+-- portfolio keeps existing YouTube work without requiring Project records.
+WITH legacy_video_rows AS (
+  SELECT DISTINCT ON (video_key)
+    video_key,
+    jsonb_build_object(
+      'id', 'migrated-' || COALESCE(NULLIF(p.project->>'id',''), p.pord::text) || '-' || v.vord::text,
+      'title', COALESCE(NULLIF(v.video->>'title',''), NULLIF(p.project->>'title',''), 'YouTube Video'),
+      'youtubeUrl', COALESCE(v.video->>'youtubeUrl',''),
+      'videoId', COALESCE(NULLIF(v.video->>'videoId',''), v.video->>'youtubeUrl',''),
+      'thumbnail', '',
+      'description', COALESCE(p.project->>'description',''),
+      'category', COALESCE(NULLIF(p.project->>'category',''), 'Uncategorized'),
+      'featured', COALESCE((p.project->>'featured')::BOOLEAN,FALSE),
+      'visible', COALESCE((p.project->>'published')::BOOLEAN,TRUE),
+      'order', 1000 + (p.pord::INTEGER * 100) + v.vord::INTEGER,
+      'caption', COALESCE(v.video->>'caption',''),
+      'client', COALESCE(p.project->>'client','')
+    ) AS item,
+    p.pord,
+    v.vord
+  FROM public.site_content AS sc
+  CROSS JOIN jsonb_array_elements(COALESCE(sc.data->'projects','[]'::jsonb))
+    WITH ORDINALITY AS p(project,pord)
+  CROSS JOIN jsonb_array_elements(COALESCE(p.project->'videos','[]'::jsonb))
+    WITH ORDINALITY AS v(video,vord)
+  CROSS JOIN LATERAL (
+    SELECT COALESCE(NULLIF(v.video->>'videoId',''), NULLIF(v.video->>'youtubeUrl','')) AS video_key
+  ) AS k
+  WHERE sc.id = 'current'
+    AND k.video_key IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements(COALESCE(sc.data->'featuredVideos','[]'::jsonb)) AS existing(item)
+      WHERE COALESCE(NULLIF(existing.item->>'videoId',''), NULLIF(existing.item->>'youtubeUrl','')) = k.video_key
+    )
+  ORDER BY video_key, p.pord, v.vord
+),
+legacy_video_batch AS (
+  SELECT COALESCE(jsonb_agg(item ORDER BY pord, vord), '[]'::jsonb) AS items
+  FROM legacy_video_rows
+)
+UPDATE public.site_content AS sc
+SET data = jsonb_set(
+  sc.data,
+  '{featuredVideos}',
+  COALESCE(sc.data->'featuredVideos','[]'::jsonb) || legacy_video_batch.items,
+  TRUE
+)
+FROM legacy_video_batch
+WHERE sc.id = 'current'
+  AND jsonb_array_length(legacy_video_batch.items) > 0;
+
 CREATE INDEX IF NOT EXISTS site_content_data_gin_idx
   ON public.site_content USING GIN (data);
 
