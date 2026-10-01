@@ -34,6 +34,7 @@ ALTER TABLE public.site_content ADD COLUMN IF NOT EXISTS updated_by TEXT DEFAULT
 -- IMPORTANT: an older projection trigger may be installed already. Disable it
 -- before migration/backfill updates so a stale function cannot block this schema.
 DROP TRIGGER IF EXISTS sync_shpixels_site_projections_trigger ON public.site_content;
+DROP TRIGGER IF EXISTS sync_shpixels_category_videos_trigger ON public.site_content;
 
 UPDATE public.site_content SET data = '{}'::jsonb WHERE data IS NULL;
 ALTER TABLE public.site_content ALTER COLUMN data SET NOT NULL;
