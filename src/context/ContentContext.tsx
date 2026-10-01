@@ -611,11 +611,11 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       return content.categories;
     }
     const catSet = new Set<string>();
-    (content.projects || []).forEach((p) => {
-      if (p.category) catSet.add(p.category);
+    (content.featuredVideos || []).forEach((video) => {
+      if (video.category) catSet.add(video.category);
     });
     return Array.from(catSet);
-  }, [content.categories, content.projects]);
+  }, [content.categories, content.featuredVideos]);
 
   const categoryDetails = useMemo(() => {
     return content.categoryDetails || initialContent.categoryDetails || {};
@@ -648,8 +648,10 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
         nextDetails[trimmed] = nextDetails[oldName];
         delete nextDetails[oldName];
       }
-      const nextProjects = (prev.projects || []).map(p => p.category === oldName ? { ...p, category: trimmed } : p);
-      const next = { ...prev, categories: nextCats, categoryDetails: nextDetails, projects: nextProjects };
+      const nextVideos = (prev.featuredVideos || []).map((video) =>
+        video.category === oldName ? { ...video, category: trimmed } : video
+      );
+      const next = { ...prev, categories: nextCats, categoryDetails: nextDetails, featuredVideos: nextVideos };
       markLocalEdit(next);
       return next;
     });
@@ -657,6 +659,12 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
 
   const deleteCategory = useCallback((name: string) => {
     setContent((prev) => {
+      // Preserve videos: a category with assigned videos must be emptied or
+      // reassigned first instead of silently orphaning/deleting its content.
+      if ((prev.featuredVideos || []).some((video) => video.category === name)) {
+        return prev;
+      }
+
       const nextCats = (prev.categories || categories).filter(c => c !== name);
       const nextDetails = { ...(prev.categoryDetails || {}) };
       delete nextDetails[name];
