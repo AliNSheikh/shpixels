@@ -68,8 +68,29 @@
   animation: marquee 30s linear infinite;
 }
 
-.animate-marquee:hover {
+.animate-marquee:hover,
+.animate-marquee-reverse:hover {
   animation-play-state: paused;
+}
+
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee 34s linear infinite reverse;
+  animation-delay: -11s;
+}
+
+/* Keep homepage sections visually compact without affecting project/category pages. */
+.homepage-sections > section:not(#hero) {
+  padding-top: 3.5rem !important;
+  padding-bottom: 3.5rem !important;
+}
+
+@media (max-width: 639px) {
+  .homepage-sections > section:not(#hero) {
+    padding-top: 2.75rem !important;
+    padding-bottom: 2.75rem !important;
+  }
 }
 
 /* Glow effects */
@@ -171,7 +192,8 @@
     scroll-behavior: auto !important;
   }
 
-  .animate-marquee {
+  .animate-marquee,
+  .animate-marquee-reverse {
     animation: none !important;
   }
 }

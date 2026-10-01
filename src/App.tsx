@@ -166,7 +166,7 @@ function AppContent() {
       {content.sectionVisibility?.header !== false && (
         <PublicSectionBoundary name="header"><Header /></PublicSectionBoundary>
       )}
-      <main>
+      <main className="homepage-sections">
         {orderedSections.map((section) => {
           const hiddenByPrimary = content.sectionVisibility?.[section.visibilityKey] === false;
           const hiddenByLegacy = section.legacyVisibilityKey

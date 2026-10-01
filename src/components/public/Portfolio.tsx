@@ -82,7 +82,7 @@ export function Portfolio() {
             <p className="text-xs sm:text-sm">{t('portfolio.empty', 'No portfolio categories are available yet.')}</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {categoryCards.map(({ category, projects, detail, coverImage }) => (
               <article
                 key={category}
@@ -103,25 +103,25 @@ export function Portfolio() {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                    <div className="absolute left-4 bottom-4 right-4 flex items-end justify-between gap-3">
+                    <div className="absolute left-3 bottom-3 right-3 sm:left-4 sm:bottom-4 sm:right-4 flex items-end justify-between gap-2 sm:gap-3">
                       <div>
                         <p className="text-[10px] font-mono uppercase tracking-wider text-[#c8c8c8]">
                           {projects.length} {isAr ? 'مشروع' : projects.length === 1 ? 'project' : 'projects'}
                         </p>
-                        <h3 className="mt-1 text-lg sm:text-xl font-black text-white font-quicksand uppercase leading-tight">
+                        <h3 className="mt-1 text-sm sm:text-xl font-black text-white font-quicksand uppercase leading-tight">
                           {getCategoryLabel(category)}
                         </h3>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 sm:p-5">
+                  <div className="p-3 sm:p-5">
                     {(isAr ? detail?.descriptionAr : detail?.description) && (
                       <p className="text-xs sm:text-sm text-[#a8a6a1] leading-relaxed line-clamp-2 min-h-[2.5rem]">
                         {isAr ? detail?.descriptionAr : detail?.description}
                       </p>
                     )}
-                    <span className="mt-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--site-accent)]">
+                    <span className="mt-3 sm:mt-4 inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--site-accent)]">
                       {isAr ? 'عرض المشاريع' : 'View Projects'}
                       <ArrowRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                     </span>

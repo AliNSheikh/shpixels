@@ -26,7 +26,11 @@ export function SEOManager() {
   });
 
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [copiedSitemap, setCopiedSitemap] = useState(false);
+  const [copiedSitemapLink, setCopiedSitemapLink] = useState(false);
+  const sitemapUrl = useMemo(
+    () => `${(seo.canonicalUrl || 'https://shpixels.vercel.app').replace(/\/$/, '')}/sitemap.xml`,
+    [seo.canonicalUrl]
+  );
 
   // Generate dynamic sitemap XML based on current published content
   const generatedSitemapXml = useMemo(() => {
@@ -87,10 +91,10 @@ export function SEOManager() {
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-  const handleCopySitemap = () => {
-    navigator.clipboard.writeText(generatedSitemapXml);
-    setCopiedSitemap(true);
-    setTimeout(() => setCopiedSitemap(false), 2000);
+  const handleCopySitemapLink = () => {
+    navigator.clipboard.writeText(sitemapUrl);
+    setCopiedSitemapLink(true);
+    setTimeout(() => setCopiedSitemapLink(false), 2000);
   };
 
   const handleDownloadSitemap = () => {
@@ -193,6 +197,33 @@ export function SEOManager() {
                 {isAr 
                   ? 'يتيح تتبع زوار المعرض، وتفاعلات تشغيل الفيديو 4K، وطلبات التواصل تلقائياً.' 
                   : 'Automatically injects Google Tag (gtag.js) to track visitor traffic, film plays, and inquiries.'}
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-[#232323]">
+              <label className="block text-xs font-mono uppercase text-[#a8a6a1] mb-1.5">
+                {isAr ? 'رابط خريطة الموقع لـ Google Search Console' : 'Google Search Console Sitemap URL'}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={sitemapUrl}
+                  className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-[#171717] border border-[#2b2b2b] text-[11px] text-[#d7d6d2] font-mono focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopySitemapLink}
+                  className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-xs font-semibold text-white whitespace-nowrap"
+                >
+                  {copiedSitemapLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedSitemapLink ? (isAr ? 'تم النسخ' : 'Copied') : (isAr ? 'نسخ الرابط' : 'Copy Link')}</span>
+                </button>
+              </div>
+              <p className="mt-1.5 text-[10px] text-[#706e6a] font-mono">
+                {isAr
+                  ? 'أرسل هذا الرابط في Google Search Console. Google Analytics يستخدم معرف GA4 أعلاه وليس ملف sitemap.'
+                  : 'Submit this URL in Google Search Console. Google Analytics uses the GA4 Measurement ID above, not the sitemap itself.'}
               </p>
             </div>
           </div>
@@ -323,11 +354,11 @@ export function SEOManager() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleCopySitemap}
+                onClick={handleCopySitemapLink}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#232323] hover:bg-[#2b2b2b] text-xs font-mono text-[#f1f2ed] transition-colors"
               >
-                {copiedSitemap ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#2563eb]" />}
-                <span>{copiedSitemap ? (isAr ? 'تم النسخ' : 'Copied!') : (isAr ? 'نسخ XML' : 'Copy XML')}</span>
+                {copiedSitemapLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#2563eb]" />}
+                <span>{copiedSitemapLink ? (isAr ? 'تم نسخ الرابط' : 'Link Copied!') : (isAr ? 'نسخ رابط Sitemap' : 'Copy Sitemap Link')}</span>
               </button>
 
               <button

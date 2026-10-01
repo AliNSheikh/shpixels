@@ -2,6 +2,28 @@ import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
 import type { ClientLogo } from '../../types/content';
 
+function balanceLogoRows(logos: ClientLogo[]): ClientLogo[][] {
+  if (logos.length <= 7) return [logos];
+
+  const firstRow: ClientLogo[] = [];
+  const secondRow: ClientLogo[] = [];
+
+  logos.forEach((logo, index) => {
+    (index % 2 === 0 ? firstRow : secondRow).push(logo);
+  });
+
+  return [firstRow, secondRow];
+}
+
+function buildLoopRow(logos: ClientLogo[]): ClientLogo[] {
+  if (logos.length === 0) return [];
+
+  const cycleLength = Math.max(7, logos.length);
+  const cycle = Array.from({ length: cycleLength }, (_, index) => logos[index % logos.length]);
+
+  return [...cycle, ...cycle];
+}
+
 export function ClientLogos() {
   const { content } = useContent();
   const { language } = useLanguage();
@@ -15,11 +37,11 @@ export function ClientLogos() {
   if (logos.length === 0) return null;
 
   const header = content.sectionHeaders?.brands || content.sectionHeaders?.clientlogos;
-  const repeated = [...logos, ...logos];
+  const rows = balanceLogoRows(logos);
 
   return (
-    <section id="brands" className="relative py-14 sm:py-20 bg-[#141414] overflow-hidden border-y border-[#262626]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-10">
+    <section id="brands" className="relative py-10 sm:py-14 bg-[#141414] overflow-hidden border-y border-[#262626]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <p className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[var(--site-accent)] mb-2">
@@ -37,44 +59,61 @@ export function ClientLogos() {
         </div>
       </div>
 
-      <div className="relative w-full overflow-hidden" aria-label={isAr ? 'شعارات العلامات التجارية' : 'Brand logos'}>
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 sm:w-28 bg-gradient-to-r from-[#141414] to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 sm:w-28 bg-gradient-to-l from-[#141414] to-transparent" />
+      <div
+        className="relative w-full overflow-hidden space-y-2 sm:space-y-3"
+        aria-label={isAr ? 'شعارات العلامات التجارية' : 'Brand logos'}
+      >
+        {rows.map((row, rowIndex) => {
+          const loopLogos = buildLoopRow(row);
+          const cycleLength = loopLogos.length / 2;
 
-        <div className="animate-marquee flex items-center whitespace-nowrap py-2">
-          {repeated.map((brand, index) => {
-            const logoSrc = String(brand.logoUrl || brand.logo || '').trim();
-            const website = String(brand.websiteUrl || brand.website || '').trim();
-            const name = String(brand.name || 'Brand');
-            const logo = (
-              <div className="mx-7 sm:mx-12 flex h-14 sm:h-20 min-w-[120px] sm:min-w-[160px] items-center justify-center">
-                <img
-                  src={logoSrc}
-                  alt={index >= logos.length ? '' : name}
-                  aria-hidden={index >= logos.length ? true : undefined}
-                  className="max-h-9 sm:max-h-12 max-w-[130px] sm:max-w-[180px] w-auto object-contain opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-300"
-                  loading="lazy"
-                />
-              </div>
-            );
+          return (
+            <div
+              key={`brand-row-${rowIndex}`}
+              className={rowIndex === 0 ? 'animate-marquee flex items-center whitespace-nowrap py-1' : 'animate-marquee-reverse flex items-center whitespace-nowrap py-1'}
+            >
+              {loopLogos.map((brand, index) => {
+                const logoSrc = String(brand.logoUrl || brand.logo || '').trim();
+                const website = String(brand.websiteUrl || brand.website || '').trim();
+                const name = String(brand.name || 'Brand');
+                const isDuplicateCycle = index >= cycleLength;
 
-            return website && index < logos.length ? (
-              <a
-                key={`${brand.id}-${index}`}
-                href={/^https?:\/\//i.test(website) ? website : `https://${website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={name}
-              >
-                {logo}
-              </a>
-            ) : (
-              <div key={`${brand.id}-${index}`} aria-hidden={index >= logos.length ? true : undefined}>
-                {logo}
-              </div>
-            );
-          })}
-        </div>
+                const logo = (
+                  <div className="flex h-14 sm:h-16 lg:h-20 w-[42vw] sm:w-[28vw] lg:w-[14.285vw] max-w-[190px] min-w-[118px] items-center justify-center px-4 sm:px-5">
+                    <img
+                      src={logoSrc}
+                      alt={isDuplicateCycle ? '' : name}
+                      aria-hidden={isDuplicateCycle ? true : undefined}
+                      className="max-h-9 sm:max-h-11 lg:max-h-12 max-w-full w-auto object-contain opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-300"
+                      loading="lazy"
+                    />
+                  </div>
+                );
+
+                return website && !isDuplicateCycle ? (
+                  <a
+                    key={`${brand.id}-${rowIndex}-${index}`}
+                    href={/^https?:\/\//i.test(website) ? website : `https://${website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={name}
+                    className="shrink-0"
+                  >
+                    {logo}
+                  </a>
+                ) : (
+                  <div
+                    key={`${brand.id}-${rowIndex}-${index}`}
+                    className="shrink-0"
+                    aria-hidden={isDuplicateCycle ? true : undefined}
+                  >
+                    {logo}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     </section>
   );

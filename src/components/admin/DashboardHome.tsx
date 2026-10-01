@@ -93,10 +93,18 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
   // General temporary notice
   const [generalNotice, setGeneralNotice] = useState<string | null>(null);
+  const [copiedSitemapUrl, setCopiedSitemapUrl] = useState(false);
 
   const showNotice = (msg: string) => {
     setGeneralNotice(msg);
     setTimeout(() => setGeneralNotice(null), 3000);
+  };
+
+  const handleCopySitemapUrl = async (event?: React.MouseEvent<HTMLButtonElement>) => {
+    event?.stopPropagation();
+    await navigator.clipboard.writeText(sitemapUrl);
+    setCopiedSitemapUrl(true);
+    setTimeout(() => setCopiedSitemapUrl(false), 2000);
   };
 
   // Metrics calculations
@@ -110,6 +118,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   const totalGalleryImages = (content.gallery?.length || 0) + content.projects.reduce((acc, p) => acc + (p.gallery?.length || 0), 0);
   const totalWorkflowSteps = content.workflow?.length || 4;
   const totalServices = content.services?.length || 6;
+  const sitemapUrl = `${(content.seo.canonicalUrl || 'https://shpixels.vercel.app').replace(/\/$/, '')}/sitemap.xml`;
 
   // Filtered recent projects
   const recentProjects = content.projects
@@ -521,8 +530,23 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
               <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">sitemap.xml</p>
-          <p className="text-[10px] sm:text-xs text-[#706e6a] mt-2 font-mono truncate">{isAr ? 'مزامنة تلقائية' : 'Live Auto-Sync'}</p>
+          <p className="text-[10px] sm:text-[11px] text-emerald-400 font-mono break-all leading-relaxed">
+            {sitemapUrl}
+          </p>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="text-[10px] text-[#706e6a] font-mono">
+              {isAr ? 'Google Search Console' : 'Search Console Ready'}
+            </span>
+            <button
+              type="button"
+              onClick={handleCopySitemapUrl}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#232323] hover:bg-[#2b2b2b] text-[10px] text-[#f1f2ed] border border-[#2b2b2b]"
+              title={isAr ? 'نسخ رابط خريطة الموقع' : 'Copy sitemap URL'}
+            >
+              {copiedSitemapUrl ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-[#38bdf8]" />}
+              <span>{copiedSitemapUrl ? (isAr ? 'تم النسخ' : 'Copied') : (isAr ? 'نسخ الرابط' : 'Copy Link')}</span>
+            </button>
+          </div>
         </div>
       </div>
 
