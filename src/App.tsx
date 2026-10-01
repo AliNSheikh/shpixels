@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Analytics } from '@vercel/analytics/react';
 import { ContentProvider, useContent } from './context/ContentContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -102,6 +103,7 @@ export default function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AppContent />
+          <Analytics />
         </LanguageProvider>
       </ThemeProvider>
     </ContentProvider>
