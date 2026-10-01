@@ -35,12 +35,26 @@ The schema includes global settings and sections plus dedicated tables for navig
 
 ### Required database migration
 
-After deploying a version that changes the schema:
+For a normal schema update:
 
 1. Open **Supabase → SQL Editor → New query**.
 2. Run the complete latest `supabase-schema.sql` from this repository.
 3. Open the CMS and make one save/publish action. This backfills all normalized projection tables from `site_content`.
-4. Use **Site Settings → Test Database** or `/api/diagnostics` to verify the schema and projections.
+4. Run `supabase-verify.sql` and use **Site Settings → Test Database** or `/api/diagnostics` to verify the schema and projections.
+
+### Repairing an older/stale Supabase trigger
+
+If Supabase reports `21000: DELETE requires a WHERE clause`, `42702: column reference "ord" is ambiguous`, or the CMS opens but publishing does not reach the database, the live project is still running an older database trigger. Use this exact order:
+
+1. Run `supabase-repair-before-schema.sql`.
+2. Immediately run the complete latest `supabase-schema.sql`.
+3. Run `supabase-verify.sql`.
+4. Publish the current site once from the CMS.
+5. Run **Test Database** again.
+
+The repair preflight removes stale `site_content` projection triggers/functions but does not delete the canonical website data. Do not use the CMS between the repair preflight and the full schema installation.
+
+See `SUPABASE_UPDATE.md` for the complete recovery procedure, Vercel environment checklist, verification queries, and Storage/Realtime checks.
 
 Do not manually edit projection tables as the normal CMS workflow. The canonical `site_content` publication is intentionally the single mutation path so all tables stay on the same version.
 
@@ -53,7 +67,7 @@ This project includes pre-configured `vercel.json` and serverless API handlers f
 1. **Push to GitHub** (see instructions below).
 2. Go to [vercel.com](https://vercel.com) and log in.
 3. Click **"Add New..."** → **"Project"**.
-4. Import your GitHub repository (`mografix` or similar).
+4. Import your GitHub repository (`shpixels` or similar).
 5. Vercel will automatically detect:
    - **Framework Preset**: Vite
    - **Build Command**: `vite build` (or `npm run build`)
@@ -74,7 +88,7 @@ git init
 git add .
 
 # 3. Commit your changes
-git commit -m "feat: complete MOGRAFIX portfolio with dedicated CMS dashboard"
+git commit -m "feat: complete SHPIXELS portfolio with dedicated CMS dashboard"
 
 # 4. Set main branch
 git branch -M main
@@ -115,10 +129,10 @@ The application runs on `http://localhost:3000`.
 
 ```
 ├── public/                 # Static assets, logos, and pre-seeded content.json
-├── api/                    # Vercel serverless API handlers (content, health, save)
+├── api/                    # Vercel serverless API handlers
 ├── src/
 │   ├── components/
-│   │   ├── admin/          # Comprehensive Director CMS Admin Dashboard
+│   │   ├── admin/          # Comprehensive CMS Admin Dashboard
 │   │   │   ├── AdminLayout.tsx
 │   │   │   ├── DashboardHome.tsx
 │   │   │   ├── ProjectManager.tsx
@@ -132,8 +146,9 @@ The application runs on `http://localhost:3000`.
 │   │   │   ├── SEOManager.tsx
 │   │   │   ├── SiteDataManager.tsx
 │   │   │   ├── InquiryManager.tsx
+│   │   │   ├── BrandLogoManager.tsx
 │   │   │   └── ExportManager.tsx
-│   │   ├── common/         # OptimizedImage, YouTubeEmbed, IconPicker
+│   │   ├── common/         # Shared UI, uploaders, YouTube, social/theme utilities
 │   │   └── public/         # Production-grade public portfolio components
 │   │       ├── Header.tsx
 │   │       ├── Hero.tsx
@@ -142,7 +157,7 @@ The application runs on `http://localhost:3000`.
 │   │       ├── About.tsx
 │   │       ├── Services.tsx
 │   │       ├── Portfolio.tsx
-│   │       ├── ProjectModal.tsx
+│   │       ├── ProjectPage.tsx
 │   │       ├── Process.tsx
 │   │       ├── Gallery.tsx
 │   │       ├── Experience.tsx
@@ -151,17 +166,21 @@ The application runs on `http://localhost:3000`.
 │   │       ├── Contact.tsx
 │   │       └── Footer.tsx
 │   ├── context/
-│   │   ├── ContentContext.tsx  # Centralized content store with local & server sync
-│   │   └── LanguageContext.tsx # English / Arabic RTL toggle
+│   │   ├── ContentContext.tsx
+│   │   ├── ThemeContext.tsx
+│   │   └── LanguageContext.tsx
 │   ├── data/
-│   │   ├── initialContent.ts   # Default project data and editorial copy
-│   │   └── content.json
+│   │   └── initialContent.ts
 │   ├── types/
-│   │   └── content.ts          # Strictly-typed TypeScript interfaces
+│   │   └── content.ts
 │   ├── App.tsx
 │   └── main.tsx
-├── server.ts               # Express full-stack backend with Vite middleware
-├── vercel.json             # Vercel configuration for SPA routing & API rewrites
+├── supabase-schema.sql                 # Complete current database schema
+├── supabase-repair-before-schema.sql   # Preflight repair for stale triggers
+├── supabase-verify.sql                 # Read-only installation verification
+├── SUPABASE_UPDATE.md                  # Full Supabase recovery/update guide
+├── server.ts
+├── vercel.json
 └── package.json
 ```
 
@@ -169,17 +188,16 @@ The application runs on `http://localhost:3000`.
 
 ## 🔐 Director Portal Access
 
-- Access the administrative CMS at `/#admin` or click **"Director Portal"** in the website footer.
+- Access the administrative CMS at `/admin` or `/#admin`.
 - The CMS allows you to:
   - Add, edit, reorder, categorize, feature, publish, and delete projects with YouTube embeds, galleries, slugs, live/GitHub URLs and tech tags.
   - Upload site images, logos, testimonial avatars, category covers and resume assets into Supabase Storage.
   - Manage experience, education, skills, testimonials, navigation/CTA targets, footer/legal links and contact details.
+  - Manage the scrolling brand-logo marquee and upload logos from the device.
   - Review inbound contact inquiries and maintain their status/internal notes.
-  - Rename the site in one place under **Settings → Site Name** — it updates the header, footer, and copyright line everywhere those aren't individually overridden.
-  - Customize all section texts, pipeline steps, and client logos.
-  - Toggle between English and Arabic.
-  - Configure Google Analytics (GA4) and Google Search Console verification.
-  - Export your complete content snapshot as JSON for backups.
+  - Rename the site in one place under **Settings → Site Name**.
+  - Customize section texts, pipeline steps, SEO and analytics settings.
+  - Export the complete content snapshot as JSON for backups.
 
 ---
 
