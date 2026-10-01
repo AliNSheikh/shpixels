@@ -6,6 +6,7 @@ import {
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { ImageUploadDropzone } from '../common/ImageUploadDropzone';
+import { getCategoryPath } from '../../utils/projectRoutes';
 
 export function SEOManager() {
   const { content, updateContent } = useContent();
@@ -32,31 +33,20 @@ export function SEOManager() {
     [seo.canonicalUrl]
   );
 
-  // Generate dynamic sitemap XML based on current published content
+  // Preview the same category-based URL structure served by /sitemap.xml.
   const generatedSitemapXml = useMemo(() => {
     const baseUrl = (seo.canonicalUrl || 'https://shpixels.vercel.app').replace(/\/$/, '');
     const today = new Date().toISOString().split('T')[0];
+    const categories = (content.categories || []).map((category) => String(category || '').trim()).filter(Boolean);
 
-    const staticUrls = [
+    const allUrls = [
       { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'weekly' },
-      { loc: `${baseUrl}/#portfolio`, priority: '0.9', changefreq: 'weekly' },
-      { loc: `${baseUrl}/#showreel`, priority: '0.8', changefreq: 'monthly' },
-      { loc: `${baseUrl}/#about`, priority: '0.8', changefreq: 'monthly' },
-      { loc: `${baseUrl}/#services`, priority: '0.8', changefreq: 'monthly' },
-      { loc: `${baseUrl}/#process`, priority: '0.7', changefreq: 'monthly' },
-      { loc: `${baseUrl}/#gallery`, priority: '0.7', changefreq: 'weekly' },
-      { loc: `${baseUrl}/#contact`, priority: '0.8', changefreq: 'monthly' }
-    ];
-
-    const projectUrls = (content.projects || [])
-      .filter((p) => p.published)
-      .map((p) => ({
-        loc: `${baseUrl}/#project-${p.id}`,
-        priority: p.featured ? '0.8' : '0.6',
+      ...categories.map((category) => ({
+        loc: `${baseUrl}${getCategoryPath(category)}`,
+        priority: '0.9',
         changefreq: 'weekly'
-      }));
-
-    const allUrls = [...staticUrls, ...projectUrls];
+      }))
+    ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
     allUrls.forEach((u) => {
@@ -65,7 +55,7 @@ export function SEOManager() {
     xml += `</urlset>`;
 
     return xml;
-  }, [seo.canonicalUrl, content.projects]);
+  }, [seo.canonicalUrl, content.categories]);
 
   const robotsTxtContent = useMemo(() => {
     const baseUrl = (seo.canonicalUrl || 'https://shpixels.vercel.app').replace(/\/$/, '');
@@ -333,14 +323,14 @@ export function SEOManager() {
                 </h3>
               </div>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/40">
-                {content.projects.filter(p => p.published).length + 8} URLs
+                {(content.categories?.length || 0) + 1} URLs
               </span>
             </div>
 
             <p className="text-xs text-[#a8a6a1]">
               {isAr 
                 ? 'يتم تحديث خريطة الموقع تلقائياً بمجرد نشر أو تعديل أي مشروع في المعرض.' 
-                : 'Sitemap dynamically includes all public navigation anchors and active portfolio production films.'}
+                : 'Sitemap dynamically includes the homepage and every public video-category page.'}
             </p>
 
             {/* Sitemap XML live preview box */}
