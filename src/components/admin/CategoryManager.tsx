@@ -54,10 +54,10 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
 
   // Quick stats per category
   const getCategoryUsage = (catName: string) => {
-    const projCount = (content.projects || []).filter((p) => p.category === catName).length;
-    const servCount = (content.services || []).filter((s) => s.category === catName).length;
-    const galCount = (content.gallery || []).filter((g) => g.category === catName).length;
-    return { projCount, servCount, galCount, total: projCount + servCount + galCount };
+    const videoCount = (content.featuredVideos || []).filter((video) => video.category === catName).length;
+    const servCount = (content.services || []).filter((service) => service.category === catName).length;
+    const galCount = (content.gallery || []).filter((item) => item.category === catName).length;
+    return { videoCount, servCount, galCount, total: videoCount + servCount + galCount };
   };
 
   const handleFileUpload = async (file: File, callback: (url: string) => void) => {
@@ -151,10 +151,22 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
   };
 
   const handleConfirmDelete = (name: string) => {
+    const usage = getCategoryUsage(name);
+    if (usage.videoCount > 0) {
+      setDeletingName(null);
+      setStatusMessage(
+        isAr
+          ? `انقل أو احذف ${usage.videoCount} فيديو من تصنيف "${name}" قبل حذف التصنيف.`
+          : `Move or delete the ${usage.videoCount} video(s) assigned to "${name}" before deleting this category.`
+      );
+      setTimeout(() => setStatusMessage(null), 4500);
+      return;
+    }
+
     deleteCategory(name);
     setDeletingName(null);
     setStatusMessage(
-      isAr 
+      isAr
         ? `✓ تم حذف التصنيف "${name}"`
         : `✓ Category "${name}" deleted.`
     );
@@ -188,8 +200,8 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
             </h2>
             <p className="text-xs text-[#a8a6a1]">
               {isAr
-                ? 'إضافة صور أغلفة مخصصة لكل تصنيف، تعديل الأسماء والوصف، وتحديث ترتيب الفلاتر في المعرض العام.'
-                : 'Manage custom cover images, descriptions, and filtering order for each production category.'}
+                ? 'أنشئ التصنيفات وأغلفتها، ثم اختر التصنيف عند إضافة فيديو YouTube ليظهر مباشرة في صفحته.'
+                : 'Create category pages and covers, then assign each YouTube video to a category so it appears there directly.'}
             </p>
           </div>
         </div>
@@ -312,8 +324,8 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
             </div>
             <p className="text-[11px] text-[#706e6a] leading-relaxed">
               {isAr 
-                ? 'تظهر صور الأغلفة في رأس قسم معرض الأعمال (Portfolio) عند تصفح كل فئة لتمنح الزائر انطباعاً سينمائياً فورياً.' 
-                : 'Category cover images enhance the public portfolio, greeting visitors with cinematic backdrop visuals upon filtering.'}
+                ? 'تظهر صورة الغلاف في صفحة التصنيف، وتعرض الصفحة جميع فيديوهات YouTube المخصصة لهذا التصنيف مباشرة.'
+                : 'Each cover image represents a category page that displays all YouTube videos assigned to that category directly.'}
             </p>
           </div>
         </div>
@@ -378,7 +390,7 @@ export function CategoryManager({ onClose, onSelectCategory }: CategoryManagerPr
                       <div className="flex items-center gap-3 text-[10px] font-mono text-[#a8a6a1] mt-1">
                         <span className="text-[#38bdf8] flex items-center gap-1">
                           <FolderCheck className="w-3 h-3" />
-                          {usage.projCount} {isAr ? 'مشاريع' : 'projects'}
+                          {usage.videoCount} {isAr ? 'فيديوهات' : usage.videoCount === 1 ? 'video' : 'videos'}
                         </span>
                         {detail.coverImage ? (
                           <span className="text-emerald-400">✓ {isAr ? 'غلاف مفعل' : 'Cover active'}</span>
