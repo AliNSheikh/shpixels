@@ -19,6 +19,16 @@ function normalizeSlug(value: unknown): string {
     .replace(/-{2,}/g, '');
 }
 
+function normalizeCategorySlug(value: unknown): string {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '');
+}
+
 function idSuffix(id: unknown): string {
   const normalized = normalizeSlug(id).replace(/^proj-/, '');
   const parts = normalized.split('-').filter(Boolean);
@@ -61,6 +71,22 @@ function projectSlugs(projects: any[]): Map<string, string> {
   return result;
 }
 
+function collectCategories(data: any, projects: any[]): string[] {
+  const categories: string[] = [];
+  const seen = new Set<string>();
+  const add = (value: unknown) => {
+    const name = String(value || '').trim();
+    const key = name.toLowerCase();
+    if (!name || seen.has(key)) return;
+    seen.add(key);
+    categories.push(name);
+  };
+
+  (Array.isArray(data?.categories) ? data.categories : []).forEach(add);
+  projects.forEach((project) => add(project?.category));
+  return categories;
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
     return res.status(405).send('Method Not Allowed');
@@ -82,14 +108,31 @@ export default async function handler(req: any, res: any) {
 
     const row = rows?.[0];
     const data = row?.data || {};
+
+    if (data?.seo?.sitemapEnabled === false) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(404).send('Sitemap is disabled in CMS SEO settings.');
+    }
+
     const projects = (Array.isArray(data.projects) ? data.projects : [])
       .filter((project: any) => project?.published !== false);
+    const categories = collectCategories(data, projects);
 
     const baseUrl = String(data?.seo?.canonicalUrl || 'https://shpixels.vercel.app')
       .replace(/\/$/, '');
     const lastModified = String(row?.updated_at || row?.published_at || new Date().toISOString())
       .slice(0, 10);
     const slugs = projectSlugs(projects);
+
+    const categoryUrls = categories.map((category) => {
+      const slug = normalizeCategorySlug(category) || 'category';
+      return `  <url>
+    <loc>${xmlEscape(`${baseUrl}/categories/${encodeURIComponent(slug)}`)}</loc>
+    <lastmod>${xmlEscape(lastModified)}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>`;
+    });
 
     const projectUrls = projects.map((project: any) => {
       const slug = slugs.get(String(project.id || '')) || normalizeSlug(project.title);
@@ -109,7 +152,7 @@ export default async function handler(req: any, res: any) {
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-${projectUrls.join('\n')}
+${[...categoryUrls, ...projectUrls].join('\n')}
 </urlset>`;
 
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
