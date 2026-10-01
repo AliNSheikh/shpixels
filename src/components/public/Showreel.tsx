@@ -50,10 +50,6 @@ export function Showreel() {
             <p className="text-xs text-gray-400">{spec.label}</p><p>{spec.value}</p>
           </div>)}
         </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
-          {content.featuredVideos.filter(video => video.visible).sort((a, b) => a.order - b.order).map(video =>
-            <YouTubeEmbed key={video.id} videoId={video.videoId} title={video.title} caption={video.caption || video.description} />)}
-        </div>
       </div>
     </section>
   );
