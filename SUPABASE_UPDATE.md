@@ -53,7 +53,19 @@ This additive migration is safe to re-run. It performs the database changes requ
 
 No new BRANDS table is required: brand records continue to use the existing `public.client_logos` projection table.
 
-### 4. Verify the database installation
+### 4. Category-video migration note
+
+The current full `supabase-schema.sql` already includes the new `public.category_videos` table and its canonical projection. If you completed step 2 using the latest full schema, **do not also run the category-video migration afterward**.
+
+For an already healthy database where you do not want to rerun the full schema, you may instead run:
+
+`supabase-migration-2026-10-02-category-videos.sql`
+
+That additive migration creates/backfills `public.category_videos` and installs a compatibility trigger that keeps it synchronized from `site_content.data.featuredVideos`. A future run of the complete schema automatically removes that compatibility trigger and uses the primary projection trigger.
+
+Legacy project tables are intentionally preserved to avoid destructive data loss, but the current public portfolio and CMS no longer use Projects as the category content model.
+
+### 5. Verify the database installation
 
 Run the complete `supabase-verify.sql` file.
 
@@ -62,14 +74,14 @@ Expected results:
 - `site_content` has one row with `id = current`.
 - `has_legacy_delete_without_where = false`.
 - `has_legacy_ambiguous_ord = false`.
-- every expected table reports `exists = true`.
+- every expected table reports `exists = true`, including `category_videos`.
 - `site_settings.google_font_url` and `site_settings.font_family` are readable.
 - the Navigation projection contains the `#brands` entry when BRANDS is enabled in the menu.
 - the `site-media` Storage bucket exists.
 - `site_content` is present in `supabase_realtime`.
 - after the next CMS publish, `cms_projection_status.ok = true` and its version equals `site_content.version`.
 
-### 5. Check Vercel environment variables
+### 6. Check Vercel environment variables
 
 In **Vercel → Project → Settings → Environment Variables**, confirm the production deployment has values for the Supabase project currently being updated:
 
@@ -85,13 +97,13 @@ The `VITE_*` values are used by the browser for public reads/Realtime. The secre
 
 If any environment variable is changed, redeploy the latest `main` branch in Vercel.
 
-### 6. Publish the current CMS snapshot once
+### 7. Publish the current CMS snapshot once
 
 Open `/admin`, log in, then use **Site Settings → Publish Content to Supabase** (or **Save Site & Publish**) once.
 
 This writes the current canonical document and triggers a complete rebuild of the normalized tables.
 
-### 7. Run Test Database
+### 8. Run Test Database
 
 Use **Site Settings → Test Database**. The current diagnostics detect:
 
@@ -108,7 +120,7 @@ A healthy installation reports the canonical content and projection tables synch
 
 ## Search Console sitemap
 
-The production sitemap is generated dynamically from the current canonical content and published project/category routes. Submit this URL in Google Search Console:
+The production sitemap is generated dynamically from the current canonical content and public category routes. Individual legacy project URLs are no longer added to the sitemap. Submit this URL in Google Search Console:
 
 `https://shpixels.vercel.app/sitemap.xml`
 
@@ -119,5 +131,5 @@ If you later change the canonical domain in the SEO manager, use the same `/site
 - Do not manually maintain the projection tables. Edit content in the CMS; `site_content` is the authoritative document.
 - Do not run the default seed unless you intentionally want to replace an empty database with the template content.
 - Uploaded logos/images/PDFs are stored in Supabase Storage (`site-media`); their public URLs are stored in the database.
-- YouTube videos are stored as links/video IDs, not uploaded video files.
+- YouTube videos are stored as links/video IDs, not uploaded video files. Category assignment controls where each video appears; no Project record is required.
 - If publishing still fails after this sequence, copy the exact result from **Test Database**, the row from `cms_projection_status`, and the error returned by the publish action. Those values identify whether the remaining issue is schema, Vercel environment configuration, authentication, or RLS/Storage.
