@@ -20,9 +20,9 @@ export function About() {
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md lg:max-w-none">
               {/* Decorative Frame */}
-              <div className="absolute -inset-3 rounded-2xl bg-gradient-to-tr from-[var(--site-accent)]/40 via-[#232323] to-transparent -z-10 blur-sm" />
+              <div className="absolute -inset-3 rounded-2xl bg-gradient-to-tr from-[#2563eb]/65 via-[#3b82f6]/30 to-[#06b6d4]/20 -z-10 blur-md" />
               
-              <div className="relative rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] shadow-2xl aspect-[4/5]">
+              <div className="relative rounded-2xl overflow-hidden bg-[#1d1d1d] border border-[#2b2b2b] shadow-[0_24px_70px_-28px_rgba(37,99,235,0.72)] aspect-[4/5]">
                 <OptimizedImage
                   src={about.profileImage}
                   alt={about.highlightText || 'Sharif Abs'}
