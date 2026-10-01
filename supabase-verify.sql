@@ -14,7 +14,8 @@ SELECT
   data ? 'branding' AS has_branding,
   data ? 'hero' AS has_hero,
   data ? 'about' AS has_about,
-  data ? 'projects' AS has_projects,
+  data ? 'featuredVideos' AS has_category_videos,
+  jsonb_array_length(COALESCE(data->'featuredVideos','[]'::jsonb)) AS category_video_count,
   data ? 'contact' AS has_contact,
   data ? 'footer' AS has_footer,
   data #>> '{branding,googleFontUrl}' AS canonical_google_font_url,
@@ -68,12 +69,8 @@ WITH expected(table_name) AS (
     ('about_profile'),
     ('services'),
     ('project_categories'),
-    ('projects'),
-    ('project_videos'),
-    ('project_gallery'),
-    ('project_links'),
-    ('project_tags'),
     ('featured_videos'),
+    ('category_videos'),
     ('gallery_items'),
     ('client_logos'),
     ('workflow_steps'),
@@ -129,12 +126,19 @@ SELECT id, platform, label, url, display_order, visible, version
 FROM public.contact_social_links
 ORDER BY display_order, platform;
 
--- 11) Supabase Storage bucket used by CMS uploads.
+-- 11) Confirm direct category-video projection/view.
+SELECT category, COUNT(*) AS video_count
+FROM public.category_videos
+WHERE visible = TRUE
+GROUP BY category
+ORDER BY category;
+
+-- 12) Supabase Storage bucket used by CMS uploads.
 SELECT id, name, public, file_size_limit, allowed_mime_types
 FROM storage.buckets
 WHERE id = 'site-media';
 
--- 12) Realtime publication membership for canonical content.
+-- 13) Realtime publication membership for canonical content.
 SELECT schemaname, tablename
 FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime'
