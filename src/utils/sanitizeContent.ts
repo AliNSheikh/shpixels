@@ -212,7 +212,7 @@ export function sanitizeGlobalContent(input: GlobalContent): GlobalContent {
     projects.push({ ...project, slug });
   }
 
-  const featuredVideos: YouTubeVideoItem[] = objectArray(raw.featuredVideos).map((item, index) => ({
+  const existingFeaturedVideos: YouTubeVideoItem[] = objectArray(raw.featuredVideos).map((item, index) => ({
     id: safeId(item.id, 'video', index),
     title: text(item.title, `Video ${index + 1}`),
     youtubeUrl: text(item.youtubeUrl),
@@ -226,6 +226,43 @@ export function sanitizeGlobalContent(input: GlobalContent): GlobalContent {
     caption: text(item.caption),
     client: text(item.client)
   }));
+
+  // Backward-compatible migration: historical "projects" may contain YouTube
+  // videos. The public site no longer requires projects, so expose those videos
+  // directly as category videos without forcing the admin to recreate them.
+  const existingVideoIds = new Set(existingFeaturedVideos.map((video) => video.id));
+  const existingVideoKeys = new Set(
+    existingFeaturedVideos.map((video) => `${video.videoId || video.youtubeUrl}::${video.category}`)
+  );
+  const legacyCategoryVideos: YouTubeVideoItem[] = [];
+
+  projects.forEach((project, projectIndex) => {
+    project.videos.forEach((video, videoIndex) => {
+      const id = `legacy-${project.id}-${video.id || videoIndex + 1}`;
+      const key = `${video.videoId || video.youtubeUrl}::${project.category}`;
+      if (!video.videoId && !video.youtubeUrl) return;
+      if (existingVideoIds.has(id) || existingVideoKeys.has(key)) return;
+
+      legacyCategoryVideos.push({
+        id,
+        title: video.title || project.title || `${project.category} Video ${videoIndex + 1}`,
+        youtubeUrl: video.youtubeUrl,
+        videoId: video.videoId || video.youtubeUrl,
+        thumbnail: project.coverImage || '',
+        description: project.description || '',
+        category: project.category || 'Uncategorized',
+        featured: project.featured,
+        order: existingFeaturedVideos.length + legacyCategoryVideos.length + 1,
+        visible: project.published,
+        caption: video.caption || '',
+        client: project.client || ''
+      });
+      existingVideoIds.add(id);
+      existingVideoKeys.add(key);
+    });
+  });
+
+  const featuredVideos: YouTubeVideoItem[] = [...existingFeaturedVideos, ...legacyCategoryVideos];
 
   const gallery: GalleryItem[] = objectArray(raw.gallery).map((item, index) => ({
     id: safeId(item.id, 'gallery', index),
@@ -352,6 +389,15 @@ export function sanitizeGlobalContent(input: GlobalContent): GlobalContent {
   for (const category of stringArray(raw.categories)) {
     const key = category.toLowerCase();
     if (!seenCategories.has(key)) {
+      seenCategories.add(key);
+      categories.push(category);
+    }
+  }
+
+  for (const video of featuredVideos) {
+    const category = text(video.category).trim();
+    const key = category.toLowerCase();
+    if (category && !seenCategories.has(key)) {
       seenCategories.add(key);
       categories.push(category);
     }

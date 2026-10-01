@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { 
-  FolderKanban, 
   Video, 
   Image, 
   Settings, 
@@ -31,7 +30,6 @@ import {
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { DashboardHome } from './DashboardHome';
-import { ProjectManager } from './ProjectManager';
 import { CategoryManager } from './CategoryManager';
 import { SectionManager } from './SectionManager';
 import { VideoManager } from './VideoManager';
@@ -47,7 +45,6 @@ import { BrandLogoManager } from './BrandLogoManager';
 
 type AdminTab = 
   | 'home' 
-  | 'projects' 
   | 'categories' 
   | 'sections' 
   | 'videos' 
@@ -128,7 +125,6 @@ export function AdminLayout() {
 
   const navItems = [
     { id: 'home', label: isAr ? 'لوحة القيادة' : 'Dashboard', icon: LayoutDashboard },
-    { id: 'projects', label: isAr ? 'إدارة المشاريع والأعمال' : 'Projects (CRUD)', icon: FolderKanban, count: content.projects.length },
     { id: 'categories', label: isAr ? 'إدارة التصنيفات والفئات' : 'Category Manager', icon: Tag, count: categories.length },
     { id: 'sections', label: isAr ? 'محرر كافة الأقسام والمحتوى' : 'Section & Pipeline Editor', icon: Layers },
     { id: 'videos', label: isAr ? 'فيديوهات YouTube 4K' : 'YouTube Videos', icon: Video },
@@ -415,7 +411,7 @@ export function AdminLayout() {
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#171717]/95 backdrop-blur-md border-t border-[#2b2b2b] px-2 py-1.5 flex items-center justify-around">
           {[
             { id: 'home', label: isAr ? 'الرئيسية' : 'Home', icon: LayoutDashboard },
-            { id: 'projects', label: isAr ? 'المشاريع' : 'Projects', icon: FolderKanban },
+            { id: 'videos', label: isAr ? 'الفيديوهات' : 'Videos', icon: Video },
             { id: 'categories', label: isAr ? 'التصنيفات' : 'Categories', icon: Tag },
             { id: 'sections', label: isAr ? 'الأقسام' : 'Sections', icon: Layers },
           ].map((item) => {
@@ -448,12 +444,8 @@ export function AdminLayout() {
         {/* Content Workspace Area */}
         <main className="flex-1 min-w-0 pb-20 md:pb-6">
           {activeTab === 'home' && (
-            <DashboardHome
-              onNavigate={(tab) => setActiveTab(tab as AdminTab)}
-              onNewProject={() => setActiveTab('projects')}
-            />
+            <DashboardHome onNavigate={(tab) => setActiveTab(tab as AdminTab)} />
           )}
-          {activeTab === 'projects' && <ProjectManager />}
           {activeTab === 'categories' && <CategoryManager />}
           {activeTab === 'sections' && <SectionManager />}
           {activeTab === 'videos' && <VideoManager />}

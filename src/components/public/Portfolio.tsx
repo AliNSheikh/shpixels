@@ -10,11 +10,11 @@ export function Portfolio() {
   const { language, t, isRTL } = useLanguage();
   const isAr = language === 'ar';
 
-  const publishedProjects = useMemo(
-    () => (Array.isArray(content.projects) ? content.projects : [])
-      .filter((project) => project?.published)
+  const visibleVideos = useMemo(
+    () => (Array.isArray(content.featuredVideos) ? content.featuredVideos : [])
+      .filter((video) => video?.visible !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0)),
-    [content.projects]
+    [content.featuredVideos]
   );
 
   const categories = useMemo(() => {
@@ -29,22 +29,21 @@ export function Portfolio() {
     };
 
     (Array.isArray(contextCategories) ? contextCategories : []).forEach(add);
-    publishedProjects.forEach((project) => add(project.category));
     return ordered;
-  }, [contextCategories, publishedProjects]);
+  }, [contextCategories]);
 
   const categoryCards = useMemo(
     () => categories.map((category) => {
-      const projects = publishedProjects.filter((project) => project.category === category);
+      const videos = visibleVideos.filter((video) => video.category === category);
       const detail = categoryDetails?.[category];
       return {
         category,
-        projects,
+        videos,
         detail,
-        coverImage: detail?.coverImage || projects.find((project) => project.coverImage)?.coverImage || ''
+        coverImage: detail?.coverImage || videos.find((video) => video.thumbnail)?.thumbnail || ''
       };
-    }).filter((item) => item.projects.length > 0 || item.detail),
-    [categories, publishedProjects, categoryDetails]
+    }).filter((item) => item.videos.length > 0 || item.detail),
+    [categories, visibleVideos, categoryDetails]
   );
 
   const getCategoryLabel = (category: string) => {
@@ -56,7 +55,7 @@ export function Portfolio() {
   const sectionTitle = content.sectionHeaders?.portfolio?.title || t('portfolio.title', 'FEATURED PORTFOLIO');
   const sectionDesc = content.sectionHeaders?.portfolio?.description || t(
     'portfolio.desc',
-    'Explore the portfolio by category. Open any category to view all published projects inside it.'
+    'Explore the portfolio by category. Open any category to watch all YouTube videos assigned to it.'
   );
 
   return (
@@ -83,7 +82,7 @@ export function Portfolio() {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-            {categoryCards.map(({ category, projects, detail, coverImage }) => (
+            {categoryCards.map(({ category, videos, detail, coverImage }) => (
               <article
                 key={category}
                 className="group overflow-hidden rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[var(--site-accent)]/60 transition-all duration-300 shadow-md hover:shadow-2xl hover:shadow-[var(--site-accent)]/10"
@@ -106,7 +105,7 @@ export function Portfolio() {
                     <div className="absolute left-3 bottom-3 right-3 sm:left-4 sm:bottom-4 sm:right-4 flex items-end justify-between gap-2 sm:gap-3">
                       <div>
                         <p className="text-[10px] font-mono uppercase tracking-wider text-[#c8c8c8]">
-                          {projects.length} {isAr ? 'مشروع' : projects.length === 1 ? 'project' : 'projects'}
+                          {videos.length} {isAr ? 'فيديو' : videos.length === 1 ? 'video' : 'videos'}
                         </p>
                         <h3 className="mt-1 text-sm sm:text-xl font-black text-white font-quicksand uppercase leading-tight">
                           {getCategoryLabel(category)}
@@ -122,7 +121,7 @@ export function Portfolio() {
                       </p>
                     )}
                     <span className="mt-3 sm:mt-4 inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--site-accent)]">
-                      {isAr ? 'عرض المشاريع' : 'View Projects'}
+                      {isAr ? 'عرض الفيديوهات' : 'View Videos'}
                       <ArrowRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                     </span>
                   </div>

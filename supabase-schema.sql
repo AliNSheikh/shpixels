@@ -333,6 +333,9 @@ CREATE TABLE IF NOT EXISTS public.project_tags (
   PRIMARY KEY (project_id, tag)
 );
 
+-- Category YouTube videos. The historical table name "featured_videos" is
+-- retained for backward compatibility with existing installations, but these
+-- rows are now the direct video records displayed inside category pages.
 CREATE TABLE IF NOT EXISTS public.featured_videos (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
@@ -350,6 +353,30 @@ CREATE TABLE IF NOT EXISTS public.featured_videos (
   version BIGINT NOT NULL DEFAULT 1,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS featured_videos_category_order_idx
+  ON public.featured_videos(category, display_order);
+
+CREATE OR REPLACE VIEW public.category_videos
+WITH (security_invoker = true)
+AS
+SELECT
+  id,
+  title,
+  youtube_url,
+  youtube_video_id,
+  thumbnail,
+  description,
+  category,
+  featured,
+  visible,
+  display_order,
+  caption,
+  client,
+  raw,
+  version,
+  updated_at
+FROM public.featured_videos;
 
 CREATE TABLE IF NOT EXISTS public.gallery_items (
   id TEXT PRIMARY KEY,
@@ -1176,7 +1203,7 @@ BEGIN
     WHERE (t.value #>> '{}') IS NOT NULL;
   END LOOP;
 
-  -- Featured YouTube videos.
+  -- Category YouTube videos (legacy table name retained for compatibility).
   INSERT INTO public.featured_videos
     (id,title,youtube_url,youtube_video_id,thumbnail,description,category,featured,visible,
      display_order,caption,client,raw,version,updated_at)
@@ -1438,6 +1465,111 @@ ON public.site_content
 FOR EACH ROW
 EXECUTE FUNCTION public.sync_shpixels_site_projections();
 
+-- ------------------------------------------------------------------------------
+-- One-time compatibility migration: flatten historical project YouTube videos
+-- into canonical featuredVideos/category videos. This is idempotent and keeps
+-- legacy project JSON untouched as an archive.
+-- ------------------------------------------------------------------------------
+DO $$
+DECLARE
+  doc JSONB;
+  videos JSONB;
+  categories_json JSONB;
+  project_row JSONB;
+  video_row JSONB;
+  project_ord BIGINT;
+  video_ord BIGINT;
+  legacy_id TEXT;
+  legacy_category TEXT;
+  legacy_video_id TEXT;
+  legacy_url TEXT;
+BEGIN
+  SELECT data
+  INTO doc
+  FROM public.site_content
+  WHERE id = 'current'
+  FOR UPDATE;
+
+  IF doc IS NULL THEN
+    RETURN;
+  END IF;
+
+  videos := COALESCE(doc->'featuredVideos', '[]'::jsonb);
+  categories_json := COALESCE(doc->'categories', '[]'::jsonb);
+
+  FOR project_row, project_ord IN
+    SELECT p.item, p.ord
+    FROM jsonb_array_elements(COALESCE(doc->'projects', '[]'::jsonb))
+      WITH ORDINALITY AS p(item, ord)
+  LOOP
+    FOR video_row, video_ord IN
+      SELECT v.item, v.ord
+      FROM jsonb_array_elements(COALESCE(project_row->'videos', '[]'::jsonb))
+        WITH ORDINALITY AS v(item, ord)
+    LOOP
+      legacy_video_id := COALESCE(NULLIF(video_row->>'videoId', ''), NULLIF(video_row->>'youtubeUrl', ''));
+      legacy_url := COALESCE(NULLIF(video_row->>'youtubeUrl', ''), legacy_video_id);
+      legacy_category := COALESCE(NULLIF(project_row->>'category', ''), 'Uncategorized');
+      legacy_id := 'legacy-' || COALESCE(NULLIF(project_row->>'id', ''), 'project-' || project_ord::text)
+        || '-' || COALESCE(NULLIF(video_row->>'id', ''), 'video-' || video_ord::text);
+
+      IF legacy_video_id IS NULL THEN
+        CONTINUE;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(videos) AS existing(item)
+        WHERE existing.item->>'id' = legacy_id
+           OR (
+             COALESCE(existing.item->>'videoId', existing.item->>'youtubeUrl', '') = legacy_video_id
+             AND COALESCE(existing.item->>'category', '') = legacy_category
+           )
+      ) THEN
+        videos := videos || jsonb_build_array(
+          jsonb_build_object(
+            'id', legacy_id,
+            'title', COALESCE(NULLIF(video_row->>'title', ''), NULLIF(project_row->>'title', ''), legacy_category || ' Video'),
+            'youtubeUrl', legacy_url,
+            'videoId', legacy_video_id,
+            'thumbnail', COALESCE(project_row->>'coverImage', ''),
+            'description', COALESCE(project_row->>'description', ''),
+            'category', legacy_category,
+            'featured', COALESCE((project_row->>'featured')::BOOLEAN, FALSE),
+            'visible', COALESCE((project_row->>'published')::BOOLEAN, TRUE),
+            'order', jsonb_array_length(videos) + 1,
+            'caption', COALESCE(video_row->>'caption', ''),
+            'client', COALESCE(project_row->>'client', '')
+          )
+        );
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements_text(categories_json) AS existing_category(name)
+        WHERE LOWER(existing_category.name) = LOWER(legacy_category)
+      ) THEN
+        categories_json := categories_json || to_jsonb(legacy_category);
+      END IF;
+    END LOOP;
+  END LOOP;
+
+  IF videos IS DISTINCT FROM COALESCE(doc->'featuredVideos', '[]'::jsonb)
+     OR categories_json IS DISTINCT FROM COALESCE(doc->'categories', '[]'::jsonb) THEN
+    UPDATE public.site_content
+    SET data = jsonb_set(
+          jsonb_set(doc, '{featuredVideos}', videos, TRUE),
+          '{categories}',
+          categories_json,
+          TRUE
+        ),
+        version = version + 1,
+        updated_at = NOW(),
+        updated_by = 'Schema migration: project videos to categories'
+    WHERE id = 'current';
+  END IF;
+END $$;
+
 -- Backfill all projection tables from the current canonical row.
 UPDATE public.site_content SET updated_at = updated_at WHERE id = 'current';
 
@@ -1549,8 +1681,10 @@ CREATE POLICY "Public read project links" ON public.project_links
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read project tags" ON public.project_tags
   FOR SELECT TO anon, authenticated USING (TRUE);
-CREATE POLICY "Public read featured videos" ON public.featured_videos
+CREATE POLICY "Public read category videos" ON public.featured_videos
   FOR SELECT TO anon, authenticated USING (visible = TRUE);
+
+GRANT SELECT ON public.category_videos TO anon, authenticated;
 CREATE POLICY "Public read gallery" ON public.gallery_items
   FOR SELECT TO anon, authenticated USING (TRUE);
 CREATE POLICY "Public read client logos" ON public.client_logos
@@ -1635,8 +1769,10 @@ ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 -- SELECT * FROM public.site_settings WHERE id='current';
 -- SELECT * FROM public.navigation_items ORDER BY display_order;
 -- SELECT * FROM public.projects ORDER BY display_order;
+-- Legacy project tables remain for backward compatibility only.
 -- SELECT * FROM public.project_videos ORDER BY project_id, display_order;
 -- SELECT * FROM public.project_links ORDER BY project_id, display_order;
+-- SELECT * FROM public.category_videos ORDER BY category, display_order;
 -- SELECT * FROM public.timeline_items ORDER BY item_type, display_order;
 -- SELECT * FROM public.skills ORDER BY category, display_order;
 -- SELECT * FROM public.testimonials ORDER BY display_order;
