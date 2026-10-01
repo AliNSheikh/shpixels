@@ -112,7 +112,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
           <p className="text-xs sm:text-sm text-[#a8a6a1] leading-relaxed">
             {isAr
               ? 'أضف رابط YouTube وحدد التصنيف فقط. سيظهر الفيديو مباشرة داخل صفحة التصنيف بدون إنشاء مشروع.'
-              : 'Add a YouTube link and select its category. The video appears directly on that category page without creating a project.'}
+              : 'Add a YouTube link and select its category. The video appears directly on that category page.'}
           </p>
         </div>
 
@@ -361,7 +361,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
           <div>
             <h2 className="text-sm font-bold text-[#f1f2ed] uppercase">Content Structure</h2>
             <p className="mt-1 text-xs text-[#706e6a]">
-              Categories → YouTube videos. Projects are no longer required for public portfolio content.
+              Categories → YouTube videos. This is the active public portfolio structure.
             </p>
           </div>
           <div className="flex gap-2">
