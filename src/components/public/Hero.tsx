@@ -4,7 +4,6 @@ import { useContent } from '../../context/ContentContext';
 import { YouTubeEmbed } from '../common/YouTubeEmbed';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import type { ClientLogo } from '../../types/content';
 
 export function Hero() {
   const { content } = useContent();
@@ -17,10 +16,6 @@ export function Hero() {
   const hero = content.hero;
   const typingStrings = (Array.isArray(hero.typingStrings) ? hero.typingStrings : [])
     .filter((item): item is string => typeof item === 'string' && Boolean(item.trim()));
-  const brandLogos = (Array.isArray(content.clientLogos) ? content.clientLogos : [])
-    .filter((brand): brand is ClientLogo => Boolean(brand && typeof brand === 'object'))
-    .filter((brand) => brand.visible !== false && Boolean(String(brand.logoUrl || brand.logo || '').trim()))
-    .sort((a, b) => (Number.isFinite(a.order) ? a.order! : 999) - (Number.isFinite(b.order) ? b.order! : 999));
 
   useEffect(() => {
     if (typingStrings.length <= 1) return;
@@ -84,29 +79,6 @@ export function Hero() {
           </div>
         </div>
       </div>
-
-      {brandLogos.length > 0 && (
-        <div className="relative z-10 w-full overflow-hidden border-y border-[#2b2b2b] bg-[#111111]/70 backdrop-blur-sm py-3 sm:py-4 mt-8">
-          <div className="flex items-center whitespace-nowrap animate-marquee">
-            {[...brandLogos, ...brandLogos, ...brandLogos, ...brandLogos].map((brand, idx) => {
-              const logoSrc = String(brand.logoUrl || brand.logo || '');
-              const website = String(brand.websiteUrl || brand.website || '');
-              const name = String(brand.name || 'Brand');
-              const inner = (
-                <div className="brand-marquee-logo-wrap mx-3 sm:mx-5 h-12 sm:h-14 min-w-[120px] sm:min-w-[150px] px-5 rounded-xl border border-[#2b2b2b] bg-[#1d1d1d] flex items-center justify-center transition-all duration-200 hover:border-[var(--site-accent)]/60 hover:-translate-y-0.5">
-                  <img src={logoSrc} alt={name} className="max-h-7 sm:max-h-8 max-w-[110px] sm:max-w-[140px] w-auto object-contain [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.18))]" loading="lazy" />
-                </div>
-              );
-
-              return website ? (
-                <a key={`${brand.id}-${idx}`} href={website} target="_blank" rel="noopener noreferrer" aria-label={name}>{inner}</a>
-              ) : (
-                <div key={`${brand.id}-${idx}`} aria-label={name}>{inner}</div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {showreelModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">

@@ -27,6 +27,11 @@ export interface BrandingData {
   logoDark?: string;
   favicon?: string;
   accentColor: string;
+  /** Google Fonts stylesheet URL, for example:
+   * https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap */
+  googleFontUrl?: string;
+  /** CSS font-family name used after the Google Fonts stylesheet has loaded. */
+  fontFamily?: string;
 }
 
 export interface NavigationItem {

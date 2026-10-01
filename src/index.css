@@ -12,6 +12,7 @@
     --color-light-text: #f1f2ed;
     --color-muted-text: #a8a6a1;
     --color-gray-subtle: #706e6a;
+    --site-font-family: 'Quicksand', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   html {
@@ -43,6 +44,16 @@
 }
 .font-inter {
   font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Public typography is controlled from the CMS through --site-font-family. */
+.public-site {
+  font-family: var(--site-font-family);
+}
+.public-site .font-quicksand,
+.public-site .font-inter,
+.public-site .font-sans {
+  font-family: var(--site-font-family) !important;
 }
 
 /* Marquee continuous scroll */
@@ -149,12 +160,6 @@
   box-shadow: 0 10px 30px rgba(26, 36, 29, 0.06);
 }
 
-.public-site[data-theme="light"] .brand-marquee-logo-wrap {
-  background: #ffffff !important;
-  border-color: #d8ddd4 !important;
-  box-shadow: 0 5px 18px rgba(24, 32, 26, 0.05);
-}
-
 .public-site[data-theme="light"] ::selection {
   background: var(--site-accent);
   color: #ffffff;
@@ -164,5 +169,9 @@
   .public-site,
   .public-site * {
     scroll-behavior: auto !important;
+  }
+
+  .animate-marquee {
+    animation: none !important;
   }
 }
