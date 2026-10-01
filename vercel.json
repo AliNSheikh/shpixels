@@ -9,6 +9,10 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/categories/:slug",
+      "destination": "/index.html"
+    },
+    {
       "source": "/projects/:slug",
       "destination": "/index.html"
     },
