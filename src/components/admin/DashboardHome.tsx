@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  FolderKanban, 
   Video, 
   Image as ImageIcon, 
-  Eye, 
-  EyeOff, 
   Plus, 
   Download, 
   Globe, 
@@ -33,14 +30,11 @@ import {
 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { ProjectItem } from '../../types/content';
-import { ProjectEditorModal } from './ProjectEditorModal';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '../../utils/youtube';
 import { compressImageFile } from '../../utils/imageCompressor';
 
 interface DashboardHomeProps {
   onNavigate: (tab: string) => void;
-  onNewProject: () => void;
 }
 
 export function DashboardHome({ onNavigate }: DashboardHomeProps) {
@@ -48,9 +42,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
     content, 
     categories, 
     addCategory, 
-    updateProject, 
-    addProject, 
-    deleteProject, 
     updateHero,
     addGalleryItem,
     exportJson, 
@@ -67,13 +58,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   } = useContent();
   const { language } = useLanguage();
   const isAr = language === 'ar';
-
-  // Modal state for direct in-dashboard project editing
-  const [editorModalOpen, setEditorModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
-
-  // Quick search in recent projects
-  const [projectSearch, setProjectSearch] = useState('');
 
   // Quick Category creation state
   const [quickCategoryName, setQuickCategoryName] = useState('');
@@ -108,72 +92,15 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
   };
 
   // Metrics calculations
-  const totalProjects = content.projects.length;
-  const publishedProjects = content.projects.filter((p) => p.published).length;
-  const hiddenProjects = totalProjects - publishedProjects;
-  
-  const totalProjectVideos = content.projects.reduce((acc, p) => acc + (p.videos?.length || 0), 0);
-  const totalVideos = totalProjectVideos + (content.featuredVideos?.length || 0) + 1;
-
-  const totalGalleryImages = (content.gallery?.length || 0) + content.projects.reduce((acc, p) => acc + (p.gallery?.length || 0), 0);
+  const categoryVideos = [...(content.featuredVideos || [])]
+    .filter((video) => video?.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const totalVideos = categoryVideos.length + (content.hero.featuredVideoId ? 1 : 0);
+  const totalGalleryImages = content.gallery?.length || 0;
   const totalWorkflowSteps = content.workflow?.length || 4;
   const totalServices = content.services?.length || 6;
   const sitemapUrl = `${(content.seo.canonicalUrl || 'https://shpixels.vercel.app').replace(/\/$/, '')}/sitemap.xml`;
-
-  // Filtered recent projects
-  const recentProjects = content.projects
-    .filter((p) => {
-      if (!projectSearch.trim()) return true;
-      const q = projectSearch.toLowerCase();
-      return (
-        p.title.toLowerCase().includes(q) ||
-        (p.client && p.client.toLowerCase().includes(q)) ||
-        (p.category && p.category.toLowerCase().includes(q))
-      );
-    })
-    .slice(0, 5);
-
-  // Handlers for direct project actions
-  const handleTogglePublish = (project: ProjectItem) => {
-    const updated = { ...project, published: !project.published };
-    updateProject(updated);
-    showNotice(
-      project.published 
-        ? (isAr ? `تم إخفاء مشروع "${project.title}"` : `Project "${project.title}" hidden`) 
-        : (isAr ? `تم نشر مشروع "${project.title}"` : `Project "${project.title}" published`)
-    );
-  };
-
-  const handleToggleFeatured = (project: ProjectItem) => {
-    const updated = { ...project, featured: !project.featured };
-    updateProject(updated);
-    showNotice(
-      project.featured 
-        ? (isAr ? `تم إلغاء تمييز "${project.title}"` : `Project "${project.title}" unfeatured`) 
-        : (isAr ? `تم تمييز مشروع "${project.title}"` : `Project "${project.title}" marked as featured`)
-    );
-  };
-
-  const handleOpenEditProject = (project: ProjectItem) => {
-    setEditingProject(project);
-    setEditorModalOpen(true);
-  };
-
-  const handleOpenCreateProject = () => {
-    setEditingProject(null);
-    setEditorModalOpen(true);
-  };
-
-  const handleSaveModalProject = (project: ProjectItem) => {
-    const exists = content.projects.some((p) => p.id === project.id);
-    if (exists) {
-      updateProject(project);
-      showNotice(isAr ? 'تم تحديث المشروع بنجاح' : 'Project updated successfully');
-    } else {
-      addProject(project);
-      showNotice(isAr ? 'تمت إضافة المشروع الجديد' : 'New project created successfully');
-    }
-  };
+  const recentVideos = categoryVideos.slice(0, 5);
 
   // Quick Add Category
   const handleQuickAddCategory = (e: React.FormEvent) => {
@@ -475,21 +402,19 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
       {/* Metrics Row: 2-Column on Mobile, 4-Column on Tablet & Desktop */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         <div
-          onClick={() => onNavigate('projects')}
+          onClick={() => onNavigate('categories')}
           className="p-4 sm:p-5 rounded-2xl bg-[#1d1d1d] border border-[#2b2b2b] hover:border-[#2563eb]/50 transition-colors cursor-pointer shadow-lg group"
         >
           <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <span className="text-[10px] sm:text-xs font-mono uppercase text-[#a8a6a1] truncate">{isAr ? 'إجمالي المشاريع' : 'Total Projects'}</span>
+            <span className="text-[10px] sm:text-xs font-mono uppercase text-[#a8a6a1] truncate">{isAr ? 'التصنيفات' : 'Categories'}</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#232323] text-[#38bdf8] group-hover:bg-[#2563eb] group-hover:text-white flex items-center justify-center transition-colors flex-shrink-0">
-              <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-[#f1f2ed] font-quicksand">{totalProjects}</p>
-          <div className="flex items-center gap-1.5 sm:gap-2 mt-2 text-[10px] sm:text-xs text-[#706e6a]">
-            <span className="text-emerald-400 font-bold">{publishedProjects} {isAr ? 'نشط' : 'active'}</span>
-            <span>•</span>
-            <span>{hiddenProjects} {isAr ? 'مسودة' : 'draft'}</span>
-          </div>
+          <p className="text-2xl sm:text-3xl font-black text-[#f1f2ed] font-quicksand">{categories.length}</p>
+          <p className="text-[10px] sm:text-xs text-[#706e6a] mt-2 font-mono truncate">
+            {isAr ? 'كل فئة تعرض فيديوهاتها مباشرة' : 'Each category displays its videos directly'}
+          </p>
         </div>
 
         <div
@@ -558,149 +483,60 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         {/* COLUMN 1: Content & Productions Management */}
         {/* ========================================================= */}
         <div className="space-y-5 sm:space-y-6">
-          {/* Card 1: Recent Projects & Quick Status Controller */}
+          {/* Card 1: Recent Category Videos */}
           <div className="rounded-2xl bg-[#171717] border border-[#2b2b2b] shadow-xl overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-[#2b2b2b] flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#2563eb]/20 border border-[#2563eb]/40 flex items-center justify-center text-[#38bdf8] flex-shrink-0">
-                  <FolderKanban className="w-4 h-4" />
+                  <Video className="w-4 h-4" />
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-bold text-[#f1f2ed] font-quicksand uppercase">
-                    {isAr ? 'المشاريع والأعمال الحديثة' : 'Recent Works & Projects'}
+                    {isAr ? 'فيديوهات التصنيفات الحديثة' : 'Recent Category Videos'}
                   </h2>
                   <p className="text-[11px] text-[#706e6a]">
-                    {isAr ? 'تحكم سريع بالنشر والتمييز وتعديل التفاصيل' : 'Quick publish toggles and inline editing'}
+                    {isAr ? 'أضف رابط YouTube وحدد التصنيف فقط' : 'Add a YouTube link and choose its category'}
                   </p>
                 </div>
               </div>
-
               <button
-                onClick={handleOpenCreateProject}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold shadow-md shadow-[#2563eb]/20 transition-all cursor-pointer whitespace-nowrap"
+                onClick={() => onNavigate('videos')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#3b82f6] text-white text-xs font-bold"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>{isAr ? 'مشروع جديد' : 'New'}</span>
+                <span>{isAr ? 'إضافة فيديو' : 'Add Video'}</span>
               </button>
             </div>
 
-            {/* Quick Search Filter */}
-            <div className="p-3 bg-[#1c1c1c] border-b border-[#2b2b2b]">
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-[#706e6a] absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={projectSearch}
-                  onChange={(e) => setProjectSearch(e.target.value)}
-                  placeholder={isAr ? 'بحث سريع بالعنوان أو العميل...' : 'Quick filter by title or client...'}
-                  className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-[#141414] border border-[#2b2b2b] text-xs text-[#f1f2ed] placeholder-[#706e6a] focus:outline-none focus:border-[#2563eb]"
-                />
-              </div>
-            </div>
-
-            {/* Projects List */}
             <div className="divide-y divide-[#232323]">
-              {recentProjects.length === 0 ? (
+              {recentVideos.length === 0 ? (
                 <div className="p-6 text-center text-xs text-[#706e6a]">
-                  {isAr ? 'لا توجد مشاريع مطابقة للبحث' : 'No projects match your filter'}
+                  {isAr ? 'لا توجد فيديوهات بعد.' : 'No category videos yet.'}
                 </div>
               ) : (
-                recentProjects.map((project, idx) => (
-                  <div
-                    key={`${project.id || 'p'}-${idx}`}
-                    className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-[#1f1f1f] transition-colors"
-                  >
-                    {/* Project Info & Thumbnail */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="relative w-16 h-11 sm:w-20 sm:h-12 rounded-lg overflow-hidden bg-[#232323] border border-[#2b2b2b] flex-shrink-0">
-                        <img
-                          src={project.coverImage}
-                          alt={project.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                        {project.videos && project.videos.length > 0 && (
-                          <span className="absolute bottom-0.5 right-0.5 p-0.5 rounded bg-black/80 text-[#2563eb]">
-                            <Video className="w-2.5 h-2.5" />
-                          </span>
+                recentVideos.map((video) => (
+                  <div key={video.id} className="p-3 sm:p-4 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-16 h-10 rounded-lg overflow-hidden bg-[#232323] flex-shrink-0">
+                        {video.thumbnail ? (
+                          <img src={video.thumbnail} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><Video className="w-4 h-4 text-[#38bdf8]" /></div>
                         )}
                       </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="text-xs sm:text-sm font-bold text-[#f1f2ed] truncate font-quicksand">
-                            {project.title}
-                          </h3>
-                          {project.featured && (
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-[#2563eb]/20 text-[#38bdf8] border border-[#2563eb]/30">
-                              {isAr ? 'مميز' : 'Featured'}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px] text-[#706e6a] truncate mt-0.5">
-                          <span className="text-[#a8a6a1] truncate">{project.category}</span>
-                          <span>•</span>
-                          <span className="truncate">{project.client || 'Client'}</span>
-                          <span>•</span>
-                          <span className="font-mono">{project.year}</span>
-                        </div>
+                      <div className="min-w-0">
+                        <h3 className="text-xs sm:text-sm font-bold text-[#f1f2ed] truncate">
+                          {video.title || (isAr ? 'فيديو YouTube' : 'YouTube Video')}
+                        </h3>
+                        <p className="text-[10px] sm:text-xs text-[#706e6a] truncate">{video.category || 'Uncategorized'}</p>
                       </div>
                     </div>
-
-                    {/* Quick 1-Click Action Controls */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {/* Publish / Unpublish toggle */}
-                      <button
-                        onClick={() => handleTogglePublish(project)}
-                        className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
-                          project.published 
-                            ? 'text-emerald-400 hover:bg-emerald-950/40' 
-                            : 'text-[#706e6a] hover:bg-[#232323]'
-                        }`}
-                        title={project.published ? (isAr ? 'منشور (انقر للإخفاء)' : 'Published (click to hide)') : (isAr ? 'مخفي (انقر للنشر)' : 'Draft (click to publish)')}
-                      >
-                        {project.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                      </button>
-
-                      {/* Featured toggle */}
-                      <button
-                        onClick={() => handleToggleFeatured(project)}
-                        className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
-                          project.featured 
-                            ? 'text-[#38bdf8] hover:bg-[#2563eb]/20' 
-                            : 'text-[#706e6a] hover:bg-[#232323]'
-                        }`}
-                        title={project.featured ? (isAr ? 'مميز في الأعلى' : 'Featured') : (isAr ? 'تمييز في الأعلى' : 'Mark featured')}
-                      >
-                        <Sparkles className="w-4 h-4" />
-                      </button>
-
-                      {/* Edit project modal */}
-                      <button
-                        onClick={() => handleOpenEditProject(project)}
-                        className="p-2 rounded-lg text-[#a8a6a1] hover:text-white hover:bg-[#232323] transition-colors cursor-pointer"
-                        title={isAr ? 'تعديل المشروع' : 'Edit project'}
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button onClick={() => onNavigate('videos')} className="text-[#38bdf8] hover:text-white text-xs font-semibold whitespace-nowrap">
+                      {isAr ? 'إدارة' : 'Manage'}
+                    </button>
                   </div>
                 ))
               )}
-            </div>
-
-            {/* Card Footer: Jump to full CRUD & Drag-and-Drop */}
-            <div className="p-3 sm:p-4 bg-[#141414] border-t border-[#2b2b2b] flex items-center justify-between text-xs">
-              <span className="text-[#706e6a] font-mono">
-                {isAr ? `إجمالي ${totalProjects} عمل` : `Total ${totalProjects} works`}
-              </span>
-              <button
-                onClick={() => onNavigate('projects')}
-                className="text-[#2563eb] hover:text-[#38bdf8] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
-              >
-                <span>{isAr ? 'إدارة وسحب وترتيب كافة المشاريع' : 'Manage & reorder all projects'}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
             </div>
           </div>
 
@@ -755,10 +591,10 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
               </button>
             </form>
 
-            {/* Active Categories Pills with Project Counts */}
+            {/* Active Categories Pills with Video Counts */}
             <div className="flex flex-wrap gap-2 pt-1">
               {categories.map((cat) => {
-                const count = content.projects.filter((p) => p.category === cat).length;
+                const count = categoryVideos.filter((video) => video.category === cat).length;
                 return (
                   <div
                     key={cat}
@@ -975,7 +811,7 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-emerald-400 font-mono">✓ Ready (Base64)</p>
-                    <p className="text-[10px] text-[#706e6a] truncate">Use in projects or stills gallery</p>
+                    <p className="text-[10px] text-[#706e6a] truncate">Use for category videos or stills gallery</p>
                   </div>
                 </div>
 
@@ -1062,20 +898,6 @@ export function DashboardHome({ onNavigate }: DashboardHomeProps) {
         </div>
       </div>
 
-      {/* Direct Project Editor Modal */}
-      <ProjectEditorModal
-        project={editingProject}
-        isOpen={editorModalOpen}
-        onClose={() => {
-          setEditorModalOpen(false);
-          setEditingProject(null);
-        }}
-        onSave={handleSaveModalProject}
-        onDelete={editingProject ? (id) => {
-          deleteProject(id);
-          showNotice(isAr ? 'تم حذف المشروع' : 'Project deleted');
-        } : undefined}
-      />
     </div>
   );
 }
