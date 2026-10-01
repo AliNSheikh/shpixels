@@ -60,7 +60,7 @@ export function ClientLogos() {
       </div>
 
       <div
-        className="relative w-full overflow-hidden space-y-2 sm:space-y-3"
+        className="relative w-full overflow-hidden space-y-1 sm:space-y-1.5"
         aria-label={isAr ? 'شعارات العلامات التجارية' : 'Brand logos'}
       >
         {rows.map((row, rowIndex) => {
@@ -79,12 +79,12 @@ export function ClientLogos() {
                 const isDuplicateCycle = index >= cycleLength;
 
                 const logo = (
-                  <div className="flex h-14 sm:h-16 lg:h-20 w-[42vw] sm:w-[28vw] lg:w-[14.285vw] max-w-[190px] min-w-[118px] items-center justify-center px-4 sm:px-5">
+                  <div className="flex h-20 sm:h-24 lg:h-28 w-[36vw] sm:w-[22vw] lg:w-[14.285vw] max-w-[240px] min-w-[112px] items-center justify-center px-1 sm:px-1.5 lg:px-2">
                     <img
                       src={logoSrc}
                       alt={isDuplicateCycle ? '' : name}
                       aria-hidden={isDuplicateCycle ? true : undefined}
-                      className="max-h-9 sm:max-h-11 lg:max-h-12 max-w-full w-auto object-contain opacity-90 hover:opacity-100 hover:scale-105 transition-all duration-300"
+                      className="max-h-14 sm:max-h-[4.5rem] lg:max-h-20 max-w-[96%] w-auto object-contain opacity-95 hover:opacity-100 hover:scale-[1.04] transition-all duration-300"
                       loading="lazy"
                     />
                   </div>
