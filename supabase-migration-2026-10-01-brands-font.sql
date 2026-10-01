@@ -40,7 +40,33 @@ SET data = jsonb_set(
 WHERE id = 'current';
 
 -- ------------------------------------------------------------------------------
--- 3) Add BRANDS to the CMS Navigation Menu when it does not already exist.
+-- 3) Rename the old clientlogos visibility key to the dedicated BRANDS section.
+--    If "brands" already exists, its current value wins.
+-- ------------------------------------------------------------------------------
+UPDATE public.site_content
+SET data = jsonb_set(
+      data,
+      '{sectionVisibility}',
+      (
+        COALESCE(data->'sectionVisibility', '{}'::jsonb)
+        || jsonb_build_object(
+          'brands',
+          CASE
+            WHEN COALESCE(data->'sectionVisibility', '{}'::jsonb) ? 'brands'
+              THEN data->'sectionVisibility'->'brands'
+            WHEN COALESCE(data->'sectionVisibility', '{}'::jsonb) ? 'clientlogos'
+              THEN data->'sectionVisibility'->'clientlogos'
+            ELSE 'true'::jsonb
+          END
+        )
+      ) - 'clientlogos',
+      true
+    ),
+    updated_at = NOW()
+WHERE id = 'current';
+
+-- ------------------------------------------------------------------------------
+-- 4) Add BRANDS to the CMS Navigation Menu when it does not already exist.
 --    Existing menu entries from order 2 onward are shifted by one position.
 -- ------------------------------------------------------------------------------
 UPDATE public.site_content sc
@@ -107,7 +133,7 @@ WHERE sc.id = 'current'
   );
 
 -- ------------------------------------------------------------------------------
--- 4) Keep the explicit typography columns synchronized with canonical branding.
+-- 5) Keep the explicit typography columns synchronized with canonical branding.
 --    The existing main projection trigger continues to own the rest of
 --    public.site_settings; this small trigger only manages the two new fields.
 -- ------------------------------------------------------------------------------
