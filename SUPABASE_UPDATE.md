@@ -53,7 +53,24 @@ This additive migration is safe to re-run. It performs the database changes requ
 
 No new BRANDS table is required: brand records continue to use the existing `public.client_logos` projection table.
 
-### 4. Verify the database installation
+### 4. Apply the category-video migration
+
+Run the complete file:
+
+`supabase-migration-2026-10-02-category-videos.sql`
+
+This migration changes the active portfolio model from **Category → Projects → Videos** to **Category → YouTube Videos**:
+
+- category pages read directly from the category video collection
+- the existing `public.featured_videos` table remains the physical storage table for backward compatibility
+- a semantic read view named `public.category_videos` is created
+- an index is added for `category + display_order`
+- YouTube videos nested inside legacy projects are copied into the canonical `featuredVideos` collection when they are not already present
+- legacy project JSON and project tables are preserved as an archive so the migration is non-destructive
+
+The CMS no longer requires the Projects tab or project records to publish videos. Add a YouTube URL, select a category, and publish.
+
+### 5. Verify the database installation
 
 Run the complete `supabase-verify.sql` file.
 
@@ -62,14 +79,14 @@ Expected results:
 - `site_content` has one row with `id = current`.
 - `has_legacy_delete_without_where = false`.
 - `has_legacy_ambiguous_ord = false`.
-- every expected table reports `exists = true`.
+- every expected table/view reports `exists = true`, including `category_videos`.
 - `site_settings.google_font_url` and `site_settings.font_family` are readable.
 - the Navigation projection contains the `#brands` entry when BRANDS is enabled in the menu.
 - the `site-media` Storage bucket exists.
 - `site_content` is present in `supabase_realtime`.
 - after the next CMS publish, `cms_projection_status.ok = true` and its version equals `site_content.version`.
 
-### 5. Check Vercel environment variables
+### 6. Check Vercel environment variables
 
 In **Vercel → Project → Settings → Environment Variables**, confirm the production deployment has values for the Supabase project currently being updated:
 
@@ -85,13 +102,13 @@ The `VITE_*` values are used by the browser for public reads/Realtime. The secre
 
 If any environment variable is changed, redeploy the latest `main` branch in Vercel.
 
-### 6. Publish the current CMS snapshot once
+### 7. Publish the current CMS snapshot once
 
 Open `/admin`, log in, then use **Site Settings → Publish Content to Supabase** (or **Save Site & Publish**) once.
 
 This writes the current canonical document and triggers a complete rebuild of the normalized tables.
 
-### 7. Run Test Database
+### 8. Run Test Database
 
 Use **Site Settings → Test Database**. The current diagnostics detect:
 
@@ -108,7 +125,7 @@ A healthy installation reports the canonical content and projection tables synch
 
 ## Search Console sitemap
 
-The production sitemap is generated dynamically from the current canonical content and published project/category routes. Submit this URL in Google Search Console:
+The production sitemap is generated dynamically from the homepage and current public video-category routes. Individual legacy project URLs are no longer added to the sitemap. Submit this URL in Google Search Console:
 
 `https://shpixels.vercel.app/sitemap.xml`
 
