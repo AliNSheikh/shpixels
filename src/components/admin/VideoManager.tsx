@@ -47,7 +47,7 @@ export function VideoManager() {
 
   const categoryVideos = useMemo(
     () => [...(content.featuredVideos || [])]
-      .filter((video) => video && video.visible !== false)
+      .filter(Boolean)
       .sort((a, b) => (a.order || 0) - (b.order || 0)),
     [content.featuredVideos]
   );
