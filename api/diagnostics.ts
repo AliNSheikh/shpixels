@@ -11,12 +11,8 @@ const NORMALIZED_PUBLIC_TABLES = [
   'about_profile',
   'services',
   'project_categories',
-  'projects',
-  'project_videos',
-  'project_gallery',
-  'project_links',
-  'project_tags',
   'featured_videos',
+  'category_videos',
   'gallery_items',
   'client_logos',
   'workflow_steps',
@@ -38,7 +34,6 @@ const EXPECTED_CMS_SECTIONS = [
   'hero',
   'about',
   'services',
-  'projects',
   'featuredVideos',
   'gallery',
   'workflow',
@@ -175,7 +170,8 @@ export default async function handler(req: any, res: any) {
       typeof canonical === 'object' &&
       canonical.branding &&
       canonical.contact &&
-      Array.isArray(canonical.projects)
+      Array.isArray(canonical.featuredVideos) &&
+      Array.isArray(canonical.categories)
     );
 
     const { data: sectionRows, error: sectionsErr } = await client
