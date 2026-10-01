@@ -27,15 +27,14 @@ import { ProjectNotFound, ProjectPage } from './components/public/ProjectPage';
 import { findProjectBySlug } from './utils/projectRoutes';
 import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButton';
 import { PublicSiteErrorBoundary } from './components/common/PublicSiteErrorBoundary';
+import { PublicSectionBoundary } from './components/common/PublicSectionBoundary';
 
 function AppContent() {
   const { isAdminView, isAuthenticated, content, serverSyncStatus } = useContent();
   const { theme } = useTheme();
 
   if (isAdminView) {
-    if (!isAuthenticated) {
-      return <AdminAuthModal />;
-    }
+    if (!isAuthenticated) return <AdminAuthModal />;
     return <AdminLayout />;
   }
 
@@ -45,26 +44,37 @@ function AppContent() {
 
   if (projectRoute) {
     const project = findProjectBySlug(
-      (content.projects || []).filter((item) => item.published),
+      (Array.isArray(content.projects) ? content.projects : []).filter((item) => item?.published),
       projectRoute[1]
     );
 
     return (
       <div data-theme={theme} className="public-site min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
         <PublicSiteErrorBoundary>
-          <SiteRuntime project={project || null} />
-          {content.sectionVisibility?.header !== false && <Header />}
+          <PublicSectionBoundary name="site-runtime">
+            <SiteRuntime project={project || null} />
+          </PublicSectionBoundary>
+
+          {content.sectionVisibility?.header !== false && (
+            <PublicSectionBoundary name="header"><Header /></PublicSectionBoundary>
+          )}
+
           {serverSyncStatus === 'syncing' ? (
             <main className="min-h-[75vh] pt-32 flex items-center justify-center">
               <div className="text-xs font-mono uppercase tracking-[0.2em] text-[#706e6a]">Loading project…</div>
             </main>
           ) : project ? (
-            <ProjectPage project={project} />
+            <PublicSectionBoundary name="project-page" fallback={<ProjectNotFound />}>
+              <ProjectPage project={project} />
+            </PublicSectionBoundary>
           ) : (
             <ProjectNotFound />
           )}
-          {content.sectionVisibility?.footer !== false && <Footer />}
-          <WhatsAppFloatingButton />
+
+          {content.sectionVisibility?.footer !== false && (
+            <PublicSectionBoundary name="footer"><Footer /></PublicSectionBoundary>
+          )}
+          <PublicSectionBoundary name="whatsapp"><WhatsAppFloatingButton /></PublicSectionBoundary>
         </PublicSiteErrorBoundary>
       </div>
     );
@@ -73,24 +83,54 @@ function AppContent() {
   return (
     <div data-theme={theme} className="public-site min-h-screen bg-[#171717] text-[#f1f2ed] selection:bg-[#2563eb] selection:text-white">
       <PublicSiteErrorBoundary>
-        <SiteRuntime />
-        {content.sectionVisibility?.header !== false && <Header />}
+        <PublicSectionBoundary name="site-runtime"><SiteRuntime /></PublicSectionBoundary>
+        {content.sectionVisibility?.header !== false && (
+          <PublicSectionBoundary name="header"><Header /></PublicSectionBoundary>
+        )}
+
         <main>
-          {content.sectionVisibility?.hero !== false && <Hero />}
-          {content.sectionVisibility?.showreel !== false && <Showreel />}
-          {content.sectionVisibility?.clientlogos !== false && <ClientLogos />}
-          {content.sectionVisibility?.about !== false && <About />}
-          {content.sectionVisibility?.services !== false && <Services />}
-          {content.sectionVisibility?.portfolio !== false && <Portfolio />}
-          {content.sectionVisibility?.process !== false && <Process />}
-          {content.sectionVisibility?.gallery !== false && <Gallery />}
-          {content.sectionVisibility?.experience !== false && <Experience />}
-          {content.sectionVisibility?.skills !== false && <Skills />}
-          {content.sectionVisibility?.testimonials !== false && <Testimonials />}
-          {content.sectionVisibility?.contact !== false && <Contact />}
+          {content.sectionVisibility?.hero !== false && (
+            <PublicSectionBoundary name="hero"><Hero /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.showreel !== false && (
+            <PublicSectionBoundary name="showreel"><Showreel /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.clientlogos !== false && (
+            <PublicSectionBoundary name="client-logos"><ClientLogos /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.about !== false && (
+            <PublicSectionBoundary name="about"><About /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.services !== false && (
+            <PublicSectionBoundary name="services"><Services /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.portfolio !== false && (
+            <PublicSectionBoundary name="portfolio"><Portfolio /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.process !== false && (
+            <PublicSectionBoundary name="process"><Process /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.gallery !== false && (
+            <PublicSectionBoundary name="gallery"><Gallery /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.experience !== false && (
+            <PublicSectionBoundary name="experience"><Experience /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.skills !== false && (
+            <PublicSectionBoundary name="skills"><Skills /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.testimonials !== false && (
+            <PublicSectionBoundary name="testimonials"><Testimonials /></PublicSectionBoundary>
+          )}
+          {content.sectionVisibility?.contact !== false && (
+            <PublicSectionBoundary name="contact"><Contact /></PublicSectionBoundary>
+          )}
         </main>
-        {content.sectionVisibility?.footer !== false && <Footer />}
-        <WhatsAppFloatingButton />
+
+        {content.sectionVisibility?.footer !== false && (
+          <PublicSectionBoundary name="footer"><Footer /></PublicSectionBoundary>
+        )}
+        <PublicSectionBoundary name="whatsapp"><WhatsAppFloatingButton /></PublicSectionBoundary>
       </PublicSiteErrorBoundary>
     </div>
   );
@@ -107,4 +147,3 @@ export default function App() {
     </ContentProvider>
   );
 }
-
