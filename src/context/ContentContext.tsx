@@ -256,7 +256,7 @@ export function ContentProvider({ children }: { children: React.ReactNode }) {
       });
       if (apiRes.ok) {
         const json = await apiRes.json();
-        if (json.data && json.data.projects) {
+        if (json.data && json.data.branding) {
           const ver = Number(json.version || 1);
           const safeData = sanitizeGlobalContent(json.data);
           latestContentRef.current = safeData;
