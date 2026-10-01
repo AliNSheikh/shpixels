@@ -99,8 +99,8 @@ function AppContent() {
     };
 
     (Array.isArray(content.categories) ? content.categories : []).forEach(addCategory);
-    (Array.isArray(content.projects) ? content.projects : [])
-      .filter((item) => item?.published)
+    (Array.isArray(content.featuredVideos) ? content.featuredVideos : [])
+      .filter((item) => item?.visible !== false)
       .forEach((item) => addCategory(item.category));
 
     const category = findCategoryBySlug(categoryNames, categoryRoute[1]);
