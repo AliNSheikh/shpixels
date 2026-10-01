@@ -444,10 +444,7 @@ export function AdminLayout() {
         {/* Content Workspace Area */}
         <main className="flex-1 min-w-0 pb-20 md:pb-6">
           {activeTab === 'home' && (
-            <DashboardHome
-              onNavigate={(tab) => setActiveTab(tab as AdminTab)}
-              onNewProject={() => setActiveTab('videos')}
-            />
+            <DashboardHome onNavigate={(tab) => setActiveTab(tab as AdminTab)} />
           )}
           {activeTab === 'categories' && <CategoryManager />}
           {activeTab === 'sections' && <SectionManager />}
