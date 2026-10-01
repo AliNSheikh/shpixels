@@ -107,7 +107,7 @@ async function startServer() {
         checks.currentVersion = Number(row.version || 1);
         checks.publishedAt = row.published_at;
         checks.updatedAt = row.updated_at;
-        if (row.data && typeof row.data === 'object' && row.data.projects) {
+        if (row.data && typeof row.data === 'object' && Array.isArray(row.data.featuredVideos)) {
           checks.dataJsonbValid = true;
         } else {
           checks.error = 'Row exists but data JSONB is empty or missing expected schema.';
@@ -212,34 +212,37 @@ async function startServer() {
     const baseUrl = (contentData?.seo?.canonicalUrl || "https://shpixels.vercel.app").replace(/\/$/, "");
     const now = new Date().toISOString().split("T")[0];
 
-    const normalizeSlug = (value: unknown) =>
+    const normalizeCategorySlug = (value: unknown) =>
       String(value || '')
         .trim()
         .toLowerCase()
-        .normalize('NFKD')
-        .replace(/[^a-z0-9]+/g, '-')
+        .normalize('NFKC')
+        .replace(/[^\p{L}\p{N}]+/gu, '-')
         .replace(/^-+|-+$/g, '')
         .replace(/-{2,}/g, '');
 
-    const projects = (Array.isArray(contentData?.projects) ? contentData.projects : [])
-      .filter((project: any) => project?.published !== false);
+    const categoryNames: string[] = [];
+    const seenCategories = new Set<string>();
+    const addCategory = (value: unknown) => {
+      const name = String(value || '').trim();
+      const key = name.toLowerCase();
+      if (!name || seenCategories.has(key)) return;
+      seenCategories.add(key);
+      categoryNames.push(name);
+    };
 
-    const usedSlugs = new Set<string>();
-    const projectUrls = projects.map((project: any) => {
-      const base = normalizeSlug(project.slug) || normalizeSlug(project.title) || normalizeSlug(project.id) || 'project';
-      let slug = base;
-      let attempt = 2;
-      while (usedSlugs.has(slug)) {
-        slug = `${base}-${attempt}`;
-        attempt += 1;
-      }
-      usedSlugs.add(slug);
+    (Array.isArray(contentData?.categories) ? contentData.categories : []).forEach(addCategory);
+    (Array.isArray(contentData?.featuredVideos) ? contentData.featuredVideos : [])
+      .filter((video: any) => video?.visible !== false)
+      .forEach((video: any) => addCategory(video?.category));
 
+    const categoryUrls = categoryNames.map((category) => {
+      const slug = normalizeCategorySlug(category) || 'category';
       return `  <url>
-    <loc>${baseUrl}/projects/${encodeURIComponent(slug)}</loc>
+    <loc>${baseUrl}/categories/${encodeURIComponent(slug)}</loc>
     <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>${project.featured ? '0.9' : '0.8'}</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>`;
     });
 
@@ -251,7 +254,7 @@ async function startServer() {
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-${projectUrls.join('\n')}
+${categoryUrls.join('\n')}
 </urlset>`;
 
     res.header("Content-Type", "application/xml");
