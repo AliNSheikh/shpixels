@@ -14,7 +14,7 @@ SELECT
   data ? 'branding' AS has_branding,
   data ? 'hero' AS has_hero,
   data ? 'about' AS has_about,
-  data ? 'projects' AS has_projects,
+  data ? 'featuredVideos' AS has_category_videos,
   data ? 'contact' AS has_contact,
   data ? 'footer' AS has_footer,
   data #>> '{branding,googleFontUrl}' AS canonical_google_font_url,
@@ -68,12 +68,7 @@ WITH expected(table_name) AS (
     ('about_profile'),
     ('services'),
     ('project_categories'),
-    ('projects'),
-    ('project_videos'),
-    ('project_gallery'),
-    ('project_links'),
-    ('project_tags'),
-    ('featured_videos'),
+    ('category_videos'),
     ('gallery_items'),
     ('client_logos'),
     ('workflow_steps'),
@@ -93,12 +88,13 @@ SELECT
 FROM expected AS e
 ORDER BY e.table_name;
 
--- 7) Compare canonical/projection versions. After publishing, all non-empty
---    projection tables should use the same version as site_content.
+-- 7) Compare canonical/projection versions. After publishing, the category-video
+--    projection and global projections should use the same version as site_content.
 SELECT 'site_content' AS source, version FROM public.site_content WHERE id='current'
 UNION ALL SELECT 'site_settings', version FROM public.site_settings WHERE id='current'
 UNION ALL SELECT 'hero_settings', version FROM public.hero_settings WHERE id='current'
 UNION ALL SELECT 'about_profile', version FROM public.about_profile WHERE id='current'
+UNION ALL SELECT 'category_videos', MAX(version) FROM public.category_videos
 UNION ALL SELECT 'cms_projection_status', version FROM public.cms_projection_status WHERE id='current';
 
 -- 8) Verify typography projection added by the BRANDS + font migration.
@@ -140,3 +136,11 @@ FROM pg_publication_tables
 WHERE pubname = 'supabase_realtime'
   AND schemaname = 'public'
   AND tablename = 'site_content';
+
+
+-- 13) Category videos should be queryable directly by category.
+SELECT category, COUNT(*) AS video_count, MIN(display_order) AS first_order, MAX(version) AS version
+FROM public.category_videos
+WHERE visible = TRUE
+GROUP BY category
+ORDER BY category;
