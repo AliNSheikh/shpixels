@@ -96,6 +96,7 @@ export default async function handler(req: any, res: any) {
       testimonials: [],
       footerLinks: [],
       categories: [],
+      featuredVideos: [],
       categoryDetails: {},
       clientLogos: [],
       sectionHeaders: {},
